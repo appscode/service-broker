@@ -1,0 +1,11 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceBinding
+metadata:
+  name: my-broker-mysql-binding
+  namespace: default
+  labels:
+    app: db-broker
+spec:
+  instanceRef:
+    name: my-broker-mysql-instance
+  secretName: my-broker-mysql-secret

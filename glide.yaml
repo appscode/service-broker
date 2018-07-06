@@ -1,0 +1,40 @@
+package: github.com/kubedb/service-broker
+import:
+- package: github.com/appscode/go
+  subpackages:
+  - encoding/json/types
+  - types
+- package: github.com/appscode/kutil
+- package: github.com/codeskyblue/go-sh
+- package: github.com/golang/glog
+- package: github.com/kubedb/apimachinery
+  subpackages:
+  - apis/kubedb/v1alpha1
+  - client/clientset/versioned/typed/kubedb/v1alpha1
+  - client/clientset/versioned/typed/kubedb/v1alpha1/util
+- package: github.com/pkg/errors
+- package: github.com/pmorie/go-open-service-broker-client
+  subpackages:
+  - v2
+- package: github.com/pmorie/osb-broker-lib
+  version: 0.0.9
+  subpackages:
+  - pkg/broker
+  - pkg/metrics
+  - pkg/rest
+  - pkg/server
+- package: github.com/prometheus/client_golang
+  subpackages:
+  - prometheus
+- package: k8s.io/api
+  subpackages:
+  - core/v1
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/api/resource
+  - pkg/apis/meta/v1
+  - pkg/util/wait
+- package: k8s.io/client-go
+  subpackages:
+  - kubernetes
+  - rest

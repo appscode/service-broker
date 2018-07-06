@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ${NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: ${APP}
+spec:
+  selector:
+    app: ${APP}
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8088
