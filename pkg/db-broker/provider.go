@@ -8,7 +8,9 @@ import (
 )
 
 type Provider interface {
-	Bind(service []corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
+	Bind(service corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
+	Create(name, namespace string) error
+	Delete(name string) error
 }
 
 type Credentials struct {

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: ${APP}
+spec:
+  replicas: 1
+#  strategy:
+#    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: ${APP}
+  template:
+    metadata:
+      labels:
+        app: ${APP}
+    spec:
+      serviceAccountName: ${SERVICE_ACCOUNT}
+      containers:
+      - name: ${NAME}
+        image: ${DOCKER_REGISTRY}/${IMG}:${TAG}
+        imagePullPolicy: ${IMAGE_PULL_POLICY}
+        command:
+        - db_broker
+        args:
+        - --port
+        - "8088"
+#        {{- if .Values.tls.cert }}
+#        - --tlsCert
+#        - "{{ .Values.tls.cert }}"
+#        {{- end }}
+#        {{- if .Values.tls.key }}
+#        - --tlsKey
+#        - "{{ .Values.tls.key }}"
+#        {{- end }}
+#        - -v
+#        - "5"
+#        - -logtostderr
+        ports:
+        - containerPort: 8088

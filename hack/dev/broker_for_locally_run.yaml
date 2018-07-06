@@ -1,0 +1,8 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ClusterServiceBroker
+metadata:
+  name: my-broker
+  labels:
+    app: db-broker
+spec:
+  url: http://my-broker.default.svc.cluster.local

@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"context"
 	"flag"
@@ -12,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/golang/glog"
-	"github.com/kubedb/example-db-broker/pkg/broker"
+	"github.com/kubedb/service-broker/pkg/broker"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
 	prom "github.com/prometheus/client_golang/prometheus"
 
@@ -26,23 +25,27 @@ var options struct {
 	Port    int
 	TLSCert string
 	TLSKey  string
+	Insecure             bool
 }
 
 func init() {
-	flag.BoolVar(&options.ServiceCatalogEnabledOnly, "service-catalog-enabled-only", false,
-		"Only list Service Catalog Enabled services")
+	//flag.BoolVar(&options.ServiceCatalogEnabledOnly, "service-catalog-enabled-only", false,
+	//	"Only list Service Catalog Enabled services")
 	flag.IntVar(&options.Port, "port", 8005,
 		"use '--port' option to specify the port for broker to listen on")
+	flag.BoolVar(&options.Insecure, "insecure", false,
+		"use --insecure to use HTTP vs HTTPS.")
 	flag.StringVar(&options.TLSCert, "tlsCert", "",
 		"base-64 encoded PEM block to use as the certificate for TLS. If '--tlsCert' is used, then '--tlsKey' must also be used. If '--tlsCert' is not used, then TLS will not be used.")
 	flag.StringVar(&options.TLSKey, "tlsKey", "",
 		"base-64 encoded PEM block to use as the private key matching the TLS certificate. If '--tlsKey' is used, then '--tlsCert' must also be used")
-	flag.StringVar(&options.CatalogPath, "catalogPath", "",
-		"The path to the catalog")
+
+	broker.AddFlags(&options.Options)
 	flag.Parse()
 }
 
 func main() {
+	fmt.Println(os.LookupEnv("PWD"))
 	if err := run(); err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 		glog.Fatalln(err)
 	}
@@ -69,7 +72,12 @@ func runWithContext(ctx context.Context) error {
 
 	addr := ":" + strconv.Itoa(options.Port)
 
+	glog.Infoln("broker client creating...")
+	fmt.Println("broker client creating...")
 	b, err := broker.NewBroker(options.Options)
+	fmt.Println("broker client created")
+	glog.Infoln("broker client created")
+
 	if err != nil {
 		return err
 	}
@@ -87,6 +95,7 @@ func runWithContext(ctx context.Context) error {
 	s := server.New(api, reg)
 
 	glog.Infof("Starting broker!")
+	fmt.Println("Starting broker!")
 
 	if options.TLSCert == "" && options.TLSKey == "" {
 		err = s.Run(ctx, addr)
