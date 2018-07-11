@@ -23,10 +23,10 @@ spec:
         image: ${DOCKER_REGISTRY}/${IMG}:${TAG}
         imagePullPolicy: ${IMAGE_PULL_POLICY}
         command:
-        - db_broker
+        - "./db_broker"
         args:
         - --port
-        - "8088"
+        - "8080"
 #        {{- if .Values.tls.cert }}
 #        - --tlsCert
 #        - "{{ .Values.tls.cert }}"
@@ -35,8 +35,8 @@ spec:
 #        - --tlsKey
 #        - "{{ .Values.tls.key }}"
 #        {{- end }}
-#        - -v
-#        - "5"
-#        - -logtostderr
+        - -v
+        - "5"
+        - -logtostderr
         ports:
-        - containerPort: 8088
+        - containerPort: 8080

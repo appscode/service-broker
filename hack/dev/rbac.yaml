@@ -9,7 +9,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: ${NAME}-cluster-admin
+  name: ${NAME}
   labels:
     app: ${APP}
 roleRef:

@@ -2,7 +2,7 @@ apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
   name: my-broker-mysql-binding
-  namespace: default
+  namespace: db-broker
   labels:
     app: db-broker
 spec:

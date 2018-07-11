@@ -140,7 +140,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	parts := strings.Split(request.InstanceID, "-")
 	exampleInstance := &exampleInstance{
 		ID:        request.InstanceID,
-		Name: "my-instance-"+parts[4],
+		Name: "mysql-"+parts[4],
 		ServiceID: request.ServiceID,
 		PlanID:    request.PlanID,
 		Params:    request.Parameters,
