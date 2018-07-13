@@ -1,0 +1,35 @@
+apiVersion: v1
+items:
+- apiVersion: kubedb.com/v1alpha1
+  kind: MySQL
+  metadata:
+    clusterName: ""
+    creationTimestamp: 2018-07-12T13:57:21Z
+    deletionGracePeriodSeconds: 0
+    deletionTimestamp: 2018-07-12T14:11:55Z
+    finalizers:
+    - kubedb.com
+    generation: 2
+    name: mysql-0242ac110005
+    namespace: test-broker-wzblh
+    resourceVersion: "5548"
+    selfLink: /apis/kubedb.com/v1alpha1/namespaces/test-broker-wzblh/mysqls/mysql-0242ac110005
+    uid: 7f655e10-85db-11e8-b276-08002783df7e
+  spec:
+    databaseSecret:
+      secretName: mysql-0242ac110005-auth
+    replicas: 1
+    resources: {}
+    storage:
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: standard
+    version: "5.7"
+  status:
+    creationTime: 2018-07-12T13:57:22Z
+    phase: Running
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

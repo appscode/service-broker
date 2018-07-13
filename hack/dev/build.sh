@@ -21,18 +21,18 @@ build() {
     pushd $REPO_ROOT
         mkdir -p hack/docker
         go build -o hack/docker/db-broker cmd/mysqldb/main.go
-        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
+#        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
 
         pushd hack/docker
             chmod 755 db-broker
             cat > Dockerfile <<EOL
-FROM busybox
+FROM ubuntu
 
 COPY db-broker /bin/db-broker/db_broker
-RUN mkdir -p /bin/db-broker/hack/dev
-COPY kubedb.sh /bin/db-broker/hack/dev/kubedb.sh
+#RUN mkdir -p /bin/db-broker/hack/dev
+#COPY kubedb.sh /bin/db-broker/hack/dev/kubedb.sh
 
-EXPOSE 8088
+#EXPOSE 8088
 WORKDIR /bin/db-broker/
 EOL
             local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."

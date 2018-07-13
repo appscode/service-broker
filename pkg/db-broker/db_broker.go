@@ -8,8 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"path/filepath"
-	shell "github.com/codeskyblue/go-sh"
 	"fmt"
 )
 
@@ -68,15 +66,15 @@ func loadNamespace(kubeConfig string) string {
 }
 
 func (c *Client) Provision(instanceID, serviceID, planID, namespace string, provisionParams map[string]interface{}) error {
-	sh := shell.NewSession()
-	args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace)}
-	SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
-	cmd := sh.Command(SetupServer, args...)
-	err := cmd.Run()
-	fmt.Print("'kubedb.sh' scripts run finish\n")
-	if err != nil {
-		return errors.Wrap(err, "failed to run 'kubedb' operator")
-	}
+	//sh := shell.NewSession()
+	//args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace)}
+	//SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
+	//cmd := sh.Command(SetupServer, args...)
+	//err := cmd.Run()
+	//fmt.Print("'kubedb.sh' scripts run finish\n")
+	//if err != nil {
+	//	return errors.Wrap(err, "failed to run 'kubedb' operator")
+	//}
 
 	fmt.Print("getting provider for 'mysqldb'\n")
 	provider, ok := c.providers["mysqldb"]
@@ -146,15 +144,15 @@ func (c *Client) Deprovision(instanceID string) error {
 		return errors.Wrapf(err, "failed to delete mysql instance %q", instanceID)
 	}
 
-	fmt.Print("'kubedb.sh' scripts run finish\n")
-	sh := shell.NewSession()
-	args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace), "--uninstall", "--purge"}
-	SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
-	cmd := sh.Command(SetupServer, args...)
-	err := cmd.Run()
-	if err != nil {
-		return errors.Wrap(err, "failed to delete 'kubedb' operator")
-	}
+	//fmt.Print("'kubedb.sh' scripts run finish\n")
+	//sh := shell.NewSession()
+	//args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace), "--uninstall", "--purge"}
+	//SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
+	//cmd := sh.Command(SetupServer, args...)
+	//err := cmd.Run()
+	//if err != nil {
+	//	return errors.Wrap(err, "failed to delete 'kubedb' operator")
+	//}
 
 	return nil
 }
