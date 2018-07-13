@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("[service-catalog] mysql", func() {
+var _ = Describe("[service-catalog] mysql", func() {
 	var (
 		f *framework.Invocation
 
