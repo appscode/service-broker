@@ -1,11 +1,11 @@
 package e2e
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	appsv1 "k8s.io/api/apps/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 func Int32Ptr(i int32) *int32 {
@@ -14,7 +14,7 @@ func Int32Ptr(i int32) *int32 {
 
 func newObjectMeta(name, namespace, label string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		Name: name,
+		Name:      name,
 		Namespace: namespace,
 		Labels: map[string]string{
 			"app": label,
@@ -41,8 +41,8 @@ func NewServiceBrokerDeployment(name, namespace, image string) *appsv1.Deploymen
 					ServiceAccountName: name,
 					Containers: []corev1.Container{
 						{
-							Name: name,
-							Image: image,
+							Name:            name,
+							Image:           image,
 							ImagePullPolicy: corev1.PullAlways,
 							Command: []string{
 								"./db_broker",
@@ -96,13 +96,13 @@ func NewServiceBrokerClusterRoleBinding(name, namespace string) *rbacv1.ClusterR
 		ObjectMeta: newObjectMeta(name, namespace, name),
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.GroupName,
-			Kind: "ClusterRole",
-			Name: "cluster-admin",
+			Kind:     "ClusterRole",
+			Name:     "cluster-admin",
 		},
 		Subjects: []rbacv1.Subject{
 			{
-				Kind: rbacv1.ServiceAccountKind,
-				Name: name,
+				Kind:      rbacv1.ServiceAccountKind,
+				Name:      name,
 				Namespace: namespace,
 			},
 		},

@@ -16,12 +16,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-type MySQLProvider struct {
+type PostgreSQLProvider struct {
 	extClient cs.KubedbV1alpha1Interface
 	//mysqls map[string]*api.MySQL
 }
 
-func NewMySQLProvider(kubeConfig string) Provider {
+func NewPostgreSQLProvider(kubeConfig string) Provider {
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 	if err != nil {
 		panic(err)
@@ -32,14 +32,16 @@ func NewMySQLProvider(kubeConfig string) Provider {
 	}
 }
 
-func MySQL(name, namespace string) *api.MySQL {
-	return &api.MySQL{
+func NewPostgresObj(name, namespace string) *api.Postgres {
+	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("5.7"),
+		Spec: api.PostgresSpec{
+			Version:    jsonTypes.StrYo("9.6"),
+			DoNotPause: true,
+			Replicas:   types.Int32P(1),
 			Storage: corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
@@ -52,36 +54,36 @@ func MySQL(name, namespace string) *api.MySQL {
 	}
 }
 
-func (p MySQLProvider) Create(name, namespace string) error {
+func (p PostgreSQLProvider) Create(name, namespace string) error {
 	glog.Infof("Create(%q, %q) error {}", name, namespace)
-	myObj := MySQL(name, namespace)
+	pgObj := NewPostgresObj(name, namespace)
 	//p.mysqls[name] = myObj
 
-	_, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj)
+	_, err := p.extClient.Postgreses(pgObj.Namespace).Create(pgObj)
 	if err != nil {
 		return err
 	}
 	err = wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		mysqldb, err := p.extClient.MySQLs(myObj.Namespace).Get(myObj.Name, metav1.GetOptions{})
+		pgsql, err := p.extClient.Postgreses(pgObj.Namespace).Get(pgObj.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
-		return mysqldb.Status.Phase == api.DatabasePhaseRunning, nil
+		return pgsql.Status.Phase == api.DatabasePhaseRunning, nil
 	})
 
-	glog.Infof("Create(%q, %q) error {} complete", name, namespace)
+	glog.Infof("Create(%q, %q) error {} complete\n", name, namespace)
 	return err
 }
 
-func (p MySQLProvider) Delete(name, namespace string) error {
+func (p PostgreSQLProvider) Delete(name, namespace string) error {
 	glog.Infof("Delete(%q %q) error {}", name, namespace)
 	//meta := p.mysqls[name].ObjectMeta
-	if err := p.extClient.MySQLs(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
+	if err := p.extClient.Postgreses(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
 	err := wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		dormantDatabase, err := p.extClient.DormantDatabases(namespace).Get(namespace, metav1.GetOptions{})
+		dormantDatabase, err := p.extClient.DormantDatabases(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -112,7 +114,7 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 	//})
 }
 
-func (p MySQLProvider) Bind(
+func (p PostgreSQLProvider) Bind(
 	service corev1.Service,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
@@ -124,27 +126,21 @@ func (p MySQLProvider) Bind(
 
 	host := buildHostFromService(service)
 
-	database := ""
-	if dbVal, ok := params["mysqlDatabase"]; ok {
+	database := "postgress"
+	if dbVal, ok := params["pgsqlDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
 	var user, password string
-	userVal, ok := params["mysqlUser"]
+	userVal, ok := params["pgsqlUser"]
 	if ok {
 		user = userVal.(string)
-
-		passwordVal, ok := data["mysqlPassword"]
-		if !ok {
-			return nil, errors.Errorf("mysql-password not found in secret keys")
-		}
-		password = passwordVal.(string)
 	} else {
-		user = "root"
+		user = "postgres"
 
-		rootPassword, ok := data["password"]
+		rootPassword, ok := data["POSTGRES_PASSWORD"]
 		if !ok {
-			return nil, errors.Errorf("mysql-root-password not found in secret keys")
+			return nil, errors.Errorf("pgsql-password not found in secret keys")
 		}
 		password = rootPassword.(string)
 	}

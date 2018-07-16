@@ -3,9 +3,9 @@ package e2e
 import (
 	"time"
 
+	"github.com/kubedb/service-broker/test/e2e/framework"
 	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
-	"github.com/kubedb/service-broker/test/e2e/framework"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -22,7 +22,7 @@ const (
 func newTestInstance(name, namespace, serviceClassName, planName string) *v1beta1.ServiceInstance {
 	return &v1beta1.ServiceInstance{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1beta1.ServiceInstanceSpec{
@@ -62,14 +62,14 @@ func waitForInstanceToBeDeleted(c clientset.Interface, namespace, name string) e
 
 var _ = Describe("[service-catalog] ServiceInstance", func() {
 	var (
-		f *framework.Invocation
-		instanceName string
+		f                 *framework.Invocation
+		instanceName      string
 		instanceNamespace string
 	)
 
 	BeforeEach(func() {
 		f = root.Invoke()
-		instanceName = f.BaseName+"-instance"
+		instanceName = f.BaseName + "-instance"
 		instanceNamespace = f.Namespace.Name
 	})
 

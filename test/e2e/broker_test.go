@@ -1,9 +1,9 @@
 package e2e
 
 import (
-	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kubedb/service-broker/test/e2e/framework"
 	"github.com/kubedb/service-broker/test/util"
+	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo"
@@ -27,7 +27,7 @@ var _ = Describe("[service-catalog] ClusterServiceBroker", func() {
 	var (
 		f *framework.Invocation
 
-		brokerName string
+		brokerName      string
 		brokerNamespace string
 		//BrokerImageFlag = brokerImageFlag
 	)

@@ -3,9 +3,9 @@ package e2e
 import (
 	"bytes"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kubedb/service-broker/test/e2e/framework"
 	"github.com/kubedb/service-broker/test/util"
+	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -17,9 +17,9 @@ var _ = Describe("[service-catalog] mysql", func() {
 	var (
 		f *framework.Invocation
 
-		brokerName string
+		brokerName      string
 		brokerNamespace string
-		brokerPodName string
+		brokerPodName   string
 		//BrokerImageFlag = brokerImageFlag
 	)
 
@@ -32,7 +32,6 @@ var _ = Describe("[service-catalog] mysql", func() {
 		//By("Installing Kubedb Operator along with it's stuffs")
 		//err := framework.InstallKubedb(filepath.Join("..", "..", "hack", "dev", "kubedb.sh"))
 		//Expect(err).ShouldNot(HaveOccurred())
-
 
 		By("Creating a service account for service broker")
 		_, err := f.KubeClient.CoreV1().
@@ -97,17 +96,17 @@ var _ = Describe("[service-catalog] mysql", func() {
 
 	It("Runs through the mysql broker", func() {
 		var (
-			brokerName                     = brokerName
-			serviceclassName               = "mysqldb"
-			serviceclassID                 = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad246a"
-			serviceplanID                  = "86064792-7ea2-467b-af93-ac9694d96d5b"
-			serviceplanName                = "default"
+			brokerName       = brokerName
+			serviceclassName = "mysqldb"
+			serviceclassID   = "4f6e6cf6-ffdd-425f-a2c7-3c9258ad246a"
+			serviceplanID    = "86064792-7ea2-467b-af93-ac9694d96d5b"
+			serviceplanName  = "default"
 			//serviceclassNameWithSinglePlan = "user-provided-service-single-plan"
 			//serviceclassIDWithSinglePlan   = "5f6e6cf6-ffdd-425f-a2c7-3c9258ad2468"
 			//testns                         = "test-ns"
-			instanceName                   = "test-mysqldb"
-			bindingName                    = "test-mysql-binding"
-			bindingsecretName                    = "test-mysql-secret"
+			instanceName      = "test-mysqldb"
+			bindingName       = "test-mysql-binding"
+			bindingsecretName = "test-mysql-secret"
 			//instanceNameDef                = "test-mysqldb-def"
 			//instanceNameK8sNames           = "test-mysqldb-k8s-names"
 			//instanceNameK8sNamesDef        = "test-mysqldb-k8s-names-def"

@@ -17,7 +17,7 @@ type Framework struct {
 	// A Kubernetes and Service Catalog client
 	KubeClient           kubernetes.Interface
 	ServiceCatalogClient svcat.Interface
-	KubedbClient cs.KubedbV1alpha1Interface
+	KubedbClient         cs.KubedbV1alpha1Interface
 	// Namespace in which all test resources should reside
 	Namespace *corev1.Namespace
 }
@@ -33,9 +33,9 @@ func NewFramework(
 	f := &Framework{
 		BaseName: baseName,
 
-		KubeClient: kubeClient,
+		KubeClient:           kubeClient,
 		ServiceCatalogClient: serviceCatalogClient,
-		KubedbClient: kubedbClient,
+		KubedbClient:         kubedbClient,
 	}
 
 	return f

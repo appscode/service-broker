@@ -22,10 +22,10 @@ import (
 var options struct {
 	broker.Options
 
-	Port    int
-	TLSCert string
-	TLSKey  string
-	Insecure             bool
+	Port     int
+	TLSCert  string
+	TLSKey   string
+	Insecure bool
 }
 
 func init() {
@@ -73,9 +73,7 @@ func runWithContext(ctx context.Context) error {
 	addr := ":" + strconv.Itoa(options.Port)
 
 	glog.Infoln("broker client creating...")
-	fmt.Println("broker client creating...")
 	b, err := broker.NewBroker(options.Options)
-	fmt.Println("broker client created")
 	glog.Infoln("broker client created")
 
 	if err != nil {
@@ -95,7 +93,6 @@ func runWithContext(ctx context.Context) error {
 	s := server.New(api, reg)
 
 	glog.Infof("Starting broker!")
-	fmt.Println("Starting broker!")
 
 	if options.TLSCert == "" && options.TLSKey == "" {
 		err = s.Run(ctx, addr)

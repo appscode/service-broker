@@ -1,18 +1,16 @@
 package broker
 
 import (
-	"sync"
-
+	"fmt"
+	"github.com/appscode/go/crypto/rand"
 	"github.com/golang/glog"
-	db_broker "github.com/kubedb/service-broker/pkg/db-broker"
+	"github.com/kubedb/service-broker/pkg/db-broker"
+	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
-	"reflect"
 	"net/http"
-
-	"fmt"
-	"github.com/pkg/errors"
-	"strings"
+	"reflect"
+	"sync"
 )
 
 // NewBroker is a hook that is called with the Options the program is run
@@ -24,8 +22,8 @@ func NewBroker(o Options) (*Broker, error) {
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
 	return &Broker{
-		Client: brClient,
-		async:  o.Async,
+		Client:    brClient,
+		async:     o.Async,
 		instances: make(map[string]*exampleInstance, 10),
 	}, nil
 }
@@ -55,8 +53,8 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 	osbResponse := &osb.CatalogResponse{
 		Services: []osb.Service{
 			{
-				Name:          "mysqldb",
-				ID:            "4f6e6cf6-ffdd-425f-a2c7-3c9258ad246a",
+				Name:          "mysql",
+				ID:            "mysql", //"4f6e6cf6-ffdd-425f-a2c7-3c9258ad246a",
 				Description:   "The example service from the MySQL database!",
 				Bindable:      true,
 				PlanUpdatable: boolPtr(true),
@@ -67,8 +65,8 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 				Plans: []osb.Plan{
 					{
 						Name:        "default",
-						ID:          "86064792-7ea2-467b-af93-ac9694d96d5b",
-						Description: "The default plan for the 'mysqldb' service",
+						ID:          rand.WithUniqSuffix("mysql"), //"86064792-7ea2-467b-af93-ac9694d96d5b",
+						Description: "The default plan for the 'mysql' service",
 						Free:        boolPtr(true),
 
 						// if Free: true, then use Metadata as follows
@@ -118,11 +116,29 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 					},
 				},
 			},
+			{
+				Name:          "postgresql",
+				ID:            "postgresql", //"3948rfjp-9eta-mcvi-s98q-35bth98345ho",
+				Description:   "The example service from the PostgreSQL database!",
+				Bindable:      true,
+				PlanUpdatable: boolPtr(true),
+				Metadata: map[string]interface{}{
+					"displayName": "Example PostgreSQL DB service",
+					"imageUrl":    "https://wiki.postgresql.org/images/3/30/PostgreSQL_logo.3colors.120x120.png",
+				},
+				Plans: []osb.Plan{
+					{
+						Name:        "default",
+						ID:          rand.WithUniqSuffix("postgresql"), //"30495hkf-vnl0-93ru-yugh-d09345vhjocd",
+						Description: "The default plan for the 'postgresql' service",
+						Free:        boolPtr(true),
+					},
+				},
+			},
 		},
 	}
 
 	glog.Infof("catalog response: %#+v", osbResponse)
-	fmt.Printf("catalog response: %#+v\n", osbResponse)
 
 	response.CatalogResponse = *osbResponse
 
@@ -137,10 +153,10 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	defer b.Unlock()
 
 	response := broker.ProvisionResponse{}
-	parts := strings.Split(request.InstanceID, "-")
+	//parts := strings.Split(request.InstanceID, "-")
 	exampleInstance := &exampleInstance{
-		ID:        request.InstanceID,
-		Name: "mysql-"+parts[4],
+		ID: request.InstanceID,
+		//Name: "mysql-"+parts[4],
 		ServiceID: request.ServiceID,
 		PlanID:    request.PlanID,
 		Params:    request.Parameters,
@@ -157,22 +173,21 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 			description := "InstanceID in use"
 			glog.Infof("The InstanceID %s is in use", request.InstanceID)
 			return nil, osb.HTTPStatusCodeError{
-				StatusCode: http.StatusConflict,
+				StatusCode:  http.StatusConflict,
 				Description: &description,
 			}
 		}
 	}
 
-	glog.Infof("Provissioning '%s/%s'...", request.ServiceID, request.PlanID)
-	fmt.Printf("Provissioning '%s/%s'...\n", request.ServiceID, request.PlanID)
+	glog.Infof("Provissioning '%q/%q'...", request.ServiceID, request.PlanID)
 	namespace := request.Context["namespace"].(string)
-	err := b.Client.Provision(exampleInstance.Name, request.ServiceID, request.PlanID, namespace, request.Parameters)
+	//err := b.Client.Provision(exampleInstance.Name, request.ServiceID, request.PlanID, namespace, request.Parameters)
+	err := b.Client.Provision(request.ServiceID, request.PlanID, namespace, request.Parameters)
 	if err != nil {
-		glog.Errorln( err)
+		glog.Errorln(err)
 		return nil, err
 	}
-	glog.Infof("Provisioning of '%s/%s' is complete", request.ServiceID, request.PlanID)
-	fmt.Printf("Provisioning of '%s/%s' is complete\n", request.ServiceID, request.PlanID)
+	glog.Infof("Provisioning of '%q/%q' is complete", request.ServiceID, request.PlanID)
 
 	b.instances[request.InstanceID] = exampleInstance
 
@@ -190,9 +205,8 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Deprovissioning %q...", request.InstanceID)
-	fmt.Printf("Deprovissioning %q...\n", request.InstanceID)
-	inst, ok := b.instances[request.InstanceID]
+	glog.Infof("Deprovissioning %q/%q...", request.ServiceID, request.PlanID)
+	_, ok := b.instances[request.InstanceID]
 	if !ok {
 		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
 		glog.Infoln(msg)
@@ -201,7 +215,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	}
 	delete(b.instances, request.InstanceID)
 
-	err := b.Client.Deprovision(inst.Name)
+	err := b.Client.Deprovision(request.ServiceID, request.PlanID)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -211,8 +225,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	if request.AcceptsIncomplete {
 		response.Async = b.async
 	}
-	glog.Infof("Deprovision of %q is complete", request.InstanceID)
-	fmt.Printf("Deprovision of %q is complete\n", request.InstanceID)
+	glog.Infof("Deprovision of %q/%q is complete", request.ServiceID, request.PlanID)
 
 	return &response, nil
 }
@@ -230,17 +243,16 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Binding instance %q...", request.InstanceID)
-	fmt.Printf("Binding instance %q...\n", request.InstanceID)
-	inst, ok := b.instances[request.InstanceID]
+	glog.Infof("Binding instance for %q/%q...", request.ServiceID, request.PlanID)
+	instance, ok := b.instances[request.InstanceID]
 	if !ok {
 		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
-		glog.Infoln(msg)
+		glog.Errorln(msg)
 
 		return nil, errors.New(msg)
 	}
 
-	creds, err := b.Client.Bind(inst.Name, request.ServiceID, request.Parameters, inst.Params)
+	creds, err := b.Client.Bind(request.ServiceID, request.PlanID, request.Parameters, instance.Params)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -254,7 +266,7 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	if request.AcceptsIncomplete {
 		response.Async = b.async
 	}
-	fmt.Printf("Binding instance %q complete\n", request.InstanceID)
+	glog.Infof("Binding instance for %q/%q is complete", request.ServiceID, request.PlanID)
 
 	return &response, nil
 }
@@ -289,8 +301,8 @@ func (b *Broker) ValidateBrokerAPIVersion(version string) error {
 
 // exampleInstance is intended as an example of a type that holds information about a service instance
 type exampleInstance struct {
-	ID        string
-	Name string
+	ID string
+	//Name      string
 	ServiceID string
 	PlanID    string
 	Params    map[string]interface{}
