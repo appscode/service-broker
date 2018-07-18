@@ -2,9 +2,7 @@ package e2e
 
 import (
 	"flag"
-	//"github.com/kubedb/service-broker/test/e2e/framework"
-	//"k8s.io/client-go/tools/clientcmd"
-	//"github.com/golang/glog"
+
 	"github.com/appscode/go/flags"
 	logs "github.com/appscode/go/log/golog"
 	"k8s.io/client-go/util/homedir"
@@ -29,13 +27,7 @@ func init() {
 	//flag.StringVar(&brokerImageFlag, "broker-image", "shudipta/servicebroker:try-as-minibroker",
 	//	"The container image for the broker to test against")
 	//framework.RegisterParseFlags()
-	//
-	//if "" == framework.TestContext.KubeConfig {
-	//	glog.Fatalf("environment variable %v must be set", clientcmd.RecommendedConfigPathEnvVar)
-	//}
-	//if "" == framework.TestContext.ServiceCatalogConfig {
-	//	glog.Fatalf("environment variable %v must be set", framework.RecommendedConfigPathEnvVar)
-	//}
+
 	enableLogging()
 	flag.Parse()
 }

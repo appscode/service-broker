@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -18,41 +19,46 @@ const (
 
 type Client struct {
 	namespace  string
-	coreClient kubernetes.Interface
+	kubeClient kubernetes.Interface
 	providers  map[string]Provider
 }
 
-func NewClient(KubeConfig string) *Client {
-	ns := loadNamespace(KubeConfig)
-	fmt.Println("broker namespace =", ns)
+func NewClient(kubeConfigPath string) *Client {
+	config := getConfig(kubeConfigPath)
 	return &Client{
-		coreClient: loadInClusterClient(KubeConfig),
-		namespace:  ns,
+		kubeClient: loadInClusterClient(config),
+		namespace:  loadNamespace(kubeConfigPath),
 		providers: map[string]Provider{
-			"mysql": NewMySQLProvider(KubeConfig),
+			"mysql": NewMySQLProvider(config),
 			//"mariadb":    MariadbProvider{},
-			"postgresql": NewPostgreSQLProvider(KubeConfig),
+			"postgresql": NewPostgreSQLProvider(config),
 			//"mongodb":    MongodbProvider{},
 		},
 	}
 }
 
-func loadInClusterClient(kubeConfig string) kubernetes.Interface {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+func getConfig(kubeConfigPath string) *rest.Config {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		panic(err)
 	}
+	config.Burst = 100
+	config.QPS = 100
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-
-	return clientset
+	return config
 }
 
-func loadNamespace(kubeConfig string) string {
-	if kubeConfig != "" {
+func loadInClusterClient(config *rest.Config) kubernetes.Interface {
+	kubeClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+
+	return kubeClient
+}
+
+func loadNamespace(kubeConfigPath string) string {
+	if kubeConfigPath != "" {
 		return "default"
 	} else {
 		if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
@@ -67,19 +73,18 @@ func loadNamespace(kubeConfig string) string {
 }
 
 func (c *Client) Provision(serviceID, planID, namespace string, provisionParams map[string]interface{}) error {
-	//glog.Infoln("getting provider for 'mysqldb'")
-	glog.Infoln("getting provider %q", serviceID)
-	//provider, ok := c.providers["mysqldb"]
+	glog.Infof("getting provider %q", serviceID)
 	provider, ok := c.providers[serviceID]
 	if !ok {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	glog.Infof("creating %q obj", planID)
+	glog.Infof("creating %s obj %q in namespace %q", serviceID, planID, namespace)
 	if err := provider.Create(planID, c.namespace); err != nil {
 		return err
-		errors.Wrapf(err, "failed to create %q", planID)
+		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, planID, namespace)
 	}
+	glog.Infoln("creation complete")
 
 	return nil
 }
@@ -96,11 +101,11 @@ func (c *Client) Bind(
 		params[k] = v
 	}
 
-	service, err := c.coreClient.CoreV1().Services(c.namespace).Get(planID, metav1.GetOptions{})
+	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(planID, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	secret, err := c.coreClient.CoreV1().Secrets(c.namespace).Get(planID+"-auth", metav1.GetOptions{})
+	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(planID+"-auth", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +116,6 @@ func (c *Client) Bind(
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
-	//provider, ok := c.providers["mysqldb"]
 	provider, ok := c.providers[serviceID]
 	if ok {
 		creds, err := provider.Bind(*service, params, data)
@@ -127,18 +131,18 @@ func (c *Client) Bind(
 }
 
 func (c *Client) Deprovision(serviceID, planID string) error {
-	//fmt.Print("getting provider for 'mysqldb'\n")
 	glog.Infof("getting provider for %q", serviceID)
-	//provider, ok := c.providers["mysqldb"]
 	provider, ok := c.providers[serviceID]
 	if !ok {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	fmt.Printf("deleting %q obj", planID)
+	fmt.Printf("deleting %s obj %q from namespace %q...", serviceID, planID, c.namespace)
 	if err := provider.Delete(planID, c.namespace); err != nil {
-		return errors.Wrapf(err, "failed to delete %q", planID)
+		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, planID, c.namespace)
 	}
+
+	glog.Infoln("deletion complete")
 
 	return nil
 }

@@ -1,15 +1,15 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 	//"github.com/kubernetes-incubator/service-catalog/pkg/svcat/kube"
 	"k8s.io/client-go/kubernetes"
 	//"github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
-	"fmt"
 	logs "github.com/appscode/go/log/golog"
 	"github.com/appscode/kutil/tools/clientcmd"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	TIMEOUT         = 20 * time.Minute
-	brokerImageFlag = "shudipta/db-broker:try"
+	TIMEOUT = 20 * time.Minute
+	//brokerImageFlag = "shudipta/db-broker:try"
+	brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
 )
 
 var (
@@ -47,6 +48,8 @@ var _ = BeforeSuite(func() {
 	By("Creating a kubernetes client")
 	clientConfig, err := clientcmd.BuildConfigFromContext(options.KubeConfig, options.KubeContext)
 	Expect(err).NotTo(HaveOccurred())
+	//config.Burst = 1000
+	//config.QPS = 1000
 
 	kubeClient, err := kubernetes.NewForConfig(clientConfig)
 	Expect(err).NotTo(HaveOccurred())

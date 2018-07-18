@@ -3,32 +3,23 @@ package db_broker
 import (
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
-	"github.com/appscode/kutil"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
-	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 )
 
 type MySQLProvider struct {
 	extClient cs.KubedbV1alpha1Interface
-	//mysqls map[string]*api.MySQL
 }
 
-func NewMySQLProvider(kubeConfig string) Provider {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		panic(err)
-	}
+func NewMySQLProvider(config *rest.Config) Provider {
 	return &MySQLProvider{
 		extClient: cs.NewForConfigOrDie(config),
-		//mysqls: make(map[string]*api.MySQL),
 	}
 }
 
@@ -53,63 +44,40 @@ func MySQL(name, namespace string) *api.MySQL {
 }
 
 func (p MySQLProvider) Create(name, namespace string) error {
-	glog.Infof("Create(%q, %q) error {}", name, namespace)
+	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
 	myObj := MySQL(name, namespace)
-	//p.mysqls[name] = myObj
 
-	_, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj)
-	if err != nil {
+	if _, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj); err != nil {
 		return err
 	}
-	err = wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		mysqldb, err := p.extClient.MySQLs(myObj.Namespace).Get(myObj.Name, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-		return mysqldb.Status.Phase == api.DatabasePhaseRunning, nil
-	})
 
-	glog.Infof("Create(%q, %q) error {} complete", name, namespace)
-	return err
+	return waitForMySQLBeReady(p.extClient, name, namespace)
 }
 
 func (p MySQLProvider) Delete(name, namespace string) error {
-	glog.Infof("Delete(%q %q) error {}", name, namespace)
-	//meta := p.mysqls[name].ObjectMeta
+	glog.Infof("Deleting mysql obj %q from namespace %q...", name, namespace)
+
+	mysql, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if mysql.Spec.DoNotPause {
+		if err := patchMySQL(p.extClient, mysql); err != nil {
+			return err
+		}
+	}
+
 	if err := p.extClient.MySQLs(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
-	err := wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		dormantDatabase, err := p.extClient.DormantDatabases(namespace).Get(namespace, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-		dormantDatabase, _, err = util.PatchDormantDatabase(p.extClient, dormantDatabase, func(in *api.DormantDatabase) *api.DormantDatabase {
-			in.Spec.WipeOut = true
-			return in
-		})
-		return true, nil
-	})
-	if err != nil {
+	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
+	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
 		return err
 	}
 
-	glog.Infof("Delete(%q %q) error {} complete", name, namespace)
 	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
-	//if p.extClient.DormantDatabases(meta.Namespace).Delete(meta.Name, deleteInBackground()); err != nil {
-	//	return err
-	//}
-	//err = wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-	//	dormantDatabase, err := p.extClient.DormantDatabases(meta.Namespace).Get(meta.Name, metav1.GetOptions{})
-	//	if err != nil {
-	//		return false, nil
-	//	}
-	//	if err != nil {
-	//		return false, nil
-	//	}
-	//	return len(podList.Items) == 0, nil
-	//})
 }
 
 func (p MySQLProvider) Bind(

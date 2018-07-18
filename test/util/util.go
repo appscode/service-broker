@@ -1,18 +1,20 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/appscode/kutil"
 	"github.com/golang/glog"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	v1beta1servicecatalog "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset/typed/servicecatalog/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/jsonmergepatch"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // WaitForBrokerCondition waits for the status of the named broker to contain
@@ -49,7 +51,7 @@ func WaitForBrokerCondition(client v1beta1servicecatalog.ServicecatalogV1beta1In
 // WaitForBrokerToNotExist waits for the Broker with the given name to no
 // longer exist.
 func WaitForBrokerToNotExist(client v1beta1servicecatalog.ServicecatalogV1beta1Interface, name string) error {
-	return wait.PollImmediate(500*time.Millisecond, wait.ForeverTestTimeout,
+	return wait.PollImmediate(500*time.Millisecond, 5*time.Minute,
 		func() (bool, error) {
 			glog.V(5).Infof("Waiting for broker %v to not exist", name)
 			_, err := client.ClusterServiceBrokers().Get(name, metav1.GetOptions{})
@@ -69,7 +71,7 @@ func WaitForBrokerToNotExist(client v1beta1servicecatalog.ServicecatalogV1beta1I
 // WaitForClusterServiceClassToExist waits for the ClusterServiceClass with the given name
 // to exist.
 func WaitForClusterServiceClassToExist(client v1beta1servicecatalog.ServicecatalogV1beta1Interface, name string) error {
-	return wait.PollImmediate(500*time.Millisecond, wait.ForeverTestTimeout,
+	return wait.PollImmediate(500*time.Millisecond, 5*time.Minute,
 		func() (bool, error) {
 			glog.V(5).Infof("Waiting for serviceClass %v to exist", name)
 			_, err := client.ClusterServiceClasses().Get(name, metav1.GetOptions{})
@@ -85,7 +87,7 @@ func WaitForClusterServiceClassToExist(client v1beta1servicecatalog.Servicecatal
 // WaitForClusterServicePlanToExist waits for the ClusterServicePlan
 // with the given name to exist.
 func WaitForClusterServicePlanToExist(client v1beta1servicecatalog.ServicecatalogV1beta1Interface, name string) error {
-	return wait.PollImmediate(500*time.Millisecond, wait.ForeverTestTimeout,
+	return wait.PollImmediate(500*time.Millisecond, 5*time.Minute,
 		func() (bool, error) {
 			glog.V(5).Infof("Waiting for ClusterServicePlan %v to exist", name)
 			_, err := client.ClusterServicePlans().Get(name, metav1.GetOptions{})
@@ -168,10 +170,60 @@ func WaitForInstanceCondition(client v1beta1servicecatalog.ServicecatalogV1beta1
 	)
 }
 
+func WaitForInstanceToBePatched(
+	c v1beta1servicecatalog.ServicecatalogV1beta1Interface,
+	instance *v1beta1.ServiceInstance) error {
+
+	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
+		if _, _, err := patchServiceInstance(c, instance, func(in *v1beta1.ServiceInstance) *v1beta1.ServiceInstance {
+			in.ObjectMeta.Finalizers = []string{}
+			return in
+		}); err != nil {
+			return false, nil
+		}
+
+		return true, nil
+	})
+}
+
+func patchServiceInstance(
+	c v1beta1servicecatalog.ServicecatalogV1beta1Interface,
+	cur *v1beta1.ServiceInstance,
+	transform func(*v1beta1.ServiceInstance) *v1beta1.ServiceInstance) (*v1beta1.ServiceInstance, kutil.VerbType, error) {
+	return patchServiceInstanceObject(c, cur, transform(cur.DeepCopy()))
+}
+
+func patchServiceInstanceObject(
+	c v1beta1servicecatalog.ServicecatalogV1beta1Interface,
+	cur, mod *v1beta1.ServiceInstance) (*v1beta1.ServiceInstance, kutil.VerbType, error) {
+
+	curJson, err := json.Marshal(cur)
+	if err != nil {
+		return nil, kutil.VerbUnchanged, err
+	}
+
+	modJson, err := json.Marshal(mod)
+	if err != nil {
+		return nil, kutil.VerbUnchanged, err
+	}
+
+	patch, err := jsonmergepatch.CreateThreeWayJSONMergePatch(curJson, modJson, curJson)
+	if err != nil {
+		return nil, kutil.VerbUnchanged, err
+	}
+	if len(patch) == 0 || string(patch) == "{}" {
+		return cur, kutil.VerbUnchanged, nil
+	}
+	glog.V(3).Infof("Patching MySQL %s/%s with %s.", cur.Namespace, cur.Name, string(patch))
+	out, err := c.ServiceInstances(cur.Namespace).Patch(cur.Name, types.MergePatchType, patch)
+
+	return out, kutil.VerbPatched, err
+}
+
 // WaitForInstanceToNotExist waits for the Instance with the given name to no
 // longer exist.
 func WaitForInstanceToNotExist(client v1beta1servicecatalog.ServicecatalogV1beta1Interface, namespace, name string) error {
-	return wait.PollImmediate(500*time.Millisecond, wait.ForeverTestTimeout,
+	return wait.PollImmediate(500*time.Millisecond, 5*time.Minute,
 		func() (bool, error) {
 			glog.V(5).Infof("Waiting for instance %v/%v to not exist", namespace, name)
 
@@ -275,7 +327,7 @@ func WaitForBindingCondition(client v1beta1servicecatalog.ServicecatalogV1beta1I
 // WaitForBindingToNotExist waits for the Binding with the given name to no
 // longer exist.
 func WaitForBindingToNotExist(client v1beta1servicecatalog.ServicecatalogV1beta1Interface, namespace, name string) error {
-	return wait.PollImmediate(500*time.Millisecond, wait.ForeverTestTimeout,
+	return wait.PollImmediate(500*time.Millisecond, 5*time.Minute,
 		func() (bool, error) {
 			glog.V(5).Infof("Waiting for binding %v/%v to not exist", namespace, name)
 

@@ -6,7 +6,7 @@ REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
 export DOCKER_REGISTRY=shudipta
 export IMG=db-broker
-export TAG=try
+export TAG=try-for-pgsql
 export ONESSL=
 
 export NAME=my-broker
@@ -16,11 +16,10 @@ export APP=db-broker
 export IMAGE_PULL_POLICY=Always
 #export IMAGE_PULL_POLICY=IfNotPresent
 
-
 build() {
     pushd $REPO_ROOT
         mkdir -p hack/docker
-        go build -o hack/docker/db-broker cmd/mysqldb/main.go
+        go build -o hack/docker/db-broker cmd/servicebroker/main.go
 #        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
 
         pushd hack/docker
@@ -28,12 +27,12 @@ build() {
             cat > Dockerfile <<EOL
 FROM ubuntu
 
-COPY db-broker /bin/db-broker/db_broker
+COPY db-broker /bin/servicebroker/db_broker
 #RUN mkdir -p /bin/db-broker/hack/dev
 #COPY kubedb.sh /bin/db-broker/hack/dev/kubedb.sh
 
 #EXPOSE 8088
-WORKDIR /bin/db-broker/
+WORKDIR /bin/servicebroker/
 EOL
             local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
             echo $cmd; $cmd
@@ -125,11 +124,11 @@ run() {
 uninstall() {
     pushd $REPO_ROOT
         # delete db-broker
-        kubectl delete deployment -l app=$APP --namespace $NAMESPACE
         kubectl delete service -l app=$APP --namespace $NAMESPACE
+        kubectl delete deployment -l app=$APP --namespace $NAMESPACE
         # delete RBAC objects, if --rbac flag was used.
-        kubectl delete serviceaccount -l app=$APP --namespace $NAMESPACE
         kubectl delete clusterrolebindings -l app=$APP
+        kubectl delete serviceaccount -l app=$APP --namespace $NAMESPACE
 
         echo "waiting for db-broker pod to stop running"
         for (( ; ; )); do

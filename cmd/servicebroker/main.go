@@ -13,10 +13,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/kubedb/service-broker/pkg/broker"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
-	prom "github.com/prometheus/client_golang/prometheus"
-
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
 	"github.com/pmorie/osb-broker-lib/pkg/server"
+	prom "github.com/prometheus/client_golang/prometheus"
 )
 
 var options struct {

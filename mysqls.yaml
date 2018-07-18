@@ -4,20 +4,20 @@ items:
   kind: MySQL
   metadata:
     clusterName: ""
-    creationTimestamp: 2018-07-12T13:57:21Z
+    creationTimestamp: 2018-07-18T08:26:56Z
     deletionGracePeriodSeconds: 0
-    deletionTimestamp: 2018-07-12T14:11:55Z
+    deletionTimestamp: 2018-07-18T08:38:13Z
     finalizers:
     - kubedb.com
     generation: 2
-    name: mysql-0242ac110005
-    namespace: test-broker-wzblh
-    resourceVersion: "5548"
-    selfLink: /apis/kubedb.com/v1alpha1/namespaces/test-broker-wzblh/mysqls/mysql-0242ac110005
-    uid: 7f655e10-85db-11e8-b276-08002783df7e
+    name: mysql-ac9694
+    namespace: test-broker-qhsd9
+    resourceVersion: "23903"
+    selfLink: /apis/kubedb.com/v1alpha1/namespaces/test-broker-qhsd9/mysqls/mysql-ac9694
+    uid: 54e6b40a-8a64-11e8-81a4-080027f6cd6b
   spec:
     databaseSecret:
-      secretName: mysql-0242ac110005-auth
+      secretName: mysql-ac9694-auth
     replicas: 1
     resources: {}
     storage:
@@ -27,7 +27,7 @@ items:
       storageClassName: standard
     version: "5.7"
   status:
-    creationTime: 2018-07-12T13:57:22Z
+    creationTime: 2018-07-18T08:26:57Z
     phase: Running
 kind: List
 metadata:

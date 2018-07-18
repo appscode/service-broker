@@ -2,15 +2,15 @@ package broker
 
 import (
 	"fmt"
-	"github.com/appscode/go/crypto/rand"
+	"net/http"
+	"reflect"
+	"sync"
+
 	"github.com/golang/glog"
 	"github.com/kubedb/service-broker/pkg/db-broker"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
-	"net/http"
-	"reflect"
-	"sync"
 )
 
 // NewBroker is a hook that is called with the Options the program is run
@@ -64,8 +64,9 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 				},
 				Plans: []osb.Plan{
 					{
-						Name:        "default",
-						ID:          rand.WithUniqSuffix("mysql"), //"86064792-7ea2-467b-af93-ac9694d96d5b",
+						Name: "default",
+						//ID:          rand.WithUniqSuffix("mysql"), //"86064792-7ea2-467b-af93-ac9694d96d5b",
+						ID:          "mysql-ac9694",
 						Description: "The default plan for the 'mysql' service",
 						Free:        boolPtr(true),
 
@@ -128,8 +129,9 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 				},
 				Plans: []osb.Plan{
 					{
-						Name:        "default",
-						ID:          rand.WithUniqSuffix("postgresql"), //"30495hkf-vnl0-93ru-yugh-d09345vhjocd",
+						Name: "default",
+						//ID:          rand.WithUniqSuffix("postgresql"), //"30495hkf-vnl0-93ru-yugh-d09345vhjocd",
+						ID:          "postgresql-d09345", //"30495hkf-vnl0-93ru-yugh-d09345vhjocd",
 						Description: "The default plan for the 'postgresql' service",
 						Free:        boolPtr(true),
 					},
@@ -153,10 +155,8 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	defer b.Unlock()
 
 	response := broker.ProvisionResponse{}
-	//parts := strings.Split(request.InstanceID, "-")
 	exampleInstance := &exampleInstance{
-		ID: request.InstanceID,
-		//Name: "mysql-"+parts[4],
+		ID:        request.InstanceID,
 		ServiceID: request.ServiceID,
 		PlanID:    request.PlanID,
 		Params:    request.Parameters,
@@ -171,7 +171,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		} else {
 			// Instance ID in use, this is a conflict.
 			description := "InstanceID in use"
-			glog.Infof("The InstanceID %s is in use", request.InstanceID)
+			glog.Infof("The InstanceID %q is in use", request.InstanceID)
 			return nil, osb.HTTPStatusCodeError{
 				StatusCode:  http.StatusConflict,
 				Description: &description,
@@ -179,15 +179,14 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		}
 	}
 
-	glog.Infof("Provissioning '%q/%q'...", request.ServiceID, request.PlanID)
+	glog.Infof("Provissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	namespace := request.Context["namespace"].(string)
-	//err := b.Client.Provision(exampleInstance.Name, request.ServiceID, request.PlanID, namespace, request.Parameters)
 	err := b.Client.Provision(request.ServiceID, request.PlanID, namespace, request.Parameters)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
 	}
-	glog.Infof("Provisioning of '%q/%q' is complete", request.ServiceID, request.PlanID)
+	glog.Infoln("Provisioning complete")
 
 	b.instances[request.InstanceID] = exampleInstance
 
@@ -205,7 +204,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Deprovissioning %q/%q...", request.ServiceID, request.PlanID)
+	glog.Infof("Deprovissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	_, ok := b.instances[request.InstanceID]
 	if !ok {
 		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
@@ -213,19 +212,19 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 
 		return nil, errors.New(msg)
 	}
-	delete(b.instances, request.InstanceID)
 
 	err := b.Client.Deprovision(request.ServiceID, request.PlanID)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
 	}
+	delete(b.instances, request.InstanceID)
 
 	response := broker.DeprovisionResponse{}
 	if request.AcceptsIncomplete {
 		response.Async = b.async
 	}
-	glog.Infof("Deprovision of %q/%q is complete", request.ServiceID, request.PlanID)
+	glog.Infoln("Deprovisioning complete")
 
 	return &response, nil
 }
@@ -243,7 +242,7 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Binding instance for %q/%q...", request.ServiceID, request.PlanID)
+	glog.Infof("Binding instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	instance, ok := b.instances[request.InstanceID]
 	if !ok {
 		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
@@ -266,7 +265,7 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	if request.AcceptsIncomplete {
 		response.Async = b.async
 	}
-	glog.Infof("Binding instance for %q/%q is complete", request.ServiceID, request.PlanID)
+	glog.Infoln("Binding complete")
 
 	return &response, nil
 }
