@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite tests="2" failures="1" time="8.438937688">
-      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0.003494395">
-          <failure type="Failure">/home/tamal/go/src/github.com/kubedb/service-broker/test/e2e/instance_test.go:76&#xA;Expected error:&#xA;    &lt;*errors.StatusError | 0xc420144240&gt;: {&#xA;        ErrStatus: {&#xA;            TypeMeta: {Kind: &#34;&#34;, APIVersion: &#34;&#34;},&#xA;            ListMeta: {SelfLink: &#34;&#34;, ResourceVersion: &#34;&#34;, Continue: &#34;&#34;},&#xA;            Status: &#34;Failure&#34;,&#xA;            Message: &#34;the server could not find the requested resource (post serviceinstances.servicecatalog.k8s.io)&#34;,&#xA;            Reason: &#34;NotFound&#34;,&#xA;            Details: {&#xA;                Name: &#34;&#34;,&#xA;                Group: &#34;servicecatalog.k8s.io&#34;,&#xA;                Kind: &#34;serviceinstances&#34;,&#xA;                UID: &#34;&#34;,&#xA;                Causes: [&#xA;                    {&#xA;                        Type: &#34;UnexpectedServerResponse&#34;,&#xA;                        Message: &#34;404 page not found&#34;,&#xA;                        Field: &#34;&#34;,&#xA;                    },&#xA;                ],&#xA;                RetryAfterSeconds: 0,&#xA;            },&#xA;            Code: 404,&#xA;        },&#xA;    }&#xA;    the server could not find the requested resource (post serviceinstances.servicecatalog.k8s.io)&#xA;not to have occurred&#xA;/home/tamal/go/src/github.com/kubedb/service-broker/test/e2e/instance_test.go:80</failure>
-          <system-out>�[1mSTEP�[0m: Creating an Instance&#xA;</system-out>
-      </testcase>
+  <testsuite tests="5" failures="0" time="316.879815709">
+      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="2.653782471"></testcase>
+      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="29.749124531"></testcase>
+      <testcase name="[service-catalog] Test MySQL Runs through the mysql broker" classname="e2e Suite" time="81.967263497"></testcase>
+      <testcase name="[service-catalog] Test PostgreSQL Runs through the postgresql broker" classname="e2e Suite" time="91.607436298"></testcase>
+      <testcase name="[service-catalog] Test Elasticsearch Runs through the elasticsearch broker" classname="e2e Suite" time="109.789186993"></testcase>
   </testsuite>

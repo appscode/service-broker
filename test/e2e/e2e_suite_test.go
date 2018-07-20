@@ -1,26 +1,28 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 	//"github.com/kubernetes-incubator/service-catalog/pkg/svcat/kube"
 	"k8s.io/client-go/kubernetes"
 	//"github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
-	"github.com/kubedb/service-broker/test/e2e/framework"
-	"github.com/appscode/kutil/tools/clientcmd"
-	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
-	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
-	"fmt"
-	"github.com/onsi/ginkgo/reporters"
 	logs "github.com/appscode/go/log/golog"
+	"github.com/appscode/kutil/tools/clientcmd"
+	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
+	"github.com/kubedb/service-broker/test/e2e/framework"
+	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
+	"github.com/onsi/ginkgo/reporters"
 )
 
 const (
 	TIMEOUT = 20 * time.Minute
-	brokerImageFlag = "shudipta/db-broker:try"
+	//brokerImageFlag = "shudipta/db-broker:try"
+	//brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
+	brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
 )
 
 var (
@@ -45,8 +47,10 @@ func TestE2e(t *testing.T) {
 var _ = BeforeSuite(func() {
 	fmt.Println("================>>>>>>>>>>")
 	By("Creating a kubernetes client")
-	clientConfig, err :=  clientcmd.BuildConfigFromContext(options.KubeConfig, options.KubeContext)
+	clientConfig, err := clientcmd.BuildConfigFromContext(options.KubeConfig, options.KubeContext)
 	Expect(err).NotTo(HaveOccurred())
+	//config.Burst = 1000
+	//config.QPS = 1000
 
 	kubeClient, err := kubernetes.NewForConfig(clientConfig)
 	Expect(err).NotTo(HaveOccurred())

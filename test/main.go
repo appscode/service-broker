@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/appscode/kutil/tools/clientcmd"
-	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -21,7 +21,7 @@ func newTestBroker(name, url string) *v1beta1.ClusterServiceBroker {
 }
 
 func main() {
-	clientConfig, err :=  clientcmd.BuildConfigFromContext("/home/ac/.kube/config", "")
+	clientConfig, err := clientcmd.BuildConfigFromContext("/home/ac/.kube/config", "")
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +34,7 @@ func main() {
 	brokerNamespace := "abc-ns"
 	url := "http://" + brokerName + "." + brokerNamespace + ".svc.cluster.local"
 	_, err = serviceCatalogClient.ServicecatalogV1beta1().ClusterServiceBrokers().Create(newTestBroker(brokerName, url))
-	if err!= nil {
+	if err != nil {
 		panic(err)
 	}
 }

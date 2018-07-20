@@ -1,10 +1,9 @@
 package framework
 
 import (
+	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
-
-	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	//"github.com/kubernetes-incubator/service-catalog/pkg/svcat/kube"
 	"github.com/appscode/go/crypto/rand"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
@@ -17,7 +16,7 @@ type Framework struct {
 	// A Kubernetes and Service Catalog client
 	KubeClient           kubernetes.Interface
 	ServiceCatalogClient svcat.Interface
-	KubedbClient cs.KubedbV1alpha1Interface
+	KubedbClient         cs.KubedbV1alpha1Interface
 	// Namespace in which all test resources should reside
 	Namespace *corev1.Namespace
 }
@@ -33,9 +32,9 @@ func NewFramework(
 	f := &Framework{
 		BaseName: baseName,
 
-		KubeClient: kubeClient,
+		KubeClient:           kubeClient,
 		ServiceCatalogClient: serviceCatalogClient,
-		KubedbClient: kubedbClient,
+		KubedbClient:         kubedbClient,
 	}
 
 	return f

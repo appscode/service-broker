@@ -1,57 +1,64 @@
 package db_broker
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
+
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"fmt"
 )
 
 const (
-	InstanceLabel       = "dbbroker.instance"
+	InstanceLabel = "dbbroker.instance"
 )
 
 type Client struct {
-	namespace                 string
-	coreClient                kubernetes.Interface
-	providers                 map[string]Provider
+	namespace  string
+	kubeClient kubernetes.Interface
+	providers  map[string]Provider
 }
 
-func NewClient(KubeConfig string) *Client {
-	ns := loadNamespace(KubeConfig)
-	fmt.Println("broker namespace =", ns)
+func NewClient(kubeConfigPath string) *Client {
+	config := getConfig(kubeConfigPath)
 	return &Client{
-		coreClient:                loadInClusterClient(KubeConfig),
-		namespace:       ns,
+		kubeClient: loadInClusterClient(config),
+		namespace:  loadNamespace(kubeConfigPath),
 		providers: map[string]Provider{
-			"mysqldb":      NewMySQLProvider(KubeConfig),
-			//"mariadb":    MariadbProvider{},
-			//"postgresql": PostgresProvider{},
+			"mysql":         NewMySQLProvider(config),
+			"postgresql":    NewPostgreSQLProvider(config),
+			"elasticsearch": NewElasticsearchProvider(config),
 			//"mongodb":    MongodbProvider{},
 		},
 	}
 }
 
-func loadInClusterClient(kubeConfig string) kubernetes.Interface {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+func getConfig(kubeConfigPath string) *rest.Config {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		panic(err)
 	}
+	config.Burst = 100
+	config.QPS = 100
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-
-	return clientset
+	return config
 }
 
-func loadNamespace(kubeConfig string) string {
-	if kubeConfig != "" {
+func loadInClusterClient(config *rest.Config) kubernetes.Interface {
+	kubeClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+
+	return kubeClient
+}
+
+func loadNamespace(kubeConfigPath string) string {
+	if kubeConfigPath != "" {
 		return "default"
 	} else {
 		if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
@@ -65,33 +72,25 @@ func loadNamespace(kubeConfig string) string {
 	panic("could not detect current namespace")
 }
 
-func (c *Client) Provision(instanceID, serviceID, planID, namespace string, provisionParams map[string]interface{}) error {
-	//sh := shell.NewSession()
-	//args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace)}
-	//SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
-	//cmd := sh.Command(SetupServer, args...)
-	//err := cmd.Run()
-	//fmt.Print("'kubedb.sh' scripts run finish\n")
-	//if err != nil {
-	//	return errors.Wrap(err, "failed to run 'kubedb' operator")
-	//}
-
-	fmt.Print("getting provider for 'mysqldb'\n")
-	provider, ok := c.providers["mysqldb"]
+func (c *Client) Provision(serviceID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
+	glog.Infof("getting provider %q", serviceID)
+	provider, ok := c.providers[serviceID]
 	if !ok {
-		return errors.New("No 'mysqldb' provider found")
+		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	fmt.Printf("creating mysql obj %q\n", instanceID)
-	if err :=  provider.Create(instanceID, c.namespace); err != nil {
+	glog.Infof("creating %s obj %q in namespace %q", serviceID, dbObjName, namespace)
+	if err := provider.Create(dbObjName, c.namespace); err != nil {
 		return err
+		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
 	}
+	glog.Infoln("creation complete")
 
 	return nil
 }
 
 func (c *Client) Bind(
-	instanceID, serviceID string,
+	dbObjName, serviceID, planID string,
 	bindParams, provisionParams map[string]interface{}) (map[string]interface{}, error) {
 
 	params := make(map[string]interface{}, len(bindParams)+len(provisionParams))
@@ -102,11 +101,11 @@ func (c *Client) Bind(
 		params[k] = v
 	}
 
-	service, err := c.coreClient.CoreV1().Services(c.namespace).Get(instanceID, metav1.GetOptions{})
+	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(dbObjName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	secret, err := c.coreClient.CoreV1().Secrets(c.namespace).Get(instanceID+"-auth", metav1.GetOptions{})
+	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -117,12 +116,11 @@ func (c *Client) Bind(
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
-	//provider, ok := c.providers[serviceID]
-	provider, ok := c.providers["mysqldb"]
+	provider, ok := c.providers[serviceID]
 	if ok {
 		creds, err := provider.Bind(*service, params, data)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to bind instance %q", instanceID)
+			return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 		}
 		for k, v := range creds.ToMap() {
 			data[k] = v
@@ -132,27 +130,19 @@ func (c *Client) Bind(
 	return data, nil
 }
 
-func (c *Client) Deprovision(instanceID string) error {
-	fmt.Print("getting provider for 'mysqldb'\n")
-	provider, ok := c.providers["mysqldb"]
+func (c *Client) Deprovision(serviceID, dbObjName string) error {
+	glog.Infof("getting provider for %q", serviceID)
+	provider, ok := c.providers[serviceID]
 	if !ok {
-		return errors.New("No 'mysqldb' provider found")
+		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	fmt.Printf("deleting mysql obj %q\n", instanceID)
-	if err :=  provider.Delete(instanceID); err != nil {
-		return errors.Wrapf(err, "failed to delete mysql instance %q", instanceID)
+	fmt.Printf("deleting %s obj %q from namespace %q...", serviceID, dbObjName, c.namespace)
+	if err := provider.Delete(dbObjName, c.namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, dbObjName, c.namespace)
 	}
 
-	//fmt.Print("'kubedb.sh' scripts run finish\n")
-	//sh := shell.NewSession()
-	//args := []interface{}{fmt.Sprintf("--namespace=%s", c.namespace), "--uninstall", "--purge"}
-	//SetupServer := filepath.Join("hack", "dev", "kubedb.sh")
-	//cmd := sh.Command(SetupServer, args...)
-	//err := cmd.Run()
-	//if err != nil {
-	//	return errors.Wrap(err, "failed to delete 'kubedb' operator")
-	//}
+	glog.Infoln("deletion complete")
 
 	return nil
 }

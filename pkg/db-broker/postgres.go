@@ -13,24 +13,26 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type MySQLProvider struct {
+type PostgreSQLProvider struct {
 	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewMySQLProvider(config *rest.Config) Provider {
-	return &MySQLProvider{
+func NewPostgreSQLProvider(config *rest.Config) Provider {
+	return &PostgreSQLProvider{
 		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 
-func MySQL(name, namespace string) *api.MySQL {
-	return &api.MySQL{
+func NewPostgresObj(name, namespace string) *api.Postgres {
+	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("5.7"),
+		Spec: api.PostgresSpec{
+			Version: jsonTypes.StrYo("9.6"),
+			//DoNotPause: true,
+			Replicas: types.Int32P(1),
 			Storage: corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
@@ -43,33 +45,33 @@ func MySQL(name, namespace string) *api.MySQL {
 	}
 }
 
-func (p MySQLProvider) Create(name, namespace string) error {
-	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	myObj := MySQL(name, namespace)
+func (p PostgreSQLProvider) Create(name, namespace string) error {
+	glog.Infof("Creating postgres obj %q in namespace %q...", name, namespace)
+	pgObj := NewPostgresObj(name, namespace)
 
-	if _, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj); err != nil {
+	if _, err := p.extClient.Postgreses(pgObj.Namespace).Create(pgObj); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForMySQLBeReady(p.extClient, name, namespace)
+	// return waitForPostgreSQLBeReady(p.extClient, name, namespace)
 }
 
-func (p MySQLProvider) Delete(name, namespace string) error {
-	glog.Infof("Deleting mysql obj %q from namespace %q...", name, namespace)
+func (p PostgreSQLProvider) Delete(name, namespace string) error {
+	glog.Infof("Deleting postgres obj %q from namespace %q...", name, namespace)
 
-	mysql, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
+	pgsql, err := p.extClient.Postgreses(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if mysql.Spec.DoNotPause {
-		if err := patchMySQL(p.extClient, mysql); err != nil {
+	if pgsql.Spec.DoNotPause {
+		if err := patchPostgreSQL(p.extClient, pgsql); err != nil {
 			return err
 		}
 	}
 
-	if err := p.extClient.MySQLs(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
+	if err := p.extClient.Postgreses(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
@@ -81,7 +83,7 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
 }
 
-func (p MySQLProvider) Bind(
+func (p PostgreSQLProvider) Bind(
 	service corev1.Service,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
@@ -93,27 +95,21 @@ func (p MySQLProvider) Bind(
 
 	host := buildHostFromService(service)
 
-	database := ""
-	if dbVal, ok := params["mysqlDatabase"]; ok {
+	database := "postgress"
+	if dbVal, ok := params["pgsqlDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
 	var user, password string
-	userVal, ok := params["mysqlUser"]
+	userVal, ok := params["pgsqlUser"]
 	if ok {
 		user = userVal.(string)
-
-		passwordVal, ok := data["mysqlPassword"]
-		if !ok {
-			return nil, errors.Errorf("mysql-password not found in secret keys")
-		}
-		password = passwordVal.(string)
 	} else {
-		user = "root"
+		user = "postgres"
 
-		rootPassword, ok := data["password"]
+		rootPassword, ok := data["POSTGRES_PASSWORD"]
 		if !ok {
-			return nil, errors.Errorf("mysql-root-password not found in secret keys")
+			return nil, errors.Errorf("pgsql-password not found in secret keys")
 		}
 		password = rootPassword.(string)
 	}

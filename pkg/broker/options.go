@@ -9,7 +9,7 @@ import (
 // AddFlags.
 type Options struct {
 	CatalogPath string
-	KubeConfig string
+	KubeConfig  string
 	Async       bool
 }
 
