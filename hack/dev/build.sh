@@ -6,7 +6,7 @@ REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
 export DOCKER_REGISTRY=shudipta
 export IMG=db-broker
-export TAG=try-for-pgsql
+export TAG=try-for-elasticsearch
 export ONESSL=
 
 export NAME=my-broker
@@ -130,10 +130,11 @@ uninstall() {
         kubectl delete clusterrolebindings -l app=$APP
         kubectl delete serviceaccount -l app=$APP --namespace $NAMESPACE
 
+        echo
         echo "waiting for db-broker pod to stop running"
         for (( ; ; )); do
-           pods=($(kubectl get pods --all-namespaces -l app=$APP -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
-           total=${#pods[*]}
+            pods=($(kubectl get pods --all-namespaces -l app=$APP -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+            total=${#pods[*]}
             if [ $total -eq 0 ] ; then
                 break
             fi

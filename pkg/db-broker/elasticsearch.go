@@ -13,25 +13,27 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type MySQLProvider struct {
+type ElasticsearchProvider struct {
 	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewMySQLProvider(config *rest.Config) Provider {
-	return &MySQLProvider{
+func NewElasticsearchProvider(config *rest.Config) Provider {
+	return &ElasticsearchProvider{
 		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 
-func MySQL(name, namespace string) *api.MySQL {
-	return &api.MySQL{
+func NewElasticsearchObj(name, namespace string) *api.Elasticsearch {
+	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("5.7"),
-			Storage: corev1.PersistentVolumeClaimSpec{
+		Spec: api.ElasticsearchSpec{
+			Version:    jsonTypes.StrYo("5.6"),
+			DoNotPause: true,
+			Replicas:   types.Int32P(1),
+			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
@@ -43,33 +45,33 @@ func MySQL(name, namespace string) *api.MySQL {
 	}
 }
 
-func (p MySQLProvider) Create(name, namespace string) error {
-	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	myObj := MySQL(name, namespace)
+func (p ElasticsearchProvider) Create(name, namespace string) error {
+	glog.Infof("Creating elasticsearch obj %q in namespace %q...", name, namespace)
+	es := NewElasticsearchObj(name, namespace)
 
-	if _, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj); err != nil {
+	if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForMySQLBeReady(p.extClient, name, namespace)
+	//return waitForElasticsearchBeReady(p.extClient, name, namespace)
 }
 
-func (p MySQLProvider) Delete(name, namespace string) error {
-	glog.Infof("Deleting mysql obj %q from namespace %q...", name, namespace)
+func (p ElasticsearchProvider) Delete(name, namespace string) error {
+	glog.Infof("Deleting elasticsearch obj %q from namespace %q...", name, namespace)
 
-	mysql, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
+	es, err := p.extClient.Elasticsearches(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if mysql.Spec.DoNotPause {
-		if err := patchMySQL(p.extClient, mysql); err != nil {
+	if es.Spec.DoNotPause {
+		if err := patchElasticsearch(p.extClient, es); err != nil {
 			return err
 		}
 	}
 
-	if err := p.extClient.MySQLs(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
+	if err := p.extClient.Elasticsearches(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
@@ -81,7 +83,7 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
 }
 
-func (p MySQLProvider) Bind(
+func (p ElasticsearchProvider) Bind(
 	service corev1.Service,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
@@ -94,29 +96,18 @@ func (p MySQLProvider) Bind(
 	host := buildHostFromService(service)
 
 	database := ""
-	if dbVal, ok := params["mysqlDatabase"]; ok {
+	if dbVal, ok := params["esDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
 	var user, password string
-	userVal, ok := params["mysqlUser"]
-	if ok {
-		user = userVal.(string)
 
-		passwordVal, ok := data["mysqlPassword"]
-		if !ok {
-			return nil, errors.Errorf("mysql-password not found in secret keys")
-		}
-		password = passwordVal.(string)
-	} else {
-		user = "root"
-
-		rootPassword, ok := data["password"]
-		if !ok {
-			return nil, errors.Errorf("mysql-root-password not found in secret keys")
-		}
-		password = rootPassword.(string)
+	user = "admin"
+	rootPassword, ok := data["ADMIN_PASSWORD"]
+	if !ok {
+		return nil, errors.Errorf("ADMIN_PASSWORD not found in secret keys")
 	}
+	password = rootPassword.(string)
 
 	creds := Credentials{
 		Protocol: svcPort.Name,

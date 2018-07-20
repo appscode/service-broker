@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/appscode/go/crypto/rand"
 	"github.com/golang/glog"
 	"github.com/kubedb/service-broker/pkg/db-broker"
 	"github.com/pkg/errors"
@@ -137,6 +138,26 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 					},
 				},
 			},
+			{
+				Name:          "elasticsearch",
+				ID:            "elasticsearch", //"3948rfjp-9eta-mcvi-s98q-35bth98345ho",
+				Description:   "The example service from the ElasticSearch database!",
+				Bindable:      true,
+				PlanUpdatable: boolPtr(true),
+				Metadata: map[string]interface{}{
+					"displayName": "Example ElasticSearch DB service",
+					"imageUrl":    "https://d22e4d61ky6061.cloudfront.net/sites/default/files/Elasticsearch_1.png",
+				},
+				Plans: []osb.Plan{
+					{
+						Name: "default",
+						//ID:          rand.WithUniqSuffix("postgresql"), //"30495hkf-vnl0-93ru-yugh-d09345vhjocd",
+						ID:          "elasticsearch-lzsiuh", //"jkwe487h-fiw4-q987-hdsr-lzsiuhqw486b",
+						Description: "The default plan for the 'elasticsearch' service",
+						Free:        boolPtr(true),
+					},
+				},
+			},
 		},
 	}
 
@@ -160,10 +181,12 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		ServiceID: request.ServiceID,
 		PlanID:    request.PlanID,
 		Params:    request.Parameters,
+		DbObjName: rand.WithUniqSuffix(request.PlanID),
 	}
 
 	// Check to see if this is the same instance
-	if i := b.instances[request.InstanceID]; i != nil {
+	i := b.instances[request.InstanceID]
+	if i != nil {
 		if i.Match(exampleInstance) {
 			response.Exists = true
 			glog.Infof("Instance %s is already exists", request.InstanceID)
@@ -181,7 +204,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 
 	glog.Infof("Provissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	namespace := request.Context["namespace"].(string)
-	err := b.Client.Provision(request.ServiceID, request.PlanID, namespace, request.Parameters)
+	err := b.Client.Provision(request.ServiceID, exampleInstance.DbObjName, namespace, request.Parameters)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -205,7 +228,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	defer b.Unlock()
 
 	glog.Infof("Deprovissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	_, ok := b.instances[request.InstanceID]
+	instance, ok := b.instances[request.InstanceID]
 	if !ok {
 		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
 		glog.Infoln(msg)
@@ -213,7 +236,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 		return nil, errors.New(msg)
 	}
 
-	err := b.Client.Deprovision(request.ServiceID, request.PlanID)
+	err := b.Client.Deprovision(request.ServiceID, instance.DbObjName)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -251,7 +274,7 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 		return nil, errors.New(msg)
 	}
 
-	creds, err := b.Client.Bind(request.ServiceID, request.PlanID, request.Parameters, instance.Params)
+	creds, err := b.Client.Bind(instance.DbObjName, request.ServiceID, request.PlanID, request.Parameters, instance.Params)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -300,11 +323,11 @@ func (b *Broker) ValidateBrokerAPIVersion(version string) error {
 
 // exampleInstance is intended as an example of a type that holds information about a service instance
 type exampleInstance struct {
-	ID string
-	//Name      string
+	ID        string
 	ServiceID string
 	PlanID    string
 	Params    map[string]interface{}
+	DbObjName string
 }
 
 func (i *exampleInstance) Match(other *exampleInstance) bool {

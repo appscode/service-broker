@@ -53,7 +53,8 @@ func (p PostgreSQLProvider) Create(name, namespace string) error {
 		return err
 	}
 
-	return waitForPostgreSQLBeReady(p.extClient, name, namespace)
+	return nil
+	// return waitForPostgreSQLBeReady(p.extClient, name, namespace)
 }
 
 func (p PostgreSQLProvider) Delete(name, namespace string) error {

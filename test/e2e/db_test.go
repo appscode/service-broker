@@ -1,15 +1,13 @@
 package e2e
 
 import (
-	"bytes"
-
 	"github.com/kubedb/service-broker/test/e2e/framework"
 	"github.com/kubedb/service-broker/test/util"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 var _ = Describe("[service-catalog]", func() {
@@ -164,6 +162,8 @@ var _ = Describe("[service-catalog]", func() {
 			Expect(sc.Spec.ClusterServiceClassRef.Name).To(Equal(serviceclassID))
 			Expect(sc.Spec.ClusterServicePlanRef.Name).To(Equal(serviceplanID))
 
+			time.Sleep(time.Second * 30)
+
 			// Binding to the ServiceInstance
 			By("Creating a ServiceBinding")
 			binding := &v1beta1.ServiceBinding{
@@ -244,18 +244,18 @@ var _ = Describe("[service-catalog]", func() {
 	})
 
 	AfterEach(func() {
-		rc, err := f.KubeClient.CoreV1().Pods(brokerNamespace).GetLogs(brokerPodName, &v1.PodLogOptions{}).Stream()
-		defer rc.Close()
-		if err != nil {
-			framework.Logf("Error getting logs for pod %s: %v", brokerName, err)
-		} else {
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(rc)
-			framework.Logf("Pod %s has the following logs:\n%sEnd %s logs", brokerName, buf.String(), brokerName)
-		}
+		//rc, err := f.KubeClient.CoreV1().Pods(brokerNamespace).GetLogs(brokerPodName, &v1.PodLogOptions{}).Stream()
+		//defer rc.Close()
+		//if err != nil {
+		//	framework.Logf("Error getting logs for pod %s: %v", brokerName, err)
+		//} else {
+		//	buf := new(bytes.Buffer)
+		//	buf.ReadFrom(rc)
+		//	framework.Logf("Pod %s has the following logs:\n%sEnd %s logs", brokerName, buf.String(), brokerName)
+		//}
 
 		By("Deleting the service account")
-		err = f.KubeClient.CoreV1().ServiceAccounts(brokerNamespace).Delete(brokerName, nil)
+		err := f.KubeClient.CoreV1().ServiceAccounts(brokerNamespace).Delete(brokerName, nil)
 		Expect(err).NotTo(HaveOccurred())
 		By("Deleting the custerrolebinding")
 		err = f.KubeClient.RbacV1().ClusterRoleBindings().Delete(brokerName, nil)
@@ -297,6 +297,22 @@ var _ = Describe("[service-catalog]", func() {
 		})
 
 		It("Runs through the postgresql broker", func() {
+			test()
+		})
+	})
+
+	Context("Test Elasticsearch", func() {
+		JustBeforeEach(func() {
+			serviceclassName = "elasticsearch"
+			serviceclassID = "elasticsearch"
+			serviceplanName = "default"
+			serviceplanID = "elasticsearch-lzsiuh"
+			instanceName = "test-elasticsearchdb"
+			bindingName = "test-elasticsearch-binding"
+			bindingsecretName = "test-elasticsearch-secret"
+		})
+
+		It("Runs through the elasticsearch broker", func() {
 			test()
 		})
 	})

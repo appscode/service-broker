@@ -9,6 +9,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+func waitForElasticsearchBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace string) error {
+	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
+		es, err := extClient.Elasticsearches(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		return es.Status.Phase == api.DatabasePhaseRunning, nil
+	})
+}
+
 func waitForPostgreSQLBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace string) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		pgsql, err := extClient.Postgreses(namespace).Get(name, metav1.GetOptions{})
@@ -26,6 +36,19 @@ func waitForMySQLBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace s
 			return false, nil
 		}
 		return mysql.Status.Phase == api.DatabasePhaseRunning, nil
+	})
+}
+
+func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsearch) error {
+	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
+		if _, _, err := util.PatchElasticsearch(extClient, es, func(in *api.Elasticsearch) *api.Elasticsearch {
+			in.Spec.DoNotPause = false
+			return in
+		}); err != nil {
+			return false, nil
+		}
+
+		return true, nil
 	})
 }
 

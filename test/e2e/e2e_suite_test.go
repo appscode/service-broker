@@ -21,7 +21,8 @@ import (
 const (
 	TIMEOUT = 20 * time.Minute
 	//brokerImageFlag = "shudipta/db-broker:try"
-	brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
+	//brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
+	brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
 )
 
 var (

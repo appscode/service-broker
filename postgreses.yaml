@@ -4,20 +4,20 @@ items:
   kind: Postgres
   metadata:
     clusterName: ""
-    creationTimestamp: 2018-07-18T07:08:09Z
+    creationTimestamp: 2018-07-20T12:44:47Z
     deletionGracePeriodSeconds: 0
-    deletionTimestamp: 2018-07-18T08:38:56Z
+    deletionTimestamp: 2018-07-20T12:54:45Z
     finalizers:
     - kubedb.com
     generation: 2
-    name: postgresql-d09345
-    namespace: test-broker-bcb6z
-    resourceVersion: "23957"
-    selfLink: /apis/kubedb.com/v1alpha1/namespaces/test-broker-bcb6z/postgreses/postgresql-d09345
-    uid: 53cd11a9-8a59-11e8-81a4-080027f6cd6b
+    name: postgresql-d09345-qulajx
+    namespace: test-broker-jgrlm
+    resourceVersion: "19518"
+    selfLink: /apis/kubedb.com/v1alpha1/namespaces/test-broker-jgrlm/postgreses/postgresql-d09345-qulajx
+    uid: afb34dad-8c1a-11e8-9ac6-080027bb0ce3
   spec:
     databaseSecret:
-      secretName: postgresql-d09345-auth
+      secretName: postgresql-d09345-qulajx-auth
     replicas: 1
     resources: {}
     storage:
@@ -27,7 +27,7 @@ items:
       storageClassName: standard
     version: "9.6"
   status:
-    creationTime: 2018-07-18T07:08:10Z
+    creationTime: 2018-07-20T12:44:53Z
     phase: Running
 kind: List
 metadata:

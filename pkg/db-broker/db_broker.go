@@ -29,9 +29,9 @@ func NewClient(kubeConfigPath string) *Client {
 		kubeClient: loadInClusterClient(config),
 		namespace:  loadNamespace(kubeConfigPath),
 		providers: map[string]Provider{
-			"mysql": NewMySQLProvider(config),
-			//"mariadb":    MariadbProvider{},
-			"postgresql": NewPostgreSQLProvider(config),
+			"mysql":         NewMySQLProvider(config),
+			"postgresql":    NewPostgreSQLProvider(config),
+			"elasticsearch": NewElasticsearchProvider(config),
 			//"mongodb":    MongodbProvider{},
 		},
 	}
@@ -72,17 +72,17 @@ func loadNamespace(kubeConfigPath string) string {
 	panic("could not detect current namespace")
 }
 
-func (c *Client) Provision(serviceID, planID, namespace string, provisionParams map[string]interface{}) error {
+func (c *Client) Provision(serviceID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
 	glog.Infof("getting provider %q", serviceID)
 	provider, ok := c.providers[serviceID]
 	if !ok {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	glog.Infof("creating %s obj %q in namespace %q", serviceID, planID, namespace)
-	if err := provider.Create(planID, c.namespace); err != nil {
+	glog.Infof("creating %s obj %q in namespace %q", serviceID, dbObjName, namespace)
+	if err := provider.Create(dbObjName, c.namespace); err != nil {
 		return err
-		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, planID, namespace)
+		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
 	}
 	glog.Infoln("creation complete")
 
@@ -90,7 +90,7 @@ func (c *Client) Provision(serviceID, planID, namespace string, provisionParams 
 }
 
 func (c *Client) Bind(
-	serviceID, planID string,
+	dbObjName, serviceID, planID string,
 	bindParams, provisionParams map[string]interface{}) (map[string]interface{}, error) {
 
 	params := make(map[string]interface{}, len(bindParams)+len(provisionParams))
@@ -101,11 +101,11 @@ func (c *Client) Bind(
 		params[k] = v
 	}
 
-	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(planID, metav1.GetOptions{})
+	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(dbObjName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(planID+"-auth", metav1.GetOptions{})
+	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -130,16 +130,16 @@ func (c *Client) Bind(
 	return data, nil
 }
 
-func (c *Client) Deprovision(serviceID, planID string) error {
+func (c *Client) Deprovision(serviceID, dbObjName string) error {
 	glog.Infof("getting provider for %q", serviceID)
 	provider, ok := c.providers[serviceID]
 	if !ok {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	fmt.Printf("deleting %s obj %q from namespace %q...", serviceID, planID, c.namespace)
-	if err := provider.Delete(planID, c.namespace); err != nil {
-		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, planID, c.namespace)
+	fmt.Printf("deleting %s obj %q from namespace %q...", serviceID, dbObjName, c.namespace)
+	if err := provider.Delete(dbObjName, c.namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, dbObjName, c.namespace)
 	}
 
 	glog.Infoln("deletion complete")
