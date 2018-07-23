@@ -32,7 +32,7 @@ func NewClient(kubeConfigPath string) *Client {
 			"mysql":         NewMySQLProvider(config),
 			"postgresql":    NewPostgreSQLProvider(config),
 			"elasticsearch": NewElasticsearchProvider(config),
-			//"mongodb":    MongodbProvider{},
+			"mongodb":    NewMongoDbProvider(config),
 		},
 	}
 }

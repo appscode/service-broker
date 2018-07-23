@@ -20,14 +20,10 @@ import (
 
 const (
 	TIMEOUT = 20 * time.Minute
-	//brokerImageFlag = "shudipta/db-broker:try"
-	//brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
-	brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
 )
 
 var (
 	root *framework.Framework
-	//brokerImageFlag string
 )
 
 func TestE2e(t *testing.T) {

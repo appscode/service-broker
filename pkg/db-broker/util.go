@@ -9,6 +9,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+func waitForMongoDbBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace string) error {
+	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
+		mg, err := extClient.MongoDBs(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		return mg.Status.Phase == api.DatabasePhaseRunning, nil
+	})
+}
+
 func waitForElasticsearchBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace string) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		es, err := extClient.Elasticsearches(namespace).Get(name, metav1.GetOptions{})
@@ -36,6 +46,19 @@ func waitForMySQLBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace s
 			return false, nil
 		}
 		return mysql.Status.Phase == api.DatabasePhaseRunning, nil
+	})
+}
+
+func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB) error {
+	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
+		if _, _, err := util.PatchMongoDB(extClient, mg, func(in *api.MongoDB) *api.MongoDB {
+			in.Spec.DoNotPause = false
+			return in
+		}); err != nil {
+			return false, nil
+		}
+
+		return true, nil
 	})
 }
 

@@ -212,9 +212,9 @@ var _ = Describe("[service-catalog]", func() {
 			Expect(err).To(HaveOccurred())
 
 			// Deprovisioning the ServiceInstance
-			By("Patching the ServiceInstance")
-			err = util.WaitForInstanceToBePatched(f.ServiceCatalogClient.ServicecatalogV1beta1(), instance)
-			Expect(err).NotTo(HaveOccurred(), "failed to patch the instance")
+			//By("Patching the ServiceInstance")
+			//err = util.WaitForInstanceToBePatched(f.ServiceCatalogClient.ServicecatalogV1beta1(), instance)
+			//Expect(err).NotTo(HaveOccurred(), "failed to patch the instance")
 
 			By("Deleting the ServiceInstance")
 			err = f.ServiceCatalogClient.ServicecatalogV1beta1().ServiceInstances(brokerNamespace).Delete(instanceName, nil)
@@ -273,7 +273,7 @@ var _ = Describe("[service-catalog]", func() {
 			serviceclassName = "mysql"
 			serviceclassID = "mysql"
 			serviceplanName = "default"
-			serviceplanID = "mysql-ac9694"
+			serviceplanID = "mysql-5-7"
 			instanceName = "test-mysqldb"
 			bindingName = "test-mysql-binding"
 			bindingsecretName = "test-mysql-secret"
@@ -290,7 +290,7 @@ var _ = Describe("[service-catalog]", func() {
 			serviceclassName = "postgresql"
 			serviceclassID = "postgresql"
 			serviceplanName = "default"
-			serviceplanID = "postgresql-d09345"
+			serviceplanID = "postgresql-9-6"
 			instanceName = "test-postgresqldb"
 			bindingName = "test-postgresql-binding"
 			bindingsecretName = "test-postgresql-secret"
@@ -306,13 +306,29 @@ var _ = Describe("[service-catalog]", func() {
 			serviceclassName = "elasticsearch"
 			serviceclassID = "elasticsearch"
 			serviceplanName = "default"
-			serviceplanID = "elasticsearch-lzsiuh"
+			serviceplanID = "elasticsearch-5-6"
 			instanceName = "test-elasticsearchdb"
 			bindingName = "test-elasticsearch-binding"
 			bindingsecretName = "test-elasticsearch-secret"
 		})
 
 		It("Runs through the elasticsearch broker", func() {
+			test()
+		})
+	})
+
+	Context("Test MongoDb", func() {
+		JustBeforeEach(func() {
+			serviceclassName = "mongodb"
+			serviceclassID = "mongodb"
+			serviceplanName = "default"
+			serviceplanID = "mongodb-3-4"
+			instanceName = "test-mongodb"
+			bindingName = "test-mongodb-binding"
+			bindingsecretName = "test-mongodb-secret"
+		})
+
+		It("Runs through the mongodb broker", func() {
 			test()
 		})
 	})
