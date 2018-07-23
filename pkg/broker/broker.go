@@ -177,6 +177,25 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 					},
 				},
 			},
+			{
+				Name:          "redis",
+				ID:            "redis",
+				Description:   "The example service from the Redis database!",
+				Bindable:      true,
+				PlanUpdatable: boolPtr(true),
+				Metadata: map[string]interface{}{
+					"displayName": "Example Redis DB service",
+					"imageUrl":    "https://redis.io/images/redis-white.png",
+				},
+				Plans: []osb.Plan{
+					{
+						Name: "default",
+						ID:          "redis-4-0",
+						Description: "The default plan for the 'redis' service",
+						Free:        boolPtr(true),
+					},
+				},
+			},
 		},
 	}
 

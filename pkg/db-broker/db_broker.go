@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -33,6 +34,7 @@ func NewClient(kubeConfigPath string) *Client {
 			"postgresql":    NewPostgreSQLProvider(config),
 			"elasticsearch": NewElasticsearchProvider(config),
 			"mongodb":    NewMongoDbProvider(config),
+			"redis":    NewRedisProvider(config),
 		},
 	}
 }
@@ -105,15 +107,20 @@ func (c *Client) Bind(
 	if err != nil {
 		return nil, err
 	}
-	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
 
 	data := make(map[string]interface{})
-	for key, value := range secret.Data {
-		data[key] = string(value)
+	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
+	if err == nil {
+		for key, value := range secret.Data {
+			data[key] = string(value)
+		}
+	} else {
+		if !apierrs.IsNotFound(err) {
+			return nil, err
+		}
 	}
+
+
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
 	provider, ok := c.providers[serviceID]

@@ -317,7 +317,7 @@ var _ = Describe("[service-catalog]", func() {
 		})
 	})
 
-	Context("Test MongoDb", func() {
+	FContext("Test MongoDb", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mongodb"
 			serviceclassID = "mongodb"
@@ -329,6 +329,22 @@ var _ = Describe("[service-catalog]", func() {
 		})
 
 		It("Runs through the mongodb broker", func() {
+			test()
+		})
+	})
+
+	Context("Test Redis", func() {
+		JustBeforeEach(func() {
+			serviceclassName = "redis"
+			serviceclassID = "redis"
+			serviceplanName = "default"
+			serviceplanID = "redis-4-0"
+			instanceName = "test-redisdb"
+			bindingName = "test-redis-binding"
+			bindingsecretName = "test-redis-secret"
+		})
+
+		It("Runs through the redis broker", func() {
 			test()
 		})
 	})
