@@ -170,7 +170,7 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 				},
 				Plans: []osb.Plan{
 					{
-						Name: "default",
+						Name:        "default",
 						ID:          "mongodb-3-4",
 						Description: "The default plan for the 'mongodb' service",
 						Free:        boolPtr(true),
@@ -189,9 +189,28 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 				},
 				Plans: []osb.Plan{
 					{
-						Name: "default",
+						Name:        "default",
 						ID:          "redis-4-0",
 						Description: "The default plan for the 'redis' service",
+						Free:        boolPtr(true),
+					},
+				},
+			},
+			{
+				Name:          "memcached",
+				ID:            "memcached",
+				Description:   "The example service from the Memcache database!",
+				Bindable:      true,
+				PlanUpdatable: boolPtr(true),
+				Metadata: map[string]interface{}{
+					"displayName": "Example Memcache DB service",
+					"imageUrl":    "https://www.veebimajutus.ee/media/uploads/5580065ce3dc0036053bdf2c.png",
+				},
+				Plans: []osb.Plan{
+					{
+						Name:        "default",
+						ID:          "memcached-1-5-4",
+						Description: "The default plan for the 'memcached' service",
 						Free:        boolPtr(true),
 					},
 				},

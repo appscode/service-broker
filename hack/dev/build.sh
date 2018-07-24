@@ -6,7 +6,7 @@ REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
 export DOCKER_REGISTRY=shudipta
 export IMG=db-broker
-export TAG=try-for-redis
+export TAG=try-for-memcached
 export ONESSL=
 
 export NAME=my-broker

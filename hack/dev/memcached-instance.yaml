@@ -1,0 +1,10 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: my-broker-memcached-instance
+  namespace: db-broker
+  labels:
+    app: db-broker
+spec:
+  clusterServiceClassExternalName: memcached
+  clusterServicePlanExternalName: default

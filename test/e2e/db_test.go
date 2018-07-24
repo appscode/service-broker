@@ -1,13 +1,13 @@
 package e2e
 
 import (
+	kubedb_util "github.com/kubedb/service-broker/pkg/db-broker"
 	"github.com/kubedb/service-broker/test/e2e/framework"
 	"github.com/kubedb/service-broker/test/util"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 var _ = Describe("[service-catalog]", func() {
@@ -25,9 +25,9 @@ var _ = Describe("[service-catalog]", func() {
 		instanceName      string
 		bindingName       string
 		bindingsecretName string
+		waitForCRDBeReady func() error
 
 		test func()
-		//BrokerImageFlag
 	)
 
 	BeforeEach(func() {
@@ -35,10 +35,6 @@ var _ = Describe("[service-catalog]", func() {
 
 		brokerName = f.BaseName
 		brokerNamespace = f.Namespace.Name
-
-		//By("Installing Kubedb Operator along with it's stuffs")
-		//err := framework.InstallKubedb(filepath.Join("..", "..", "hack", "dev", "kubedb.sh"))
-		//Expect(err).ShouldNot(HaveOccurred())
 
 		By("Creating a service account for service broker")
 		_, err := f.KubeClient.CoreV1().
@@ -153,6 +149,9 @@ var _ = Describe("[service-catalog]", func() {
 			)
 			Expect(err).NotTo(HaveOccurred(), "failed to wait instance to be ready")
 
+			By("Waiting for database crd obj to be ready")
+			Expect(waitForCRDBeReady()).NotTo(HaveOccurred())
+
 			// Make sure references have been resolved
 			By("References should have been resolved before ServiceInstance is ready ")
 			sc, err := f.ServiceCatalogClient.ServicecatalogV1beta1().ServiceInstances(brokerNamespace).Get(instanceName, metav1.GetOptions{})
@@ -161,8 +160,6 @@ var _ = Describe("[service-catalog]", func() {
 			Expect(sc.Spec.ClusterServicePlanRef).NotTo(BeNil())
 			Expect(sc.Spec.ClusterServiceClassRef.Name).To(Equal(serviceclassID))
 			Expect(sc.Spec.ClusterServicePlanRef.Name).To(Equal(serviceplanID))
-
-			time.Sleep(time.Second * 30)
 
 			// Binding to the ServiceInstance
 			By("Creating a ServiceBinding")
@@ -195,7 +192,6 @@ var _ = Describe("[service-catalog]", func() {
 
 			By("Secret should have been created after binding")
 			err = framework.WaitForCreatingSecret(f.KubeClient, bindingsecretName, brokerNamespace)
-			//_, err = f.KubeClient.CoreV1().Secrets(brokerNamespace).Get(bindingsecretName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to create secret after binding")
 
 			// Unbinding from the ServiceInstance
@@ -277,7 +273,11 @@ var _ = Describe("[service-catalog]", func() {
 			instanceName = "test-mysqldb"
 			bindingName = "test-mysql-binding"
 			bindingsecretName = "test-mysql-secret"
-
+			waitForCRDBeReady = func() error {
+				my, err := f.KubedbClient.MySQLs(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForMySQLBeReady(f.KubedbClient, my.Items[0].Name, brokerNamespace)
+			}
 		})
 
 		It("Runs through the mysql broker", func() {
@@ -294,6 +294,12 @@ var _ = Describe("[service-catalog]", func() {
 			instanceName = "test-postgresqldb"
 			bindingName = "test-postgresql-binding"
 			bindingsecretName = "test-postgresql-secret"
+			waitForCRDBeReady = func() error {
+				pg, err := f.KubedbClient.Postgreses(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForPostgreSQLBeReady(f.KubedbClient, pg.Items[0].Name, brokerNamespace)
+			}
+
 		})
 
 		It("Runs through the postgresql broker", func() {
@@ -310,6 +316,12 @@ var _ = Describe("[service-catalog]", func() {
 			instanceName = "test-elasticsearchdb"
 			bindingName = "test-elasticsearch-binding"
 			bindingsecretName = "test-elasticsearch-secret"
+			waitForCRDBeReady = func() error {
+				es, err := f.KubedbClient.Elasticsearches(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForElasticsearchBeReady(f.KubedbClient, es.Items[0].Name, brokerNamespace)
+			}
+
 		})
 
 		It("Runs through the elasticsearch broker", func() {
@@ -317,7 +329,7 @@ var _ = Describe("[service-catalog]", func() {
 		})
 	})
 
-	FContext("Test MongoDb", func() {
+	Context("Test MongoDb", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mongodb"
 			serviceclassID = "mongodb"
@@ -326,6 +338,11 @@ var _ = Describe("[service-catalog]", func() {
 			instanceName = "test-mongodb"
 			bindingName = "test-mongodb-binding"
 			bindingsecretName = "test-mongodb-secret"
+			waitForCRDBeReady = func() error {
+				mg, err := f.KubedbClient.MongoDBs(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForMongoDbBeReady(f.KubedbClient, mg.Items[0].Name, brokerNamespace)
+			}
 		})
 
 		It("Runs through the mongodb broker", func() {
@@ -342,9 +359,35 @@ var _ = Describe("[service-catalog]", func() {
 			instanceName = "test-redisdb"
 			bindingName = "test-redis-binding"
 			bindingsecretName = "test-redis-secret"
+			waitForCRDBeReady = func() error {
+				rd, err := f.KubedbClient.Redises(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForRedisBeReady(f.KubedbClient, rd.Items[0].Name, brokerNamespace)
+			}
 		})
 
 		It("Runs through the redis broker", func() {
+			test()
+		})
+	})
+
+	Context("Test Memcached", func() {
+		JustBeforeEach(func() {
+			serviceclassName = "memcached"
+			serviceclassID = "memcached"
+			serviceplanName = "default"
+			serviceplanID = "memcached-1-5-4"
+			instanceName = "test-memcachedb"
+			bindingName = "test-memcached-binding"
+			bindingsecretName = "test-memcached-secret"
+			waitForCRDBeReady = func() error {
+				mc, err := f.KubedbClient.Memcacheds(brokerNamespace).List(metav1.ListOptions{})
+				Expect(err).NotTo(HaveOccurred())
+				return kubedb_util.WaitForMemcachedBeReady(f.KubedbClient, mc.Items[0].Name, brokerNamespace)
+			}
+		})
+
+		It("Runs through the memcached broker", func() {
 			test()
 		})
 	})

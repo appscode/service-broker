@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite tests="6" failures="0" time="434.050763511">
-      <testcase name="[service-catalog] Test MySQL Runs through the mysql broker" classname="e2e Suite" time="85.332454984"></testcase>
-      <testcase name="[service-catalog] Test PostgreSQL Runs through the postgresql broker" classname="e2e Suite" time="94.850575811"></testcase>
-      <testcase name="[service-catalog] Test Elasticsearch Runs through the elasticsearch broker" classname="e2e Suite" time="127.804929453"></testcase>
-      <testcase name="[service-catalog] Test MongoDb Runs through the mongodb broker" classname="e2e Suite" time="86.907211335"></testcase>
-      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="2.921401164"></testcase>
-      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="33.578856565"></testcase>
+  <testsuite tests="1" failures="0" time="72.662077753">
+      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test MySQL Runs through the mysql broker" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test PostgreSQL Runs through the postgresql broker" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test Elasticsearch Runs through the elasticsearch broker" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test MongoDb Runs through the mongodb broker" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test Redis Runs through the redis broker" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test Memcached Runs through the memcached broker" classname="e2e Suite" time="71.94417455"></testcase>
+      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
   </testsuite>
