@@ -1,0 +1,9 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceBroker
+metadata:
+  name: ${NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: ${APP}
+spec:
+  url: http://${NAME}.${NAMESPACE}.svc.cluster.local

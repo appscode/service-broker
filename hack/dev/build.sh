@@ -6,7 +6,7 @@ REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
 export DOCKER_REGISTRY=shudipta
 export IMG=db-broker
-export TAG=try-for-redis
+export TAG=try-for-memcached
 export ONESSL=
 
 export NAME=my-broker
@@ -103,7 +103,7 @@ deploy_db_broker() {
     cat hack/dev/deployment.yaml | $ONESSL envsubst | kubectl apply -f -
     cat hack/dev/service.yaml | $ONESSL envsubst | kubectl apply -f -
     cat hack/dev/rbac.yaml | $ONESSL envsubst | kubectl create -f -
-    cat hack/dev/broker.yaml | $ONESSL envsubst | kubectl apply -f -
+    cat hack/dev/cluster_service_broker.yaml | $ONESSL envsubst | kubectl apply -f -
 
     echo
     echo "waiting until db-broker deployment is ready"

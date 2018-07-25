@@ -7,11 +7,11 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -33,8 +33,9 @@ func NewClient(kubeConfigPath string) *Client {
 			"mysql":         NewMySQLProvider(config),
 			"postgresql":    NewPostgreSQLProvider(config),
 			"elasticsearch": NewElasticsearchProvider(config),
-			"mongodb":    NewMongoDbProvider(config),
-			"redis":    NewRedisProvider(config),
+			"mongodb":       NewMongoDbProvider(config),
+			"redis":         NewRedisProvider(config),
+			"memcached":     NewMemcachedProvider(config),
 		},
 	}
 }
@@ -83,8 +84,7 @@ func (c *Client) Provision(serviceID, dbObjName, namespace string, provisionPara
 
 	glog.Infof("creating %s obj %q in namespace %q", serviceID, dbObjName, namespace)
 	if err := provider.Create(dbObjName, c.namespace); err != nil {
-		return err
-		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
+		return errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
 	}
 	glog.Infoln("creation complete")
 
@@ -119,8 +119,6 @@ func (c *Client) Bind(
 			return nil, err
 		}
 	}
-
-
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
 	provider, ok := c.providers[serviceID]

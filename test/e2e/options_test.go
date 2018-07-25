@@ -22,7 +22,8 @@ var (
 	//brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
 	//brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
 	//brokerImageFlag = "shudipta/db-broker:try-for-mongodb"
-	brokerImageFlag = "shudipta/db-broker:try-for-redis"
+	//brokerImageFlag = "shudipta/db-broker:try-for-redis"
+	brokerImageFlag = "shudipta/db-broker:try-for-memcached"
 )
 
 func init() {
