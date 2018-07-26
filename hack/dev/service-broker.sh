@@ -5,8 +5,8 @@ GOPATH=$(go env GOPATH)
 REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
 export DOCKER_REGISTRY=shudipta
-export IMG=db-broker
-export TAG=try-for-memcached
+export IMG=service-broker
+export TAG=latest
 export ONESSL=
 
 export NAME=service-broker
@@ -14,6 +14,7 @@ export NAMESPACE=service-broker
 export SERVICE_ACCOUNT="$NAME"
 export APP=service-broker
 export IMAGE_PULL_POLICY=IfNotPresent
+export IMAGE_PULL_SECRET=
 
 export KUBEDB_ENV=${KUBEDB_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/"
@@ -32,15 +33,16 @@ show_help() {
     echo " "
     echo "commands:"
     echo "---------"
-    echo "build            builds and push the docker image for service-broker"
-    echo "run              installs service-broker"
-    echo "uninstall        uninstalls service-broker"
+    echo "build         builds and push the docker image for service-broker"
+    echo "run           installs service-broker"
+    echo "uninstall     uninstalls service-broker"
     echo " "
     echo "options:"
     echo "--------"
-    echo "-h, --help                         show brief help"
-    echo "-n, --namespace=NAMESPACE          specify namespace (default: $NAMESPACE)"
-    echo "    --docker-registry              docker registry used to pull stash images (default: $DOCKER_REGISTRY)"
+    echo "-h, --help                    show brief help"
+    echo "-n, --namespace=NAMESPACE     specify namespace (default: $NAMESPACE)"
+    echo "    --docker-registry         docker registry used to pull stash images (default: $DOCKER_REGISTRY)"
+    echo "    --image-pull-secret       name of secret used to pull service broker image"
 }
 
 while test $# -gt 0; do
@@ -71,6 +73,11 @@ while test $# -gt 0; do
             export DOCKER_REGISTRY=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
+        --image-pull-secret*)
+            secret=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export IMAGE_PULL_SECRET="name: '$secret'"
+            shift
+            ;;
         *)
             show_help
             exit 1
@@ -87,6 +94,7 @@ echo "NAMESPACE=$NAMESPACE"
 echo "SERVICE_ACCOUNT=$SERVICE_ACCOUNT"
 echo "APP=$APP"
 echo "IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY"
+echo "IMAGE_PULL_SECRET=$IMAGE_PULL_SECRET"
 echo ""
 echo "KUBEDB_ENV=$KUBEDB_ENV"
 echo "SCRIPT_LOCATION=$SCRIPT_LOCATION"
@@ -95,20 +103,15 @@ echo ""
 build() {
     pushd $REPO_ROOT
         mkdir -p hack/docker
-        go build -o hack/docker/db-broker cmd/servicebroker/main.go
+        go build -o hack/docker/service-broker cmd/servicebroker/main.go
 #        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
 
         pushd hack/docker
-            chmod 755 db-broker
+            chmod 755 service-broker
             cat > Dockerfile <<EOL
 FROM ubuntu
 
-COPY db-broker /bin/servicebroker/db_broker
-#RUN mkdir -p /bin/db-broker/hack/dev
-#COPY kubedb.sh /bin/db-broker/hack/dev/kubedb.sh
-
-#EXPOSE 8088
-WORKDIR /bin/servicebroker/
+COPY service-broker /bin/service-broker
 EOL
             local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
             echo $cmd; $cmd
@@ -172,32 +175,30 @@ run() {
 }
 
 uninstall() {
-    pushd $REPO_ROOT
-        # delete db-broker
-        kubectl delete service -l app=$APP --namespace $NAMESPACE
-        kubectl delete deployment -l app=$APP --namespace $NAMESPACE
-        # delete RBAC objects, if --rbac flag was used.
-        kubectl delete serviceaccount -l app=$APP --namespace $NAMESPACE
-        kubectl delete clusterrolebindings -l app=$APP
+    # delete service-broker
+    kubectl delete service -l app=$APP --namespace $NAMESPACE
+    kubectl delete deployment -l app=$APP --namespace $NAMESPACE
+    # delete RBAC objects, if --rbac flag was used.
+    kubectl delete serviceaccount -l app=$APP --namespace $NAMESPACE
+    kubectl delete clusterrolebindings -l app=$APP
 
-        echo
-        echo "waiting for service-broker pod to stop running"
-        for (( ; ; )); do
-            pods=($(kubectl get pods --all-namespaces -l app=$APP -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
-            total=${#pods[*]}
-            if [ $total -eq 0 ] ; then
-                break
-            fi
-           sleep 2
-        done
+    echo
+    echo "waiting for service-broker pod to stop running"
+    for (( ; ; )); do
+        pods=($(kubectl get pods --all-namespaces -l app=$APP -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+        total=${#pods[*]}
+        if [ $total -eq 0 ] ; then
+            break
+        fi
+        sleep 2
+    done
 
-        kubectl delete clusterservicebroker -l app=$APP
-        kubectl delete ns $NAMESPACE
+    kubectl delete clusterservicebroker -l app=$APP
+    kubectl delete ns $NAMESPACE
 
-        echo
-        echo "Successfully uninstalled service-broker!"
-        exit 0
-    popd
+    echo
+    echo "Successfully uninstalled service-broker!"
+    exit 0
 }
 
 $CMD
