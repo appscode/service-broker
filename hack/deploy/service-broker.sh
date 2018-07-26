@@ -154,10 +154,10 @@ deploy_service_broker() {
         kubectl create ns $NAMESPACE
     fi
 
-    ${SCRIPT_LOCATION}hack/dev/deployment.yaml | $ONESSL envsubst | kubectl apply -f -
-    ${SCRIPT_LOCATION}hack/dev/service.yaml | $ONESSL envsubst | kubectl apply -f -
-    ${SCRIPT_LOCATION}hack/dev/rbac.yaml | $ONESSL envsubst | kubectl apply -f -
-    ${SCRIPT_LOCATION}hack/dev/cluster_service_broker.yaml | $ONESSL envsubst | kubectl apply -f -
+    ${SCRIPT_LOCATION}hack/deploy/deployment.yaml | $ONESSL envsubst | kubectl apply -f -
+    ${SCRIPT_LOCATION}hack/deploy/service.yaml | $ONESSL envsubst | kubectl apply -f -
+    ${SCRIPT_LOCATION}hack/deploy/rbac.yaml | $ONESSL envsubst | kubectl apply -f -
+    ${SCRIPT_LOCATION}hack/deploy/cluster_service_broker.yaml | $ONESSL envsubst | kubectl apply -f -
 
     echo
     echo "waiting until service-broker deployment is ready"
