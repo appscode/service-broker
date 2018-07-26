@@ -1,5 +1,14 @@
 # Installation Guide
 
+## Prerequisites
+
+- This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat.
+- You also need `Kubedb` to be installed. Please see the [installation instructions](https://kubedb.com/docs/0.8.0/setup/install).
+
+> After satisfying the prerequisites, all commands in this document assume that you're operating out of the root of this repository.
+
+## Install Service Broker
+
 `Kubedb Service Broker` can be installed via a script or as a Helm chart.
 
 <ul class="nav nav-tabs" id="installerTab" role="tablist">
@@ -13,7 +22,7 @@
 <div class="tab-content" id="installerTabContent">
   <div class="tab-pane fade show active" id="script" role="tabpanel" aria-labelledby="script-tab">
 
-## Using Script
+### Using Script
 
 To install `Kubedb Service Broker` in your Kubernetes cluster, run the following command:
 
@@ -29,7 +38,7 @@ $ kubectl get pods -n service-broker | grep service-broker
 stash-operator-846d47f489-jrb58       1/1       Running   0          48s
 ```
 
-### Customizing Installer
+#### Customizing Installer
 
 The installer script and associated yaml files can be found in the [hack/dev](https://github.com/kubedb/service-broker/tree/master/hack/dev) folder. You can see the full list of flags available to installer using `-h` flag.
 
@@ -74,7 +83,7 @@ $ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack
 ...
 ```
 
-## Verify installation
+### Verify installation
 
 To check whether Service broker pod has started or not, run the following command:
 
@@ -115,7 +124,7 @@ postgresql-9-6      3m
 redis-4-0           3m
 ```
 
-You can get the same thing in a different manner using service-catalog cli `svcat`.
+You can get the same thing in a different manner using Service Catalog CLI `svcat`.
 
 ```console
 $ svcat get brokers
