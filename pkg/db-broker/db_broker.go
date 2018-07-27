@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -32,7 +33,9 @@ func NewClient(kubeConfigPath string) *Client {
 			"mysql":         NewMySQLProvider(config),
 			"postgresql":    NewPostgreSQLProvider(config),
 			"elasticsearch": NewElasticsearchProvider(config),
-			//"mongodb":    MongodbProvider{},
+			"mongodb":       NewMongoDbProvider(config),
+			"redis":         NewRedisProvider(config),
+			"memcached":     NewMemcachedProvider(config),
 		},
 	}
 }
@@ -105,14 +108,17 @@ func (c *Client) Bind(
 	if err != nil {
 		return nil, err
 	}
-	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
 
 	data := make(map[string]interface{})
-	for key, value := range secret.Data {
-		data[key] = string(value)
+	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
+	if err == nil {
+		for key, value := range secret.Data {
+			data[key] = string(value)
+		}
+	} else {
+		if !apierrs.IsNotFound(err) {
+			return nil, err
+		}
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
