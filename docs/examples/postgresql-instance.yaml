@@ -2,9 +2,9 @@ apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
   name: my-broker-postgresql-instance
-  namespace: db-broker
+  namespace: service-broker
   labels:
-    app: db-broker
+    app: service-broker
 spec:
   clusterServiceClassExternalName: postgresql
   clusterServicePlanExternalName: default
