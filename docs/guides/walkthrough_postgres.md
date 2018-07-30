@@ -275,7 +275,7 @@ $ svcat unbind my-broker-postgresql-instance --namespace service-broker
 deleted my-broker-postgresql-binding
 ```
 
-After completion of unbinding, the `Secret` named `my-broker-mysql-secret` should be deleted.
+After completion of unbinding, the `Secret` named `my-broker-postgresql-secret` should be deleted.
 
 ```console
 $ kubectl get secrets --namespace service-broker
