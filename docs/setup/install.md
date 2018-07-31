@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat.
-- You also need `Kubedb` to be installed. Please see the [installation instructions](https://kubedb.com/docs/0.8.0/setup/install).
+To check the installation you need the Service Catalog onto your cluster. So, this document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat.
+<!-- - You also need `Kubedb` to be installed. Please see the [installation instructions](https://kubedb.com/docs/0.8.0/setup/install). -->
 
 > After satisfying the prerequisites, all commands in this document assume that you're operating out of the root of this repository.
 
@@ -11,23 +11,15 @@
 
 `Kubedb Service Broker` can be installed via a script or as a Helm chart.
 
-<ul class="nav nav-tabs" id="installerTab" role="tablist">
-  <li class="nav-item">
-    <a class="nav-link active" id="script-tab" data-toggle="tab" href="#script" role="tab" aria-controls="script" aria-selected="true">Script</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" id="helm-tab" data-toggle="tab" href="#helm" role="tab" aria-controls="helm" aria-selected="false">Helm</a>
-  </li>
-</ul>
-<div class="tab-content" id="installerTabContent">
-  <div class="tab-pane fade show active" id="script" role="tabpanel" aria-labelledby="script-tab">
+- [Script](/docs/setup/install.md#Using-Script)
+- [Helm](/docs/setup/install.md#Using-Helm)
 
 ### Using Script
 
 To install `Kubedb Service Broker` in your Kubernetes cluster, run the following command:
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/dev/build.sh | bash -s -- run
+$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/deploy/service-broker.sh | bash -s -- run
 ...
 ```
 
@@ -40,10 +32,10 @@ service-broker-***       1/1       Running   0          48s
 
 #### Customizing Installer
 
-The installer script and associated yaml files can be found in the [hack/dev](https://github.com/kubedb/service-broker/tree/master/hack/dev) folder. You can see the full list of flags available to installer using `-h` flag.
+The installer script and associated yaml files can be found in the [hack/deploy](https://github.com/kubedb/service-broker/tree/master/hack/deploy) folder. You can see the full list of flags available to installer using `-h` flag.
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/dev/build.sh | bash -s -- -h
+$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/deploy/service-broker.sh | bash -s -- -h
 build.sh
 
 build.sh [commands] [options]
@@ -67,7 +59,7 @@ If you would like to run Service broker pod in `my-ns` namespace, pass the `--na
 $ kubectl create namespace my-ns
 namespace "my-ns" created
 
-$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/dev/build.sh | bash -s -- --namespace=my-ns
+$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/deploy/service-broker.sh | bash -s -- --namespace=my-ns
 ...
 ```
 
@@ -78,8 +70,17 @@ If you are using a private Docker registry, you need to pull the following image
 To pass the address of your private registry and optionally a image pull secret use flags `--docker-registry` and `--image-pull-secret` respectively.
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/dev/build.sh \
+$ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack/deploy/service-broker.sh \
     | bash -s -- --docker-registry=MY_REGISTRY [--image-pull-secret=SECRET_NAME]
+...
+```
+
+### Using Helm
+
+`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart). To install the chart with the release name `service-broker`:
+
+```console
+$ helm install --name service-broker --namespace service-broker chart/service-broker/
 ...
 ```
 
@@ -88,12 +89,22 @@ $ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack
 To check whether Service broker pod has started or not, run the following command:
 
 ```console
+# for script installation
 $ kubectl get pods --all-namespaces -l app=service-broker --watch
 NAMESPACE        NAME                              READY     STATUS    RESTARTS   AGE
 service-broker   service-broker-6974dcff7f-87cgm   0/1       Pending   0          0s
 service-broker   service-broker-6974dcff7f-87cgm   0/1       Pending   0         1s
 service-broker   service-broker-6974dcff7f-87cgm   0/1       ContainerCreating   0         2s
 service-broker   service-broker-6974dcff7f-87cgm   1/1       Running   0         26s
+
+# for helm installation
+kubectl get pods --namespace service-broker --watch
+NAME                                     READY     STATUS              RESTARTS   AGE
+service-broker-688bfc6957-7p4pj          0/1       ContainerCreating   0          9s
+service-broker-kubedb-6d6694776b-hgs6d   0/1       ContainerCreating   0          8s
+service-broker-kubedb-6d6694776b-hgs6d   0/1       Running   0         22s
+service-broker-688bfc6957-7p4pj   1/1       Running   0         24s
+service-broker-kubedb-6d6694776b-hgs6d   1/1       Running   0         31s
 ```
 
 Once the pods is running, you can cancel the above command by typing `Ctrl+C`.

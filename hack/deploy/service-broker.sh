@@ -123,6 +123,10 @@ EOL
     popd
 }
 
+install_kubedb() {
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.8.0/hack/deploy/kubedb.sh| bash
+}
+
 ensure_onessl() {
     if [ -x "$(command -v onessl)" ]; then
         export ONESSL=onessl
@@ -169,12 +173,18 @@ deploy_service_broker() {
 
 run() {
     pushd $REPO_ROOT
+        install_kubedb
+        echo ""
+
         ensure_onessl
         deploy_service_broker
     popd
 }
 
 uninstall() {
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.8.0/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
+    echo ""
+
     # delete service-broker
     kubectl delete service -l app=$APP --namespace $NAMESPACE
     kubectl delete deployment -l app=$APP --namespace $NAMESPACE
