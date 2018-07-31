@@ -35,7 +35,7 @@ After successful installation, you should have a `service-broker-***` pod runnin
 
 ```console
 $ kubectl get pods -n service-broker | grep service-broker
-stash-operator-846d47f489-jrb58       1/1       Running   0          48s
+service-broker-***       1/1       Running   0          48s
 ```
 
 #### Customizing Installer
