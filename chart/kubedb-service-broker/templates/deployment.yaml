@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "service-broker.fullname" . }}
+  name: {{ template "kubedb-service-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ template "service-broker.name" . }}
-    chart: {{ template "service-broker.chart" . }}
+    app: {{ template "kubedb-service-broker.name" . }}
+    chart: {{ template "kubedb-service-broker.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "service-broker.name" . }}
+      app: {{ template "kubedb-service-broker.name" . }}
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ template "service-broker.name" . }}
+        app: {{ template "kubedb-service-broker.name" . }}
         release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ template "service-broker.fullname" . }}
+      serviceAccountName: {{ template "kubedb-service-broker.fullname" . }}
       imagePullSecrets: {{ .Values.imagePullSecrets }}
       containers:
         - name: {{ .Chart.Name }}

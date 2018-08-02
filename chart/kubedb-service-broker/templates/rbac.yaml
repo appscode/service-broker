@@ -1,21 +1,21 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ template "service-broker.fullname" . }}
+  name: {{ template "kubedb-service-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ template "service-broker.name" . }}
-    chart: {{ template "service-broker.chart" . }}
+    app: {{ template "kubedb-service-broker.name" . }}
+    chart: {{ template "kubedb-service-broker.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ template "service-broker.fullname" . }}
+  name: {{ template "kubedb-service-broker.fullname" . }}
   labels:
-    app: {{ template "service-broker.name" . }}
-    chart: {{ template "service-broker.chart" . }}
+    app: {{ template "kubedb-service-broker.name" . }}
+    chart: {{ template "kubedb-service-broker.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 roleRef:
@@ -24,5 +24,5 @@ roleRef:
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: {{ template "service-broker.fullname" . }}
+    name: {{ template "kubedb-service-broker.fullname" . }}
     namespace: {{ .Release.Namespace }}

@@ -77,10 +77,10 @@ $ curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/hack
 
 ### Using Helm
 
-`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart). To install the chart with the release name `service-broker`:
+`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart). To install the chart with the release name `my-release`:
 
 ```console
-$ helm install --name service-broker --namespace service-broker chart/service-broker/
+$ helm install --name my-release --namespace service-broker chart/kubedb-service-broker/
 ...
 ```
 
@@ -98,13 +98,12 @@ service-broker   service-broker-6974dcff7f-87cgm   0/1       ContainerCreating  
 service-broker   service-broker-6974dcff7f-87cgm   1/1       Running   0         26s
 
 # for helm installation
-kubectl get pods --namespace service-broker --watch
-NAME                                     READY     STATUS              RESTARTS   AGE
-service-broker-688bfc6957-7p4pj          0/1       ContainerCreating   0          9s
-service-broker-kubedb-6d6694776b-hgs6d   0/1       ContainerCreating   0          8s
-service-broker-kubedb-6d6694776b-hgs6d   0/1       Running   0         22s
-service-broker-688bfc6957-7p4pj   1/1       Running   0         24s
-service-broker-kubedb-6d6694776b-hgs6d   1/1       Running   0         31s
+                            READY     STATUS              RESTARTS   AGE
+my-release-kubedb-678f6df8d-r799p                   0/1       ContainerCreating   0          3s
+my-release-kubedb-service-broker-64ff8c6d6d-zcmvr   0/1       ContainerCreating   0          3s
+my-release-kubedb-service-broker-64ff8c6d6d-zcmvr   1/1       Running   0         18s
+my-release-kubedb-678f6df8d-r799p   0/1       Running   0         20s
+my-release-kubedb-678f6df8d-r799p   1/1       Running   0         40s
 ```
 
 Once the pods is running, you can cancel the above command by typing `Ctrl+C`.
