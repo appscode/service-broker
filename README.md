@@ -1,1 +1,1 @@
-# example-db-broker
+# service-broker

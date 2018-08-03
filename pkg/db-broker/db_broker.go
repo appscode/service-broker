@@ -84,8 +84,7 @@ func (c *Client) Provision(serviceID, dbObjName, namespace string, provisionPara
 
 	glog.Infof("creating %s obj %q in namespace %q", serviceID, dbObjName, namespace)
 	if err := provider.Create(dbObjName, c.namespace); err != nil {
-		return err
-		errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
+		return errors.Wrapf(err, "failed to create %s obj %q in namespace", serviceID, dbObjName, namespace)
 	}
 	glog.Infoln("creation complete")
 

@@ -1,0 +1,10 @@
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ServiceInstance
+metadata:
+  name: my-broker-elasticsearch-instance
+  namespace: service-broker
+  labels:
+    app: service-broker
+spec:
+  clusterServiceClassExternalName: elasticsearch
+  clusterServicePlanExternalName: default

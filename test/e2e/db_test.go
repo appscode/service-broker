@@ -16,7 +16,6 @@ var _ = Describe("[service-catalog]", func() {
 
 		brokerName      string
 		brokerNamespace string
-		brokerPodName   string
 
 		serviceclassName  string
 		serviceclassID    string
@@ -57,7 +56,6 @@ var _ = Describe("[service-catalog]", func() {
 		By("Waiting for pod to be running")
 		pod, err := framework.GetBrokerPod(f.KubeClient, deploy)
 		Expect(err).NotTo(HaveOccurred())
-		brokerPodName = pod.Name
 		err = framework.WaitForPodRunningInNamespace(f.KubeClient, pod)
 		Expect(err).NotTo(HaveOccurred())
 
