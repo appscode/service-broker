@@ -24,17 +24,17 @@ type Client struct {
 	providers  map[string]Provider
 }
 
-func NewClient(kubeConfigPath string) *Client {
+func NewClient(kubeConfigPath, storageClassName string) *Client {
 	config := getConfig(kubeConfigPath)
 	return &Client{
 		kubeClient: loadInClusterClient(config),
 		namespace:  loadNamespace(kubeConfigPath),
 		providers: map[string]Provider{
-			"mysql":         NewMySQLProvider(config),
-			"postgresql":    NewPostgreSQLProvider(config),
-			"elasticsearch": NewElasticsearchProvider(config),
-			"mongodb":       NewMongoDbProvider(config),
-			"redis":         NewRedisProvider(config),
+			"mysql":         NewMySQLProvider(config, storageClassName),
+			"postgresql":    NewPostgreSQLProvider(config, storageClassName),
+			"elasticsearch": NewElasticsearchProvider(config, storageClassName),
+			"mongodb":       NewMongoDbProvider(config, storageClassName),
+			"redis":         NewRedisProvider(config, storageClassName),
 			"memcached":     NewMemcachedProvider(config),
 		},
 	}

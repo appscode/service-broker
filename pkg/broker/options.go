@@ -8,9 +8,10 @@ import (
 // line. Users should add their own options here and add flags for them in
 // AddFlags.
 type Options struct {
-	CatalogPath string
-	KubeConfig  string
-	Async       bool
+	CatalogPath  string
+	KubeConfig   string
+	Async        bool
+	StorageClass string
 }
 
 // AddFlags is a hook called to initialize the CLI flags for broker options.

@@ -52,7 +52,7 @@ var _ = Describe("[service-catalog] ClusterServiceBroker", func() {
 		By("Creating a service broker deployment")
 		deploy, err := f.KubeClient.AppsV1().
 			Deployments(brokerNamespace).
-			Create(NewServiceBrokerDeployment(brokerName, brokerNamespace, brokerImageFlag))
+			Create(NewServiceBrokerDeployment(brokerName, brokerNamespace, brokerImageFlag, storageClass))
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for pod to be running")

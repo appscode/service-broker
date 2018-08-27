@@ -18,7 +18,7 @@ import (
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(o Options) (*Broker, error) {
-	brClient := db_broker.NewClient(o.KubeConfig)
+	brClient := db_broker.NewClient(o.KubeConfig, o.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.

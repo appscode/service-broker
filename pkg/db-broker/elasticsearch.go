@@ -14,16 +14,18 @@ import (
 )
 
 type ElasticsearchProvider struct {
-	extClient cs.KubedbV1alpha1Interface
+	extClient        cs.KubedbV1alpha1Interface
+	storageClassName string
 }
 
-func NewElasticsearchProvider(config *rest.Config) Provider {
+func NewElasticsearchProvider(config *rest.Config, storageClassName string) Provider {
 	return &ElasticsearchProvider{
-		extClient: cs.NewForConfigOrDie(config),
+		extClient:        cs.NewForConfigOrDie(config),
+		storageClassName: storageClassName,
 	}
 }
 
-func NewElasticsearchObj(name, namespace string) *api.Elasticsearch {
+func NewElasticsearchObj(name, namespace, storageClassName string) *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -39,7 +41,7 @@ func NewElasticsearchObj(name, namespace string) *api.Elasticsearch {
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP("standard"),
+				StorageClassName: types.StringP(storageClassName),
 			},
 		},
 	}
@@ -47,7 +49,7 @@ func NewElasticsearchObj(name, namespace string) *api.Elasticsearch {
 
 func (p ElasticsearchProvider) Create(name, namespace string) error {
 	glog.Infof("Creating elasticsearch obj %q in namespace %q...", name, namespace)
-	es := NewElasticsearchObj(name, namespace)
+	es := NewElasticsearchObj(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
 		return err
