@@ -14,16 +14,18 @@ import (
 )
 
 type RedisProvider struct {
-	extClient cs.KubedbV1alpha1Interface
+	extClient        cs.KubedbV1alpha1Interface
+	storageClassName string
 }
 
-func NewRedisProvider(config *rest.Config) Provider {
+func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 	return &RedisProvider{
-		extClient: cs.NewForConfigOrDie(config),
+		extClient:        cs.NewForConfigOrDie(config),
+		storageClassName: storageClassName,
 	}
 }
 
-func NewRedisObj(name, namespace string) *api.Redis {
+func NewRedisObj(name, namespace, storageClassName string) *api.Redis {
 	return &api.Redis{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -39,7 +41,7 @@ func NewRedisObj(name, namespace string) *api.Redis {
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP("standard"),
+				StorageClassName: types.StringP(storageClassName),
 			},
 		},
 	}
@@ -47,7 +49,7 @@ func NewRedisObj(name, namespace string) *api.Redis {
 
 func (p RedisProvider) Create(name, namespace string) error {
 	glog.Infof("Creating redis obj %q in namespace %q...", name, namespace)
-	rd := NewRedisObj(name, namespace)
+	rd := NewRedisObj(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.Redises(rd.Namespace).Create(rd); err != nil {
 		return err

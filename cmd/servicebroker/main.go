@@ -38,6 +38,8 @@ func init() {
 		"base-64 encoded PEM block to use as the certificate for TLS. If '--tlsCert' is used, then '--tlsKey' must also be used. If '--tlsCert' is not used, then TLS will not be used.")
 	flag.StringVar(&options.TLSKey, "tlsKey", "",
 		"base-64 encoded PEM block to use as the private key matching the TLS certificate. If '--tlsKey' is used, then '--tlsCert' must also be used")
+	flag.StringVar(&options.StorageClass, "storage-class", "standard",
+		"name of the storage-class for database storage")
 
 	broker.AddFlags(&options.Options)
 	flag.Parse()

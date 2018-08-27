@@ -1,0 +1,14 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: appscodeci/dind
+    tag: latest
+
+inputs:
+- name: service-broker
+- name: creds
+
+run:
+  path: service-broker/hack/concourse/test.sh

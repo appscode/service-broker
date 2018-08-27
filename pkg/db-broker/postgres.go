@@ -14,16 +14,18 @@ import (
 )
 
 type PostgreSQLProvider struct {
-	extClient cs.KubedbV1alpha1Interface
+	extClient        cs.KubedbV1alpha1Interface
+	storageClassName string
 }
 
-func NewPostgreSQLProvider(config *rest.Config) Provider {
+func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provider {
 	return &PostgreSQLProvider{
-		extClient: cs.NewForConfigOrDie(config),
+		extClient:        cs.NewForConfigOrDie(config),
+		storageClassName: storageClassName,
 	}
 }
 
-func NewPostgresObj(name, namespace string) *api.Postgres {
+func NewPostgresObj(name, namespace, storageClassName string) *api.Postgres {
 	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -39,7 +41,7 @@ func NewPostgresObj(name, namespace string) *api.Postgres {
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP("standard"),
+				StorageClassName: types.StringP(storageClassName),
 			},
 		},
 	}
@@ -47,7 +49,7 @@ func NewPostgresObj(name, namespace string) *api.Postgres {
 
 func (p PostgreSQLProvider) Create(name, namespace string) error {
 	glog.Infof("Creating postgres obj %q in namespace %q...", name, namespace)
-	pgObj := NewPostgresObj(name, namespace)
+	pgObj := NewPostgresObj(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.Postgreses(pgObj.Namespace).Create(pgObj); err != nil {
 		return err

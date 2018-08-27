@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"fmt"
+
 	kubedb_util "github.com/kubedb/service-broker/pkg/db-broker"
 	"github.com/kubedb/service-broker/test/e2e/framework"
 	"github.com/kubedb/service-broker/test/util"
@@ -34,6 +36,7 @@ var _ = Describe("[service-catalog]", func() {
 
 		brokerName = f.BaseName
 		brokerNamespace = f.Namespace.Name
+		fmt.Println(">>>>>>>>>>>>> broker image =", brokerImageFlag)
 
 		By("Creating a service account for service broker")
 		_, err := f.KubeClient.CoreV1().
@@ -50,7 +53,7 @@ var _ = Describe("[service-catalog]", func() {
 		By("Creating a service broker deployment")
 		deploy, err := f.KubeClient.AppsV1().
 			Deployments(brokerNamespace).
-			Create(NewServiceBrokerDeployment(brokerName, brokerNamespace, brokerImageFlag))
+			Create(NewServiceBrokerDeployment(brokerName, brokerNamespace, brokerImageFlag, storageClass))
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Waiting for pod to be running")

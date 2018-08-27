@@ -14,16 +14,18 @@ import (
 )
 
 type MongoDbProvider struct {
-	extClient cs.KubedbV1alpha1Interface
+	extClient        cs.KubedbV1alpha1Interface
+	storageClassName string
 }
 
-func NewMongoDbProvider(config *rest.Config) Provider {
+func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	return &MongoDbProvider{
-		extClient: cs.NewForConfigOrDie(config),
+		extClient:        cs.NewForConfigOrDie(config),
+		storageClassName: storageClassName,
 	}
 }
 
-func NewMongoDbObj(name, namespace string) *api.MongoDB {
+func NewMongoDbObj(name, namespace, storageClassName string) *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -39,7 +41,7 @@ func NewMongoDbObj(name, namespace string) *api.MongoDB {
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP("standard"),
+				StorageClassName: types.StringP(storageClassName),
 			},
 		},
 	}
@@ -47,7 +49,7 @@ func NewMongoDbObj(name, namespace string) *api.MongoDB {
 
 func (p MongoDbProvider) Create(name, namespace string) error {
 	glog.Infof("Creating mongodb obj %q in namespace %q...", name, namespace)
-	mg := NewMongoDbObj(name, namespace)
+	mg := NewMongoDbObj(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
 		return err

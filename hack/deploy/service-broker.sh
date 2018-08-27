@@ -4,9 +4,13 @@ set -eou pipefail
 GOPATH=$(go env GOPATH)
 REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
 
-export DOCKER_REGISTRY=shudipta
+pushd $REPO_ROOT
+source "$REPO_ROOT/hack/libbuild/common/lib.sh"
+detect_tag ''
+
+export DOCKER_REGISTRY=${DOCKER_REGISTRY:-shudipta}
 export IMG=service-broker
-export TAG=latest
+export TAG=${TAG:-latest}
 export ONESSL=
 
 export NAME=service-broker
@@ -15,6 +19,7 @@ export SERVICE_ACCOUNT="$NAME"
 export APP=service-broker
 export IMAGE_PULL_POLICY=IfNotPresent
 export IMAGE_PULL_SECRET=
+export STORAGE_CLASS=standard
 
 export KUBEDB_ENV=${KUBEDB_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/"
@@ -43,6 +48,7 @@ show_help() {
     echo "-n, --namespace=NAMESPACE     specify namespace (default: $NAMESPACE)"
     echo "    --docker-registry         docker registry used to pull stash images (default: $DOCKER_REGISTRY)"
     echo "    --image-pull-secret       name of secret used to pull service broker image"
+    echo "    --storage-class           name of the storage-class for database storage"
 }
 
 while test $# -gt 0; do
@@ -78,6 +84,10 @@ while test $# -gt 0; do
             export IMAGE_PULL_SECRET="name: '$secret'"
             shift
             ;;
+        --storage-class*)
+            export STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
+            shift
+            ;;
         *)
             show_help
             exit 1
@@ -95,6 +105,7 @@ echo "SERVICE_ACCOUNT=$SERVICE_ACCOUNT"
 echo "APP=$APP"
 echo "IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY"
 echo "IMAGE_PULL_SECRET=$IMAGE_PULL_SECRET"
+echo "STORAGE_CLASS=$STORAGE_CLASS"
 echo ""
 echo "KUBEDB_ENV=$KUBEDB_ENV"
 echo "SCRIPT_LOCATION=$SCRIPT_LOCATION"
@@ -214,3 +225,5 @@ uninstall() {
 $CMD
 
 "$@"
+
+popd

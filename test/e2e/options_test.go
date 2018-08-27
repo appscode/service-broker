@@ -23,7 +23,9 @@ var (
 	//brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
 	//brokerImageFlag = "shudipta/db-broker:try-for-mongodb"
 	//brokerImageFlag = "shudipta/db-broker:try-for-redis"
-	brokerImageFlag = "shudipta/db-broker:try-for-memcached"
+	// brokerImageFlag = "shudipta/db-broker:try-for-memcached"
+	brokerImageFlag = "shudipta/service-broker:latest"
+	storageClass = "standard"
 )
 
 func init() {
@@ -32,6 +34,8 @@ func init() {
 
 	flag.StringVar(&brokerImageFlag, "broker-image", brokerImageFlag,
 		"The container image for the broker to test against")
+	flag.StringVar(&storageClass, "storage-class", storageClass,
+		"name of the storage-class for database storage")
 	//framework.RegisterParseFlags()
 
 	enableLogging()

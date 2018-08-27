@@ -14,16 +14,18 @@ import (
 )
 
 type MySQLProvider struct {
-	extClient cs.KubedbV1alpha1Interface
+	extClient        cs.KubedbV1alpha1Interface
+	storageClassName string
 }
 
-func NewMySQLProvider(config *rest.Config) Provider {
+func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 	return &MySQLProvider{
-		extClient: cs.NewForConfigOrDie(config),
+		extClient:        cs.NewForConfigOrDie(config),
+		storageClassName: storageClassName,
 	}
 }
 
-func MySQL(name, namespace string) *api.MySQL {
+func MySQL(name, namespace, storageClassName string) *api.MySQL {
 	return &api.MySQL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -37,7 +39,7 @@ func MySQL(name, namespace string) *api.MySQL {
 						corev1.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP("standard"),
+				StorageClassName: types.StringP(storageClassName),
 			},
 		},
 	}
@@ -45,7 +47,7 @@ func MySQL(name, namespace string) *api.MySQL {
 
 func (p MySQLProvider) Create(name, namespace string) error {
 	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	myObj := MySQL(name, namespace)
+	myObj := MySQL(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj); err != nil {
 		return err

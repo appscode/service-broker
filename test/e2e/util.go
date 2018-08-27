@@ -22,7 +22,7 @@ func newObjectMeta(name, namespace, label string) metav1.ObjectMeta {
 	}
 }
 
-func NewServiceBrokerDeployment(name, namespace, image string) *appsv1.Deployment {
+func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: newObjectMeta(name, namespace, name),
 		Spec: appsv1.DeploymentSpec{
@@ -45,7 +45,7 @@ func NewServiceBrokerDeployment(name, namespace, image string) *appsv1.Deploymen
 							Image:           image,
 							ImagePullPolicy: corev1.PullAlways,
 							Command: []string{
-								"./db_broker",
+								"service-broker",
 							},
 							Args: []string{
 								"--port",
@@ -53,6 +53,8 @@ func NewServiceBrokerDeployment(name, namespace, image string) *appsv1.Deploymen
 								"-v",
 								"5",
 								"-logtostderr",
+								"--storage-class",
+								storageClass,
 							},
 							Ports: []corev1.ContainerPort{
 								{
