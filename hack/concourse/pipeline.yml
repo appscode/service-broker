@@ -1,28 +1,46 @@
 resource_types:
 - name: pull-request
   type: docker-image
+  tags: [cncf]
   source:
     repository: appscodeci/github-pr-resource
     tag: latest
 
+- name: github-status
+  type: docker-image
+  tags: [cncf]
+  source:
+    repository: dpb587/github-status-resource
+    tag: master
+
 resources:
 - name: service-broker
   type: git
+  tags: [cncf]
   source:
     uri: https://github.com/kubedb/service-broker
     branch: master
 
+- name: repo-status
+  type: github-status
+  tags: [cncf]
+  source:
+    repository: kubedb/service-broker
+    access_token: ((access_token))
+
 - name: cncf
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
     label: ok-to-test/cncf
-    org: kubedb
+    # org: kubedb
     access_token: ((access_token))
 
 - name: gke
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -31,6 +49,7 @@ resources:
 
 - name: aws
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -39,6 +58,7 @@ resources:
 
 - name: azure-aks
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -47,6 +67,7 @@ resources:
 
 - name: azure-acs
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -55,6 +76,7 @@ resources:
 
 - name: do
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -63,6 +85,7 @@ resources:
 
 - name: kubespray
   type: pull-request
+  tags: [cncf]
   source:
     owner: kubedb
     repo: service-broker
@@ -79,6 +102,7 @@ resources:
 
 - name: concourse-locks
   type: pool
+  tags: [cncf]
   source:
     uri: git@github.com:kubedb/concourse-locks.git
     branch: master
@@ -86,7 +110,7 @@ resources:
     private_key: ((private_key))
 
 jobs:
-- name: test-service-broker-master
+- name: test-master
   plan:
   - get: service-broker
     trigger: true
@@ -96,6 +120,11 @@ jobs:
   - put: concourse-locks
     params:
       acquire: true
+  - put: repo-status
+    params:
+      state: pending
+      commit: service-broker
+      description: "concourse-ci"
   - task: test-e2e
     privileged: true
     file: service-broker/hack/concourse/task.yml
@@ -104,13 +133,24 @@ jobs:
       DOCKER_USER: ((docker_user))
       DOCKER_PASS: ((docker_pass))
     tags: [cncf]
+    on_success:
+      put: repo-status
+      params:
+        state: success
+        commit: service-broker
+        description: "concourse-ci"
+    on_failure:
+      put: repo-status
+      params:
+        state: failure
+        commit: service-broker
+        description: "concourse-ci"
     ensure:
       put: concourse-locks
       params:
         release: concourse-locks
 
-
-- name: test-service-broker-cncf
+- name: test-cncf
   plan:
   - get: cncf
     trigger: true
@@ -144,7 +184,7 @@ jobs:
       put: cncf
       params: {path: cncf, status: failure}
 
-- name: test-service-broker-gke
+- name: test-gke
   plan:
   - get: gke
     trigger: true
@@ -170,7 +210,7 @@ jobs:
       put: gke
       params: {path: gke, status: failure}
 
-- name: test-service-broker-aws
+- name: test-aws
   plan:
   - get: aws
     version: every
@@ -198,7 +238,7 @@ jobs:
       put: aws
       params: {path: aws, status: failure}
 
-- name: test-azure-aks
+- name: test-azur-aks
   plan:
   - get: azure-aks
     version: every
@@ -256,7 +296,7 @@ jobs:
       put: azure-acs
       params: {path: azure-acs, status: failure}
 
-- name: test-service-broker-do
+- name: test-do
   plan:
   - get: do
     version: every
@@ -282,7 +322,7 @@ jobs:
       put: do
       params: {path: do, status: failure}
 
-- name: test-service-broker-kubespray
+- name: test-kubespray
   plan:
   - get: kubespray
     version: every
