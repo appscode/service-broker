@@ -124,7 +124,7 @@ FROM ubuntu
 
 COPY service-broker /bin/service-broker
 EOL
-            local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
+            local cmd="docker build --pull -t $DOCKER_REGISTRY/$IMG:$TAG ."
             echo $cmd; $cmd
             cmd="docker push $DOCKER_REGISTRY/$IMG:$TAG"
             echo $cmd; $cmd
