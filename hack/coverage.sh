@@ -2,7 +2,7 @@
 set -eou pipefail
 
 GOPATH=$(go env GOPATH)
-REPO_ROOT="$GOPATH/src/github.com/kubedb/user-manager"
+REPO_ROOT="$GOPATH/src/github.com/kubedb/service-broker"
 
 pushd $REPO_ROOT
 

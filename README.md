@@ -1,10 +1,9 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubedb/postgres)](https://goreportcard.com/report/github.com/kubedb/postgres)
-[![Build Status](https://travis-ci.org/kubedb/postgres.svg?branch=master)](https://travis-ci.org/kubedb/postgres)
-[![codecov](https://codecov.io/gh/kubedb/postgres/branch/master/graph/badge.svg)](https://codecov.io/gh/kubedb/postgres)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubedb/service-broker)](https://goreportcard.com/report/github.com/kubedb/service-broker)
+[![Build Status](https://travis-ci.org/kubedb/service-broker.svg?branch=master)](https://travis-ci.org/kubedb/service-broker)
+[![codecov](https://codecov.io/gh/kubedb/service-broker/branch/master/graph/badge.svg)](https://codecov.io/gh/kubedb/service-broker)
 [![Slack](http://slack.kubernetes.io/badge.svg)](http://slack.kubernetes.io/#kubedb)
 [![mailing list](https://img.shields.io/badge/mailing_list-join-blue.svg)](https://groups.google.com/forum/#!forum/kubedb)
 [![Twitter](https://img.shields.io/twitter/follow/kubedb.svg?style=social&logo=twitter&label=Follow)](https://twitter.com/intent/follow?screen_name=kubedb)
-
 [![Throughput Graph](https://graphs.waffle.io/kubedb/project/throughput.svg)](https://waffle.io/kubedb/project/metrics/throughput)
 
 # service-broker
