@@ -1,11 +1,14 @@
 package e2e
 
 import (
+	"github.com/appscode/go/types"
+	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"path/filepath"
 )
 
 func Int32Ptr(i int32) *int32 {
@@ -20,6 +23,56 @@ func newObjectMeta(name, namespace, label string) metav1.ObjectMeta {
 			"app": label,
 		},
 	}
+}
+
+func NewCatalogConfigMap(name, namespace string) (*corev1.ConfigMap, error) {
+	var (
+		data          []byte
+		err           error
+		mysql         string
+		postgresql    string
+		elasticsearch string
+		mongodb       string
+		memcached     string
+		redis         string
+	)
+	catalogPath := filepath.Join("..", "..", "hack", "deploy", "catalogs")
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "mysql.yaml")); err != nil {
+		return nil, err
+	}
+	mysql = string(data)
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "postgresql.yaml")); err != nil {
+		return nil, err
+	}
+	postgresql = string(data)
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "elasticsearch.yaml")); err != nil {
+		return nil, err
+	}
+	elasticsearch = string(data)
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "mongodb.yaml")); err != nil {
+		return nil, err
+	}
+	mongodb = string(data)
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "memcached.yaml")); err != nil {
+		return nil, err
+	}
+	memcached = string(data)
+	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "redis.yaml")); err != nil {
+		return nil, err
+	}
+	redis = string(data)
+
+	return &corev1.ConfigMap{
+		ObjectMeta: newObjectMeta(name, namespace, name),
+		Data: map[string]string{
+			"mysql.yaml":         mysql,
+			"postgresql.yaml":    postgresql,
+			"elasticsearch.yaml": elasticsearch,
+			"mongodb.yaml":       mongodb,
+			"memcached.yaml":     memcached,
+			"redis.yaml":         redis,
+		},
+	}, nil
 }
 
 func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *appsv1.Deployment {
@@ -50,6 +103,8 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 							Args: []string{
 								"--port",
 								"8080",
+								"--catalog-path",
+								"/etc/config/catalogs",
 								"-v",
 								"5",
 								"-logtostderr",
@@ -59,6 +114,25 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8080,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									MountPath: "/etc/config/catalogs",
+									Name:      "catalogs-volume",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "catalogs-volume",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: name,
+									},
+									DefaultMode: types.Int32P(511),
 								},
 							},
 						},

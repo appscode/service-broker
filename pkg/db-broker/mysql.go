@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type MySQLProvider struct {
@@ -25,36 +26,41 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func MySQL(name, namespace, storageClassName string) *api.MySQL {
+func NewMySQL(name, namespace, storageClassName string) *api.MySQL {
 	return &api.MySQL{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("5.7"),
-			Storage: corev1.PersistentVolumeClaimSpec{
+			Version: jsonTypes.StrYo("8.0-v1"),
+			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("1Gi"),
+						corev1.ResourceStorage: resource.MustParse("50Mi"),
 					},
 				},
 				StorageClassName: types.StringP(storageClassName),
+			},
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
 			},
 		},
 	}
 }
 
-func (p MySQLProvider) Create(name, namespace string) error {
+func (p MySQLProvider) Create(planID, name, namespace string) error {
 	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	myObj := MySQL(name, namespace, p.storageClassName)
+	my := NewMySQL(name, namespace, p.storageClassName)
 
-	if _, err := p.extClient.MySQLs(myObj.Namespace).Create(myObj); err != nil {
+	if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForMySQLBeReady(p.extClient, name, namespace)
 }
 
 func (p MySQLProvider) Delete(name, namespace string) error {
@@ -65,7 +71,7 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	if mysql.Spec.DoNotPause {
+	if mysql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
 		if err := patchMySQL(p.extClient, mysql); err != nil {
 			return err
 		}
@@ -75,12 +81,7 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
-	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
-		return err
-	}
-
-	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
+	return nil
 }
 
 func (p MySQLProvider) Bind(
@@ -88,41 +89,51 @@ func (p MySQLProvider) Bind(
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
+	var (
+		user, password   string
+		connScheme, host string
+		port             int32
+	)
+
+	connScheme = "mysql"
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
-	svcPort := service.Spec.Ports[0]
+	for _, p := range service.Spec.Ports {
+		if p.Name == "db" {
+			port = p.Port
+			break
+		}
+	}
 
-	host := buildHostFromService(service)
+	host = buildHostFromService(service)
+	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mysqlDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
-	var user, password string
 	userVal, ok := params["mysqlUser"]
 	if ok {
 		user = userVal.(string)
-
-		passwordVal, ok := data["mysqlPassword"]
-		if !ok {
-			return nil, errors.Errorf("mysql-password not found in secret keys")
-		}
-		password = passwordVal.(string)
 	} else {
-		user = "root"
-
-		rootPassword, ok := data["password"]
+		mysqlUser, ok := data["user"]
 		if !ok {
-			return nil, errors.Errorf("mysql-root-password not found in secret keys")
+			return nil, errors.Errorf("mysql-user not found in secret keys")
 		}
-		password = rootPassword.(string)
+		user = mysqlUser.(string)
 	}
 
+	mysqlPassword, ok := data["password"]
+	if !ok {
+		return nil, errors.Errorf("mysql-password not found in secret keys")
+	}
+	password = mysqlPassword.(string)
+
 	creds := Credentials{
-		Protocol: svcPort.Name,
-		Port:     svcPort.Port,
+		Protocol: connScheme,
+		Port:     port,
 		Host:     host,
 		Username: user,
 		Password: password,

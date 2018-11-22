@@ -1,8 +1,11 @@
 package v1alpha1
 
 import (
+	"github.com/appscode/go/encoding/json/types"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	store "kmodules.xyz/objectstore-api/api/v1"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 const (
@@ -26,10 +29,19 @@ type Snapshot struct {
 type SnapshotSpec struct {
 	// Database name
 	DatabaseName string `json:"databaseName"`
+
 	// Snapshot Spec
-	SnapshotStorageSpec `json:",inline"`
-	// Compute Resources required by the sidecar container.
-	Resources core.ResourceRequirements `json:"resources,omitempty"`
+	store.Backend `json:",inline"`
+
+	// PodTemplate is an optional configuration for pods used to take database snapshots
+	// +optional
+	PodTemplate ofst.PodTemplateSpec `json:"podTemplate,omitempty"`
+
+	// -------------------------------------------------------------------------
+
+	// Compute Resources required by the pod used to take database snapshots
+	// Deprecated: Use podTemplate.spec.resources
+	Resources *core.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type SnapshotPhase string
@@ -48,6 +60,10 @@ type SnapshotStatus struct {
 	CompletionTime *metav1.Time  `json:"completionTime,omitempty"`
 	Phase          SnapshotPhase `json:"phase,omitempty"`
 	Reason         string        `json:"reason,omitempty"`
+	// observedGeneration is the most recent generation observed for this resource. It corresponds to the
+	// resource's generation, which is updated on mutation by the API Server.
+	// +optional
+	ObservedGeneration *types.IntHash `json:"observedGeneration,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -25,7 +25,7 @@ var (
 	//brokerImageFlag = "shudipta/db-broker:try-for-redis"
 	// brokerImageFlag = "shudipta/db-broker:try-for-memcached"
 	brokerImageFlag = "shudipta/service-broker:latest"
-	storageClass = "standard"
+	storageClass    = "standard"
 )
 
 func init() {

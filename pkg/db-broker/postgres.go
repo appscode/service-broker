@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type PostgreSQLProvider struct {
@@ -25,38 +26,46 @@ func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provide
 	}
 }
 
-func NewPostgresObj(name, namespace, storageClassName string) *api.Postgres {
+func NewPostgres(name, namespace, storageClassName string) *api.Postgres {
 	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: api.PostgresSpec{
-			Version: jsonTypes.StrYo("9.6"),
-			//DoNotPause: true,
+			Version:  jsonTypes.StrYo("10.2-v1"),
 			Replicas: types.Int32P(1),
-			Storage: corev1.PersistentVolumeClaimSpec{
+			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("1Gi"),
+						corev1.ResourceStorage: resource.MustParse("50Mi"),
 					},
 				},
 				StorageClassName: types.StringP(storageClassName),
+			},
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
 			},
 		},
 	}
 }
 
-func (p PostgreSQLProvider) Create(name, namespace string) error {
+func (p PostgreSQLProvider) Create(planID, name, namespace string) error {
 	glog.Infof("Creating postgres obj %q in namespace %q...", name, namespace)
-	pgObj := NewPostgresObj(name, namespace, p.storageClassName)
 
-	if _, err := p.extClient.Postgreses(pgObj.Namespace).Create(pgObj); err != nil {
+	pg := NewPostgres(name, namespace, p.storageClassName)
+	if planID == "ha-postgresql-10-2" {
+		pg.Spec.Replicas = types.Int32P(3)
+	}
+
+	if _, err := p.extClient.Postgreses(pg.Namespace).Create(pg); err != nil {
 		return err
 	}
 
 	return nil
-	// return waitForPostgreSQLBeReady(p.extClient, name, namespace)
 }
 
 func (p PostgreSQLProvider) Delete(name, namespace string) error {
@@ -67,7 +76,7 @@ func (p PostgreSQLProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	if pgsql.Spec.DoNotPause {
+	if pgsql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
 		if err := patchPostgreSQL(p.extClient, pgsql); err != nil {
 			return err
 		}
@@ -77,12 +86,7 @@ func (p PostgreSQLProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
-	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
-		return err
-	}
-
-	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
+	return nil
 }
 
 func (p PostgreSQLProvider) Bind(
@@ -90,35 +94,51 @@ func (p PostgreSQLProvider) Bind(
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
+	var (
+		user, password   string
+		connScheme, host string
+		port             int32
+	)
+
+	connScheme = "postgresql"
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
-	svcPort := service.Spec.Ports[0]
+	for _, p := range service.Spec.Ports {
+		if p.Name == "api" {
+			port = p.Port
+			break
+		}
+	}
 
-	host := buildHostFromService(service)
+	host = buildHostFromService(service)
+	//host := service.Spec.ExternalIPs[0]
 
-	database := "postgress"
+	database := "postgres"
 	if dbVal, ok := params["pgsqlDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
-	var user, password string
 	userVal, ok := params["pgsqlUser"]
 	if ok {
 		user = userVal.(string)
 	} else {
-		user = "postgres"
-
-		rootPassword, ok := data["POSTGRES_PASSWORD"]
+		pgUser, ok := data["POSTGRES_USER"]
 		if !ok {
-			return nil, errors.Errorf("pgsql-password not found in secret keys")
+			return nil, errors.Errorf("POSTGRES_USER not found in secret keys")
 		}
-		password = rootPassword.(string)
+		user = pgUser.(string)
 	}
 
+	pgPassword, ok := data["POSTGRES_PASSWORD"]
+	if !ok {
+		return nil, errors.Errorf("POSTGRES_PASSWORD not found in secret keys")
+	}
+	password = pgPassword.(string)
+
 	creds := Credentials{
-		Protocol: svcPort.Name,
-		Port:     svcPort.Port,
+		Protocol: connScheme,
+		Port:     port,
 		Host:     host,
 		Username: user,
 		Password: password,
