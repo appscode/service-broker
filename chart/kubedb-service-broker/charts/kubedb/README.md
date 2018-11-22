@@ -48,18 +48,29 @@ The following table lists the configurable parameters of the KubeDB chart and th
 | `replicaCount`                      | Number of kubedb operator replicas to create (only 1 is supported) | `1`                |
 | `kubedb.registry`                   | Docker registry used to pull Kubedb operator image                 | `kubedb`           |
 | `kubedb.repository`                 | Kubedb operator container image                                    | `operator`         |
-| `kubedb.tag`                        | Kubedb operator container image tag                                | `0.8.0`     |
+| `kubedb.tag`                        | Kubedb operator container image tag                                | `0.9.0-rc.0`     |
+| `cleaner.registry`                  | Docker registry used to pull Webhook cleaner image                 | `appscode`         |
+| `cleaner.repository`                | Webhook cleaner container image                                    | `kubectl`          |
+| `cleaner.tag`                       | Webhook cleaner container image tag                                | `v1.11`            |
 | `imagePullSecrets`                  | Specify image pull secrets                                         | `nil` (does not add image pull secrets to deployed pods) |
 | `imagePullPolicy`                   | Image pull policy                                                  | `IfNotPresent`     |
 | `criticalAddon`                     | If true, installs KubeDB operator as critical addon                | `false`            |
+| `logLevel`                          | Log level for operator                                             | `3`                |
+| `affinity`                          | Affinity rules for pod assignment                                  | `{}`               |
+| `annotations`                       | Annotations applied to operator pod(s)                             | `{}`               |
+| `nodeSelector`                      | Node labels for pod assignment                                     | `{}`               |
+| `tolerations`                       | Tolerations used pod assignment                                    | `{}`               |
 | `rbac.create`                       | If `true`, create and use RBAC resources                           | `true`             |
 | `serviceAccount.create`             | If `true`, create a new service account                            | `true`             |
 | `serviceAccount.name`               | Service account to be used. If not set and `serviceAccount.create` is `true`, a name is generated using the fullname template | `` |
 | `apiserver.groupPriorityMinimum`    | The minimum priority the group should have.                        | 10000              |
 | `apiserver.versionPriority`         | The ordering of this API inside of the group.                      | 15                 |
-| `apiserver.enableValidatingWebhook` | Enable validating webhooks for KubeDB CRDs                         | false              |
-| `apiserver.enableMutatingWebhook`   | Enable mutating webhooks for KubeDB CRDs                           | false              |
-| `apiserver.ca`                      | CA certificate used by main Kubernetes api server                  | ``                 |
+| `apiserver.enableValidatingWebhook` | Enable validating webhooks for KubeDB CRDs                         | `true`             |
+| `apiserver.enableMutatingWebhook`   | Enable mutating webhooks for KubeDB CRDs                           | `true`             |
+| `apiserver.ca`                      | CA certificate used by main Kubernetes api server                  | `not-ca-cert`      |
+| `apiserver.disableStatusSubresource` | If true, disables status sub resource for crds. Otherwise enables based on Kubernetes version | `false`            |
+| `apiserver.bypassValidatingWebhookXray` | If true, bypasses validating webhook xray checks               | `false`            |
+| `apiserver.useKubeapiserverFqdnForAks`  | If true, uses kube-apiserver FQDN for AKS cluster to workaround https://github.com/Azure/AKS/issues/522 | `true`             |
 | `enableAnalytics`                   | Send usage events to Google Analytics                              | `true`             |
 
 

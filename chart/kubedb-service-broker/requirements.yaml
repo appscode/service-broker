@@ -3,3 +3,7 @@ dependencies:
     version: "*"
     condition: kubedb.enabled
     repository: file://charts/kubedb
+  - name: kubedb-catalog
+      version: "*"
+      condition: kubedbCatalog.enabled
+      repository: file://charts/kubedb-catalog

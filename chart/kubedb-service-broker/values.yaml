@@ -29,5 +29,14 @@ resources: {}
   # requests:
   #  cpu: 100m
   #  memory: 128Mi
+
+# enable kubedb
 kubedb:
   enabled: true
+
+# enable kubedb-catalog
+kubedbCatalog:
+  path: /etc/config/catalogs
+  enabled: true
+
+storageClass: standard

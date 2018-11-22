@@ -31,10 +31,22 @@ spec:
           args:
             - --port
             - "{{ .Values.containerPort }}"
+            - --catalog-path
+            - "{{ .Values.kubedbCatalog.path }}"
             - -v
             - "{{ .Values.logLabel }}"
             - -logtostderr
+            - --storage-class
+            - "{{ .Values.storageClass }}"
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
+          volumeMounts:
+            - mountPath: "{{ .Values.kubedbCatalog.path }}"
+              name: catalogs-volume
+      volumes:
+        - name: catalogs-volume
+          configMap:
+            name: catalogs
+            defaultMode: 511
