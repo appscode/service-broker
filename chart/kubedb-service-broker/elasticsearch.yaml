@@ -1,0 +1,17 @@
+id: elasticsearch
+name: elasticsearch
+description: The example service from the ElasticSearch database!
+bindable: true
+planupdatable: true
+metadata:
+  displayName: Example ElasticSearch DB service
+  imageUrl: https://d22e4d61ky6061.cloudfront.net/sites/default/files/Elasticsearch_1.png
+plans:
+- id: elasticsearch-6-3
+  name: default
+  description: The default plan for the 'elasticsearch' service
+  free: true
+- id: elasticsearch-cluster-6-3
+  name: elasticsearch-cluster
+  description: This plan is for getting a simple elasticsearch cluster under the 'elasticsearch' service
+  free: true

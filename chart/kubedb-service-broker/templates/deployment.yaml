@@ -32,7 +32,7 @@ spec:
             - --port
             - "{{ .Values.containerPort }}"
             - --catalog-path
-            - "{{ .Values.kubedbCatalog.path }}"
+            - "{{ .Values.catalogPath }}"
             - -v
             - "{{ .Values.logLabel }}"
             - -logtostderr
@@ -43,10 +43,10 @@ spec:
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
           volumeMounts:
-            - mountPath: "{{ .Values.kubedbCatalog.path }}"
+            - mountPath: "{{ .Values.catalogPath }}"
               name: catalogs-volume
       volumes:
         - name: catalogs-volume
           configMap:
-            name: catalogs
+            name: {{ template "kubedb-service-broker.fullname" . }}
             defaultMode: 511

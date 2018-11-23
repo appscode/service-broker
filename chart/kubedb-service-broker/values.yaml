@@ -36,7 +36,10 @@ kubedb:
 
 # enable kubedb-catalog
 kubedbCatalog:
-  path: /etc/config/catalogs
   enabled: true
 
+# The path where catalogs for different database service plans are stored
+catalogPath: /etc/config/catalogs
+
+# storageClassName for database storage
 storageClass: standard

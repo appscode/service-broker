@@ -27,8 +27,8 @@ spec:
         - "service-broker"
         args:
         - --port
-#        - ${PORT}
-        - "8080"
+        - "${PORT}"
+#        - "8080"
         - --catalog-path
         - ${CATALOG_PATH}
         - -v
