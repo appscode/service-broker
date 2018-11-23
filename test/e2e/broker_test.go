@@ -49,6 +49,14 @@ var _ = Describe("[service-catalog] ClusterServiceBroker", func() {
 			Create(NewServiceBrokerClusterRoleBinding(brokerName, brokerNamespace))
 		Expect(err).NotTo(HaveOccurred())
 
+		By("Creating configmap for catalogs")
+		cm, err := NewCatalogConfigMap(brokerName, brokerNamespace)
+		Expect(err).NotTo(HaveOccurred())
+		_, err = f.KubeClient.CoreV1().
+			ConfigMaps(brokerNamespace).
+			Create(cm)
+		Expect(err).NotTo(HaveOccurred())
+
 		By("Creating a service broker deployment")
 		deploy, err := f.KubeClient.AppsV1().
 			Deployments(brokerNamespace).

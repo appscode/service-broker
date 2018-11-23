@@ -2,45 +2,34 @@ package v1alpha1
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/appscode/kube-mon/api"
+	"github.com/appscode/go/types"
 	crdutils "github.com/appscode/kutil/apiextensions/v1beta1"
+	meta_util "github.com/appscode/kutil/meta"
+	"github.com/kubedb/apimachinery/apis"
+	"github.com/kubedb/apimachinery/apis/kubedb"
+	apps "k8s.io/api/apps/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
+	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
+
+var _ apis.ResourceInfo = &Postgres{}
 
 func (p Postgres) OffshootName() string {
 	return p.Name
 }
 
-func (p Postgres) OffshootLabels() map[string]string {
+func (p Postgres) OffshootSelectors() map[string]string {
 	return map[string]string{
 		LabelDatabaseName: p.Name,
 		LabelDatabaseKind: ResourceKindPostgres,
 	}
 }
 
-func (p Postgres) StatefulSetLabels() map[string]string {
-	labels := p.OffshootLabels()
-	for key, val := range p.Labels {
-		if !strings.HasPrefix(key, GenericKey+"/") && !strings.HasPrefix(key, PostgresKey+"/") {
-			labels[key] = val
-		}
-	}
-	return labels
+func (p Postgres) OffshootLabels() map[string]string {
+	return meta_util.FilterKeys(GenericKey, p.OffshootSelectors(), p.Labels)
 }
-
-func (p Postgres) StatefulSetAnnotations() map[string]string {
-	annotations := make(map[string]string)
-	for key, val := range p.Annotations {
-		if !strings.HasPrefix(key, GenericKey+"/") && !strings.HasPrefix(key, PostgresKey+"/") {
-			annotations[key] = val
-		}
-	}
-	return annotations
-}
-
-var _ ResourceInfo = &Postgres{}
 
 func (p Postgres) ResourceShortCode() string {
 	return ResourceCodePostgres
@@ -62,20 +51,48 @@ func (p Postgres) ServiceName() string {
 	return p.OffshootName()
 }
 
-func (p Postgres) ServiceMonitorName() string {
+type postgresApp struct {
+	*Postgres
+}
+
+func (r postgresApp) Name() string {
+	return fmt.Sprintf("kubedb:%s:%s:%s", ResourceSingularPostgres, r.Postgres.Namespace, r.Postgres.Name)
+}
+
+func (r postgresApp) Type() appcat.AppType {
+	return appcat.AppType(fmt.Sprintf("%s/%s", kubedb.GroupName, ResourceSingularPostgres))
+}
+
+func (r Postgres) AppBindingMeta() appcat.AppBindingMeta {
+	return &postgresApp{&r}
+}
+
+type postgresStatsService struct {
+	*Postgres
+}
+
+func (p postgresStatsService) GetNamespace() string {
+	return p.Postgres.GetNamespace()
+}
+
+func (p postgresStatsService) ServiceName() string {
+	return p.OffshootName() + "-stats"
+}
+
+func (p postgresStatsService) ServiceMonitorName() string {
 	return fmt.Sprintf("kubedb-%s-%s", p.Namespace, p.Name)
 }
 
-func (p Postgres) Path() string {
-	return fmt.Sprintf("/kubedb.com/v1alpha1/namespaces/%s/%s/%s/metrics", p.Namespace, p.ResourcePlural(), p.Name)
+func (p postgresStatsService) Path() string {
+	return "/metrics"
 }
 
-func (p Postgres) Scheme() string {
+func (p postgresStatsService) Scheme() string {
 	return ""
 }
 
-func (p *Postgres) StatsAccessor() api.StatsAccessor {
-	return p
+func (p Postgres) StatsService() mona.StatsAccessor {
+	return &postgresStatsService{&p}
 }
 
 func (p *Postgres) GetMonitoringVendor() string {
@@ -96,6 +113,7 @@ func (p Postgres) CustomResourceDefinition() *apiextensions.CustomResourceDefini
 		Singular:      ResourceSingularPostgres,
 		Kind:          ResourceKindPostgres,
 		ShortNames:    []string{ResourceCodePostgres},
+		Categories:    []string{"datastore", "kubedb", "appscode", "all"},
 		ResourceScope: string(apiextensions.NamespaceScoped),
 		Versions: []apiextensions.CustomResourceDefinitionVersion{
 			{
@@ -110,7 +128,7 @@ func (p Postgres) CustomResourceDefinition() *apiextensions.CustomResourceDefini
 		SpecDefinitionName:      "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.Postgres",
 		EnableValidation:        true,
 		GetOpenAPIDefinitions:   GetOpenAPIDefinitions,
-		EnableStatusSubresource: EnableStatusSubresource,
+		EnableStatusSubresource: apis.EnableStatusSubresource,
 		AdditionalPrinterColumns: []apiextensions.CustomResourceColumnDefinition{
 			{
 				Name:     "Version",
@@ -128,5 +146,85 @@ func (p Postgres) CustomResourceDefinition() *apiextensions.CustomResourceDefini
 				JSONPath: ".metadata.creationTimestamp",
 			},
 		},
-	}, setNameSchema)
+	}, apis.SetNameSchema)
+}
+
+func (p *Postgres) SetDefaults() {
+	if p == nil {
+		return
+	}
+	p.Spec.SetDefaults()
+}
+
+func (p *PostgresSpec) SetDefaults() {
+	if p == nil {
+		return
+	}
+
+	// migrate first to avoid incorrect defaulting
+	p.BackupSchedule.SetDefaults()
+	if p.DoNotPause {
+		p.TerminationPolicy = TerminationPolicyDoNotTerminate
+		p.DoNotPause = false
+	}
+	if len(p.NodeSelector) > 0 {
+		p.PodTemplate.Spec.NodeSelector = p.NodeSelector
+		p.NodeSelector = nil
+	}
+	if p.Resources != nil {
+		p.PodTemplate.Spec.Resources = *p.Resources
+		p.Resources = nil
+	}
+	if p.Affinity != nil {
+		p.PodTemplate.Spec.Affinity = p.Affinity
+		p.Affinity = nil
+	}
+	if len(p.SchedulerName) > 0 {
+		p.PodTemplate.Spec.SchedulerName = p.SchedulerName
+		p.SchedulerName = ""
+	}
+	if len(p.Tolerations) > 0 {
+		p.PodTemplate.Spec.Tolerations = p.Tolerations
+		p.Tolerations = nil
+	}
+	if len(p.ImagePullSecrets) > 0 {
+		p.PodTemplate.Spec.ImagePullSecrets = p.ImagePullSecrets
+		p.ImagePullSecrets = nil
+	}
+
+	// perform defaulting
+	if p.StorageType == "" {
+		p.StorageType = StorageTypeDurable
+	}
+	if p.UpdateStrategy.Type == "" {
+		p.UpdateStrategy.Type = apps.RollingUpdateStatefulSetStrategyType
+	}
+	if p.TerminationPolicy == "" {
+		if p.StorageType == StorageTypeEphemeral {
+			p.TerminationPolicy = TerminationPolicyDelete
+		} else {
+			p.TerminationPolicy = TerminationPolicyPause
+		}
+	}
+	if p.Init != nil && p.Init.PostgresWAL != nil && p.Init.PostgresWAL.PITR != nil {
+		pitr := p.Init.PostgresWAL.PITR
+
+		if pitr.TargetInclusive == nil {
+			pitr.TargetInclusive = types.BoolP(true)
+		}
+
+		p.Init.PostgresWAL.PITR = pitr
+	}
+}
+
+func (e *PostgresSpec) GetSecrets() []string {
+	if e == nil {
+		return nil
+	}
+
+	var secrets []string
+	if e.DatabaseSecret != nil {
+		secrets = append(secrets, e.DatabaseSecret.SecretName)
+	}
+	return secrets
 }

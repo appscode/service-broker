@@ -1,0 +1,13 @@
+id: mysql
+name: mysql
+description: The example service from the MySQL database!
+bindable: true
+planupdatable: true
+metadata:
+  displayName: Example MySQL DB service
+  imageUrl: http://www.cgtechworld.in/images/Training/technologies/mysql.png
+plans:
+- id: mysql-8-0
+  name: default
+  description: The default plan for the 'mysql' service
+  free: true

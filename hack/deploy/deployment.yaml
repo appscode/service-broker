@@ -27,11 +27,25 @@ spec:
         - "service-broker"
         args:
         - --port
-        - "8080"
+        - "${PORT}"
+#        - "8080"
+        - --catalog-path
+        - ${CATALOG_PATH}
         - -v
         - "5"
         - -logtostderr
         - --storage-class
-        - $STORAGE_CLASS
+        - ${STORAGE_CLASS}
         ports:
         - containerPort: 8080
+        volumeMounts:
+        - mountPath: "${CATALOG_PATH}"
+          name: catalogs-volume
+      volumes:
+      - name: catalogs-volume
+        configMap:
+          name: catalogs
+          defaultMode: 511
+#          items:
+#          - key: mysql.yaml
+#            path: mysql

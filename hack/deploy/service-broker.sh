@@ -8,7 +8,7 @@ pushd $REPO_ROOT
 source "$REPO_ROOT/hack/libbuild/common/lib.sh"
 detect_tag ''
 
-export DOCKER_REGISTRY=${DOCKER_REGISTRY:-shudipta}
+export DOCKER_REGISTRY=${DOCKER_REGISTRY:-kubedb}
 export IMG=service-broker
 export TAG=${TAG:-latest}
 export ONESSL=
@@ -19,8 +19,11 @@ export SERVICE_ACCOUNT="$NAME"
 export APP=service-broker
 export IMAGE_PULL_POLICY=IfNotPresent
 export IMAGE_PULL_SECRET=
+export PORT=8080
+export CATALOG_PATH="/etc/config/catalogs"
 export STORAGE_CLASS=standard
 
+export KUBEDB_VERSION="0.9.0-rc.0"
 export KUBEDB_ENV=${KUBEDB_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/"
 if [ "$KUBEDB_ENV" = "dev" ]; then
@@ -48,6 +51,8 @@ show_help() {
     echo "-n, --namespace=NAMESPACE     specify namespace (default: $NAMESPACE)"
     echo "    --docker-registry         docker registry used to pull stash images (default: $DOCKER_REGISTRY)"
     echo "    --image-pull-secret       name of secret used to pull service broker image"
+    echo "    --port                    port number at which the broker will expose"
+    echo "    --catalogPath             the path of catalogs for different service plans"
     echo "    --storage-class           name of the storage-class for database storage"
 }
 
@@ -84,6 +89,14 @@ while test $# -gt 0; do
             export IMAGE_PULL_SECRET="name: '$secret'"
             shift
             ;;
+        --port*)
+            export PORT=`echo $1 | sed -e 's/^[^=]*=//g'`
+            shift
+            ;;
+        --catalogPath*)
+            export CATALOG_PATH=`echo $1 | sed -e 's/^[^=]*=//g'`
+            shift
+            ;;
         --storage-class*)
             export STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
@@ -98,17 +111,19 @@ done
 echo "DOCKER_REGISTRY=$DOCKER_REGISTRY"
 echo "IMG=$IMG"
 echo "TAG=$TAG"
-echo "ONESSL=$ONESSL"
+#echo "ONESSL=$ONESSL"
 echo "NAME=$NAME"
 echo "NAMESPACE=$NAMESPACE"
 echo "SERVICE_ACCOUNT=$SERVICE_ACCOUNT"
 echo "APP=$APP"
 echo "IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY"
 echo "IMAGE_PULL_SECRET=$IMAGE_PULL_SECRET"
+echo "PORT=$PORT"
+echo "CATALOG_PATH=$CATALOG_PATH"
 echo "STORAGE_CLASS=$STORAGE_CLASS"
 echo ""
-echo "KUBEDB_ENV=$KUBEDB_ENV"
-echo "SCRIPT_LOCATION=$SCRIPT_LOCATION"
+
+echo "KUBEDB_VERSION=$KUBEDB_VERSION"
 echo ""
 
 build() {
@@ -135,7 +150,7 @@ EOL
 }
 
 install_kubedb() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.8.0/hack/deploy/kubedb.sh| bash
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/${KUBEDB_VERSION}/hack/deploy/kubedb.sh| bash
 }
 
 ensure_onessl() {
@@ -144,12 +159,23 @@ ensure_onessl() {
     else
         # ref: https://stackoverflow.com/a/27776822/244009
         case "$(uname -s)" in
-            Linux)
-                curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.3.0/onessl-linux-amd64
+            Darwin)
+                curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.8.0/onessl-darwin-amd64
                 chmod +x onessl
                 export ONESSL=./onessl
                 ;;
 
+            Linux)
+                curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.8.0/onessl-linux-amd64
+                chmod +x onessl
+                export ONESSL=./onessl
+                ;;
+
+            CYGWIN* | MINGW32* | MSYS*)
+                curl -fsSL -o onessl.exe https://github.com/kubepack/onessl/releases/download/0.8.0/onessl-windows-amd64.exe
+                chmod +x onessl.exe
+                export ONESSL=./onessl.exe
+                ;;
             *)
                 echo 'other OS'
                 ;;
@@ -169,6 +195,8 @@ deploy_service_broker() {
         kubectl create ns $NAMESPACE
     fi
 
+    echo "$PWD"
+    kubectl create configmap catalogs --namespace $NAMESPACE --from-file=hack/deploy/catalogs
     ${SCRIPT_LOCATION}hack/deploy/deployment.yaml | $ONESSL envsubst | kubectl apply -f -
     ${SCRIPT_LOCATION}hack/deploy/service.yaml | $ONESSL envsubst | kubectl apply -f -
     ${SCRIPT_LOCATION}hack/deploy/rbac.yaml | $ONESSL envsubst | kubectl apply -f -
@@ -193,9 +221,11 @@ run() {
 }
 
 uninstall() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.8.0/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/${KUBEDB_VERSION}/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
     echo ""
 
+    # delete configmap
+    kubectl delete configmap catalogs --namespace $NAMESPACE
     # delete service-broker
     kubectl delete service -l app=$APP --namespace $NAMESPACE
     kubectl delete deployment -l app=$APP --namespace $NAMESPACE

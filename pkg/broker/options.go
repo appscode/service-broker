@@ -18,7 +18,9 @@ type Options struct {
 // It is called after the flags are added for the skeleton and before flag
 // parse is called.
 func AddFlags(o *Options) {
-	flag.StringVar(&o.CatalogPath, "catalogPath", "", "The path to the catalog")
+	flag.StringVar(&o.CatalogPath, "catalog-path", "/etc/config/catalogs", "The path to the catalog")
 	flag.StringVar(&o.KubeConfig, "kube-config", "", "specify the kube config path to be used")
 	flag.BoolVar(&o.Async, "async", false, "Indicates whether the broker is handling the requests asynchronously.")
+	flag.StringVar(&o.StorageClass, "storage-class", "standard",
+		"name of the storage-class for database storage")
 }

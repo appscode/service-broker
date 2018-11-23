@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type ElasticsearchProvider struct {
@@ -25,16 +26,16 @@ func NewElasticsearchProvider(config *rest.Config, storageClassName string) Prov
 	}
 }
 
-func NewElasticsearchObj(name, namespace, storageClassName string) *api.Elasticsearch {
+func NewElasticsearch(name, namespace, storageClassName string) *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: api.ElasticsearchSpec{
-			Version:    jsonTypes.StrYo("5.6"),
-			DoNotPause: true,
-			Replicas:   types.Int32P(1),
+			Version:   jsonTypes.StrYo("6.3-v1"),
+			Replicas:  types.Int32P(1),
+			EnableSSL: true,
 			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
@@ -43,20 +44,91 @@ func NewElasticsearchObj(name, namespace, storageClassName string) *api.Elastics
 				},
 				StorageClassName: types.StringP(storageClassName),
 			},
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
+			},
 		},
 	}
 }
 
-func (p ElasticsearchProvider) Create(name, namespace string) error {
+func NewElasticsearchCluster(name, namespace, storageClassName string) *api.Elasticsearch {
+	return &api.Elasticsearch{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: api.ElasticsearchSpec{
+			Version:           jsonTypes.StrYo("6.3-v1"),
+			EnableSSL:         true,
+			StorageType:       api.StorageTypeDurable,
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
+			},
+			Topology: &api.ElasticsearchClusterTopology{
+				Master: api.ElasticsearchNode{
+					Prefix:   "master",
+					Replicas: types.Int32P(1),
+					Storage: &corev1.PersistentVolumeClaimSpec{
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("1Gi"),
+							},
+						},
+						StorageClassName: types.StringP(storageClassName),
+					},
+				},
+				Data: api.ElasticsearchNode{
+					Prefix:   "data",
+					Replicas: types.Int32P(2),
+					Storage: &corev1.PersistentVolumeClaimSpec{
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("1Gi"),
+							},
+						},
+						StorageClassName: types.StringP(storageClassName),
+					},
+				},
+				Client: api.ElasticsearchNode{
+					Prefix:   "client",
+					Replicas: types.Int32P(1),
+					Storage: &corev1.PersistentVolumeClaimSpec{
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("50Mi"),
+							},
+						},
+						StorageClassName: types.StringP(storageClassName),
+					},
+				},
+			},
+		},
+	}
+}
+
+func (p ElasticsearchProvider) Create(planID, name, namespace string) error {
 	glog.Infof("Creating elasticsearch obj %q in namespace %q...", name, namespace)
-	es := NewElasticsearchObj(name, namespace, p.storageClassName)
+
+	var es *api.Elasticsearch
+
+	switch planID {
+	case "elasticsearch-6-3":
+		es = NewElasticsearch(name, namespace, p.storageClassName)
+	case "elasticsearch-cluster-6-3":
+		es = NewElasticsearchCluster(name, namespace, p.storageClassName)
+	}
 
 	if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForElasticsearchBeReady(p.extClient, name, namespace)
 }
 
 func (p ElasticsearchProvider) Delete(name, namespace string) error {
@@ -67,7 +139,7 @@ func (p ElasticsearchProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	if es.Spec.DoNotPause {
+	if es.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
 		if err := patchElasticsearch(p.extClient, es); err != nil {
 			return err
 		}
@@ -77,12 +149,7 @@ func (p ElasticsearchProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
-	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
-		return err
-	}
-
-	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
+	return nil
 }
 
 func (p ElasticsearchProvider) Bind(
@@ -90,34 +157,64 @@ func (p ElasticsearchProvider) Bind(
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
+	var (
+		user, password   string
+		connScheme, host string
+		port             int32
+		rootCert         string
+	)
+
+	// todo: connScheme should be set depending on es.spec.EnableSSL, once we implement parametes passing
+	connScheme = "https"
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
-	svcPort := service.Spec.Ports[0]
+	for _, p := range service.Spec.Ports {
+		if p.Name == api.ElasticsearchRestPortName {
+			port = p.Port
+			break
+		}
+	}
 
-	host := buildHostFromService(service)
+	host = buildHostFromService(service)
+	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["esDatabase"]; ok {
 		database = dbVal.(string)
 	}
+	userVal, ok := params["esUser"]
 
-	var user, password string
+	if ok {
+		user = userVal.(string)
+	} else {
+		adminUser, ok := data["ADMIN_USERNAME"]
+		if !ok {
+			return nil, errors.Errorf("ADMIN_USERNAME not found in secret keys")
+		}
+		user = adminUser.(string)
+	}
 
-	user = "admin"
-	rootPassword, ok := data["ADMIN_PASSWORD"]
+	adminPassword, ok := data["ADMIN_PASSWORD"]
 	if !ok {
 		return nil, errors.Errorf("ADMIN_PASSWORD not found in secret keys")
 	}
-	password = rootPassword.(string)
+	password = adminPassword.(string)
+
+	cert, ok := data["root.pem"]
+	if !ok {
+		return nil, errors.Errorf("root certificate not found in secret keys")
+	}
+	rootCert = cert.(string)
 
 	creds := Credentials{
-		Protocol: svcPort.Name,
-		Port:     svcPort.Port,
+		Protocol: connScheme,
+		Port:     port,
 		Host:     host,
 		Username: user,
 		Password: password,
 		Database: database,
+		RootCert: rootCert,
 	}
 	creds.URI = buildURI(creds)
 

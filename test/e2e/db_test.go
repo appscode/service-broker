@@ -50,6 +50,14 @@ var _ = Describe("[service-catalog]", func() {
 			Create(NewServiceBrokerClusterRoleBinding(brokerName, brokerNamespace))
 		Expect(err).NotTo(HaveOccurred())
 
+		By("Creating configmap for catalogs")
+		cm, err := NewCatalogConfigMap(brokerName, brokerNamespace)
+		Expect(err).NotTo(HaveOccurred())
+		_, err = f.KubeClient.CoreV1().
+			ConfigMaps(brokerNamespace).
+			Create(cm)
+		Expect(err).NotTo(HaveOccurred())
+
 		By("Creating a service broker deployment")
 		deploy, err := f.KubeClient.AppsV1().
 			Deployments(brokerNamespace).
@@ -75,7 +83,7 @@ var _ = Describe("[service-catalog]", func() {
 		test = func() {
 			By("Making sure the ServiceBroker does not exist before creating it")
 			if _, err := f.ServiceCatalogClient.ServicecatalogV1beta1().ClusterServiceBrokers().Get(brokerName, metav1.GetOptions{}); err == nil {
-				By("deleting the ServiceBroker if it does exist")
+				By("deleting the ServiceBroker if it exists")
 				err = f.ServiceCatalogClient.ServicecatalogV1beta1().ClusterServiceBrokers().Delete(brokerName, nil)
 				Expect(err).NotTo(HaveOccurred(), "failed to delete the broker")
 
@@ -257,6 +265,9 @@ var _ = Describe("[service-catalog]", func() {
 		By("Deleting the custerrolebinding")
 		err = f.KubeClient.RbacV1().ClusterRoleBindings().Delete(brokerName, nil)
 		Expect(err).NotTo(HaveOccurred())
+		By("Deleting the configmap for catalog")
+		err = f.KubeClient.CoreV1().ConfigMaps(brokerNamespace).Delete(brokerName, nil)
+		Expect(err).NotTo(HaveOccurred())
 		By("Deleting the service broker deployment")
 		err = f.KubeClient.AppsV1().Deployments(brokerNamespace).Delete(brokerName, nil)
 		Expect(err).NotTo(HaveOccurred())
@@ -265,12 +276,11 @@ var _ = Describe("[service-catalog]", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Context("Test MySQL", func() {
+	Context("Test MySQL broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mysql"
 			serviceclassID = "mysql"
-			serviceplanName = "default"
-			serviceplanID = "mysql-5-7"
+
 			instanceName = "test-mysqldb"
 			bindingName = "test-mysql-binding"
 			bindingsecretName = "test-mysql-secret"
@@ -281,17 +291,18 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the mysql broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "mysql-8-0"
 			test()
 		})
 	})
 
-	Context("Test PostgreSQL", func() {
+	Context("Test PostgreSQL broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "postgresql"
 			serviceclassID = "postgresql"
-			serviceplanName = "default"
-			serviceplanID = "postgresql-9-6"
+
 			instanceName = "test-postgresqldb"
 			bindingName = "test-postgresql-binding"
 			bindingsecretName = "test-postgresql-secret"
@@ -303,17 +314,24 @@ var _ = Describe("[service-catalog]", func() {
 
 		})
 
-		It("Runs through the postgresql broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "postgresql-10-2"
+			test()
+		})
+
+		It("Runs through the ha-postgresql plan", func() {
+			serviceplanName = "ha-postgresql"
+			serviceplanID = "ha-postgresql-10-2"
 			test()
 		})
 	})
 
-	Context("Test Elasticsearch", func() {
+	Context("Test Elasticsearch broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "elasticsearch"
 			serviceclassID = "elasticsearch"
-			serviceplanName = "default"
-			serviceplanID = "elasticsearch-5-6"
+
 			instanceName = "test-elasticsearchdb"
 			bindingName = "test-elasticsearch-binding"
 			bindingsecretName = "test-elasticsearch-secret"
@@ -325,17 +343,24 @@ var _ = Describe("[service-catalog]", func() {
 
 		})
 
-		It("Runs through the elasticsearch broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "elasticsearch-6-3"
+			test()
+		})
+
+		It("Runs through the elasticsearch-cluster plan", func() {
+			serviceplanName = "elasticsearch-cluster"
+			serviceplanID = "elasticsearch-cluster-6-3"
 			test()
 		})
 	})
 
-	Context("Test MongoDb", func() {
+	Context("Test MongoDb broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mongodb"
 			serviceclassID = "mongodb"
-			serviceplanName = "default"
-			serviceplanID = "mongodb-3-4"
+
 			instanceName = "test-mongodb"
 			bindingName = "test-mongodb-binding"
 			bindingsecretName = "test-mongodb-secret"
@@ -346,17 +371,24 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the mongodb broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "mongodb-3-6"
+			test()
+		})
+
+		It("Runs through the mongodb-cluster plan", func() {
+			serviceplanName = "mongodb-cluster"
+			serviceplanID = "mongodb-cluster-3-6"
 			test()
 		})
 	})
 
-	Context("Test Redis", func() {
+	Context("Test Redis broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "redis"
 			serviceclassID = "redis"
-			serviceplanName = "default"
-			serviceplanID = "redis-4-0"
+
 			instanceName = "test-redisdb"
 			bindingName = "test-redis-binding"
 			bindingsecretName = "test-redis-secret"
@@ -367,17 +399,18 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the redis broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "redis-4-0"
 			test()
 		})
 	})
 
-	Context("Test Memcached", func() {
+	Context("Test Memcached broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "memcached"
 			serviceclassID = "memcached"
-			serviceplanName = "default"
-			serviceplanID = "memcached-1-5-4"
+
 			instanceName = "test-memcachedb"
 			bindingName = "test-memcached-binding"
 			bindingsecretName = "test-memcached-secret"
@@ -388,7 +421,9 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the memcached broker", func() {
+		It("Runs through the default plan", func() {
+			serviceplanName = "default"
+			serviceplanID = "memcached-1-5-4"
 			test()
 		})
 	})

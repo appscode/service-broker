@@ -1,0 +1,17 @@
+id: mongodb
+name: mongodb
+description: The example service from the MongoDB database!
+bindable: true
+planupdatable: true
+metadata:
+  displayName: Example Mongo DB service
+  imageUrl: https://www.vectorlogo.zone/logos/mongodb/mongodb-card.png
+plans:
+- id: mongodb-3-6
+  name: default
+  description: The default plan for the 'mongodb' service
+  free: true
+- id: mongodb-cluster-3-6
+  name: mongodb-cluster
+  description: This plan is for getting a simple mongodb cluster under the 'mongodb' service
+  free: true

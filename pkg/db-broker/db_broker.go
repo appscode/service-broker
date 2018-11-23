@@ -6,12 +6,16 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/pkg/errors"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"path/filepath"
 )
 
 const (
@@ -21,14 +25,17 @@ const (
 type Client struct {
 	namespace  string
 	kubeClient kubernetes.Interface
-	providers  map[string]Provider
+
+	catalogPath string
+	providers   map[string]Provider
 }
 
-func NewClient(kubeConfigPath, storageClassName string) *Client {
+func NewClient(catalogPath, kubeConfigPath, storageClassName string) *Client {
 	config := getConfig(kubeConfigPath)
 	return &Client{
-		kubeClient: loadInClusterClient(config),
-		namespace:  loadNamespace(kubeConfigPath),
+		kubeClient:  loadInClusterClient(config),
+		namespace:   loadNamespace(kubeConfigPath),
+		catalogPath: catalogPath,
 		providers: map[string]Provider{
 			"mysql":         NewMySQLProvider(config, storageClassName),
 			"postgresql":    NewPostgreSQLProvider(config, storageClassName),
@@ -75,18 +82,37 @@ func loadNamespace(kubeConfigPath string) string {
 	panic("could not detect current namespace")
 }
 
-func (c *Client) Provision(serviceID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
+func (c *Client) GetCatalog() ([]osb.Service, error) {
+	glog.Infoln("Listing services for catalog...")
+
+	services := []osb.Service{}
+	for providerName, _ := range c.providers {
+		out, err := ioutil.ReadFile(filepath.Join(c.catalogPath, fmt.Sprintf("%s.yaml", providerName)))
+		if err != nil {
+			return nil, err
+		}
+
+		service := osb.Service{}
+		if err = yaml.Unmarshal(out, &service); err != nil {
+			return nil, err
+		}
+		services = append(services, service)
+	}
+
+	glog.Infoln("Service list has been completed for catalog")
+	return services, nil
+}
+
+func (c *Client) Provision(serviceID, planID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
 	glog.Infof("getting provider %q", serviceID)
 	provider, ok := c.providers[serviceID]
 	if !ok {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	glog.Infof("creating %s obj %q in namespace %q", serviceID, dbObjName, namespace)
-	if err := provider.Create(dbObjName, c.namespace); err != nil {
+	if err := provider.Create(planID, dbObjName, c.namespace); err != nil {
 		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s", serviceID, dbObjName, namespace)
 	}
-	glog.Infoln("creation complete")
 
 	return nil
 }
@@ -108,31 +134,29 @@ func (c *Client) Bind(
 		return nil, err
 	}
 
+	secrets, err := c.kubeClient.CoreV1().Secrets(c.namespace).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			api.LabelDatabaseName: dbObjName,
+		}.String(),
+	})
 	data := make(map[string]interface{})
-	secret, err := c.kubeClient.CoreV1().Secrets(c.namespace).Get(dbObjName+"-auth", metav1.GetOptions{})
-	if err == nil {
+	for _, secret := range secrets.Items {
 		for key, value := range secret.Data {
 			data[key] = string(value)
-		}
-	} else {
-		if !apierrs.IsNotFound(err) {
-			return nil, err
 		}
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
+	var creds *Credentials
 	provider, ok := c.providers[serviceID]
 	if ok {
-		creds, err := provider.Bind(*service, params, data)
+		creds, err = provider.Bind(*service, params, data)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 		}
-		for k, v := range creds.ToMap() {
-			data[k] = v
-		}
 	}
 
-	return data, nil
+	return creds.ToMap(), nil
 }
 
 func (c *Client) Deprovision(serviceID, dbObjName string) error {
@@ -142,12 +166,9 @@ func (c *Client) Deprovision(serviceID, dbObjName string) error {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	fmt.Printf("deleting %s obj %q from namespace %q...", serviceID, dbObjName, c.namespace)
 	if err := provider.Delete(dbObjName, c.namespace); err != nil {
 		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, dbObjName, c.namespace)
 	}
-
-	glog.Infoln("deletion complete")
 
 	return nil
 }

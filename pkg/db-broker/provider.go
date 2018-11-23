@@ -9,7 +9,7 @@ import (
 
 type Provider interface {
 	Bind(service corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
-	Create(name, namespace string) error
+	Create(planID, name, namespace string) error
 	Delete(name, namespace string) error
 }
 
@@ -21,6 +21,7 @@ type Credentials struct {
 	Host     string `json:"host,omitempty"`
 	Port     int32  `json:"port,omitempty"`
 	Database string `json:"database,omitempty"`
+	RootCert string `json:"rootCert,omitempty"`
 }
 
 // ToMap converts the credentials into the OSB API credentials response

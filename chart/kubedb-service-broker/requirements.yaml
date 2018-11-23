@@ -1,5 +1,0 @@
-dependencies:
-  - name: kubedb
-    version: "*"
-    condition: kubedb.enabled
-    repository: file://charts/kubedb

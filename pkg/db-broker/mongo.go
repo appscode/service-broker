@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type MongoDbProvider struct {
@@ -25,38 +26,60 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMongoDbObj(name, namespace, storageClassName string) *api.MongoDB {
+func NewMongoDB(name, namespace, storageClassName string) *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: api.MongoDBSpec{
-			Version:    jsonTypes.StrYo("3.4"),
-			DoNotPause: true,
-			Replicas:   types.Int32P(1),
-			Storage: corev1.PersistentVolumeClaimSpec{
+			Version:     jsonTypes.StrYo("3.6-v1"),
+			StorageType: api.StorageTypeDurable,
+			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("1Gi"),
+						corev1.ResourceStorage: resource.MustParse("50Mi"),
 					},
 				},
 				StorageClassName: types.StringP(storageClassName),
+			},
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
 			},
 		},
 	}
 }
 
-func (p MongoDbProvider) Create(name, namespace string) error {
+func NewMongoDBCluster(name, namespace, storageClassName string) *api.MongoDB {
+	mg := NewMongoDB(name, namespace, storageClassName)
+	mg.Spec.Replicas = types.Int32P(3)
+	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
+		Name: "rs0",
+	}
+
+	return mg
+}
+
+func (p MongoDbProvider) Create(planID, name, namespace string) error {
 	glog.Infof("Creating mongodb obj %q in namespace %q...", name, namespace)
-	mg := NewMongoDbObj(name, namespace, p.storageClassName)
+
+	var mg *api.MongoDB
+
+	switch planID {
+	case "mongodb-3-6":
+		mg = NewMongoDB(name, namespace, p.storageClassName)
+	case "mongodb-cluster-3-6":
+		mg = NewMongoDBCluster(name, namespace, p.storageClassName)
+	}
 
 	if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForMongoDbBeReady(p.extClient, name, namespace)
 }
 
 func (p MongoDbProvider) Delete(name, namespace string) error {
@@ -67,7 +90,7 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	if mg.Spec.DoNotPause {
+	if mg.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
 		if err := patchMongoDb(p.extClient, mg); err != nil {
 			return err
 		}
@@ -77,12 +100,7 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
-	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
-		return err
-	}
-
-	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
+	return nil
 }
 
 func (p MongoDbProvider) Bind(
@@ -90,41 +108,51 @@ func (p MongoDbProvider) Bind(
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
+	var (
+		user, password   string
+		connScheme, host string
+		port             int32
+	)
+
+	connScheme = "mongodb"
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
-	svcPort := service.Spec.Ports[0]
+	for _, p := range service.Spec.Ports {
+		if p.Name == "db" {
+			port = p.Port
+			break
+		}
+	}
 
-	host := buildHostFromService(service)
+	host = buildHostFromService(service)
+	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mgDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
-	var user, password string
 	userVal, ok := params["mgUser"]
 	if ok {
 		user = userVal.(string)
-
-		passwordVal, ok := data["mgPassword"]
-		if !ok {
-			return nil, errors.Errorf("mongodb-password not found in secret keys")
-		}
-		password = passwordVal.(string)
 	} else {
-		user = "root"
-
-		rootPassword, ok := data["password"]
+		mgUser, ok := data["user"]
 		if !ok {
-			return nil, errors.Errorf("mongodb-root-password not found in secret keys")
+			return nil, errors.Errorf("user not found in secret keys")
 		}
-		password = rootPassword.(string)
+		user = mgUser.(string)
 	}
 
+	mgPassword, ok := data["password"]
+	if !ok {
+		return nil, errors.Errorf("password not found in secret keys")
+	}
+	password = mgPassword.(string)
+
 	creds := Credentials{
-		Protocol: svcPort.Name,
-		Port:     svcPort.Port,
+		Protocol: connScheme,
+		Port:     port,
 		Host:     host,
 		Username: user,
 		Password: password,

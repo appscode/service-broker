@@ -1,0 +1,13 @@
+id: memcached
+name: memcached
+description: The example service from the Memcache database!
+bindable: true
+planupdatable: true
+metadata:
+  displayName: Example Memcache DB service
+  imageUrl: https://www.veebimajutus.ee/media/uploads/5580065ce3dc0036053bdf2c.png
+plans:
+- id: memcached-1-5-4
+  name: default
+  description: The default plan for the 'memcached' service
+  free: true

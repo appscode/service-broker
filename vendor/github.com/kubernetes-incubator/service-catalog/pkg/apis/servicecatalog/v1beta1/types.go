@@ -136,13 +136,13 @@ type CommonServiceBrokerSpec struct {
 // This is an example of a whitelist on service externalName.
 // Goal: Only list Services with the externalName of FooService and BarService,
 // Solution: restrictions := ServiceCatalogRestrictions{
-// 		ServiceClass: ["externalName in (FooService, BarService)"]
+// 		ServiceClass: ["spec.externalName in (FooService, BarService)"]
 // }
 //
 // This is an example of a blacklist on service externalName.
 // Goal: Allow all services except the ones with the externalName of FooService and BarService,
 // Solution: restrictions := ServiceCatalogRestrictions{
-// 		ServiceClass: ["externalName notin (FooService, BarService)"]
+// 		ServiceClass: ["spec.externalName notin (FooService, BarService)"]
 // }
 //
 // This whitelists plans called "Demo", and blacklists (but only a single element in
@@ -150,7 +150,7 @@ type CommonServiceBrokerSpec struct {
 // Goal: Allow all plans with the externalName demo, but not AABBCC, and not a specific service by name,
 // Solution: restrictions := ServiceCatalogRestrictions{
 // 		ServiceClass: ["name!=AABBB-CCDD-EEGG-HIJK"]
-// 		ServicePlan: ["externalName in (Demo)", "name!=AABBCC"]
+// 		ServicePlan: ["spec.externalName in (Demo)", "name!=AABBCC"]
 // }
 //
 // CatalogRestrictions strings have a special format similar to Label Selectors,
@@ -171,8 +171,9 @@ type CommonServiceBrokerSpec struct {
 //   name - the value set to [Cluster]ServicePlan.Name
 //   spec.externalName - the value set to [Cluster]ServicePlan.Spec.ExternalName
 //   spec.externalID - the value set to [Cluster]ServicePlan.Spec.ExternalID
+//   spec.free - the value set to [Cluster]ServicePlan.Spec.Free
 //   spec.serviceClass.name - the value set to ServicePlan.Spec.ServiceClassRef.Name
-//   spec.clusterServiceClass.name - the vlaue set to ClusterServicePlan.Spec.ClusterServiceClassRef.Name
+//   spec.clusterServiceClass.name - the value set to ClusterServicePlan.Spec.ClusterServiceClassRef.Name
 type CatalogRestrictions struct {
 	// ServiceClass represents a selector for plans, used to filter catalog re-lists.
 	ServiceClass []string `json:"serviceClass,omitempty"`
@@ -212,7 +213,7 @@ const (
 )
 
 // ClusterServiceBrokerAuthInfo is a union type that contains information on
-// one of the authentication methods the the service catalog and brokers may
+// one of the authentication methods the service catalog and brokers may
 // support, according to the OpenServiceBroker API specification
 // (https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md).
 type ClusterServiceBrokerAuthInfo struct {
@@ -248,7 +249,7 @@ type ClusterBearerTokenAuthConfig struct {
 }
 
 // ServiceBrokerAuthInfo is a union type that contains information on
-// one of the authentication methods the the service catalog and brokers may
+// one of the authentication methods the service catalog and brokers may
 // support, according to the OpenServiceBroker API specification
 // (https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md).
 type ServiceBrokerAuthInfo struct {
@@ -513,6 +514,13 @@ type CommonServiceClassSpec struct {
 	// ServiceInstance provisioned from this ServiceClass will not
 	// work correctly.
 	Requires []string `json:"requires,omitempty"`
+
+	// DefaultProvisionParameters are default parameters passed to the broker
+	// when an instance of this class is provisioned. Any parameters defined on
+	// the plan and instance are merged with these defaults, with
+	// plan and then instance-defined parameters taking precedence over the class
+	// defaults.
+	DefaultProvisionParameters *runtime.RawExtension `json:"defaultProvisionParameters,omitempty"`
 }
 
 // ClusterServiceClassSpec represents the details about a ClusterServiceClass
@@ -633,6 +641,12 @@ type CommonServicePlanSpec struct {
 	// broker's response, which allows clients to see what the credentials
 	// will look like even before the binding operation is performed.
 	ServiceBindingCreateResponseSchema *runtime.RawExtension `json:"serviceBindingCreateResponseSchema,omitempty"`
+
+	// DefaultProvisionParameters are default parameters passed to the broker
+	// when an instance of this plan is provisioned. Any parameters defined on
+	// the instance are merged with these defaults, with instance-defined
+	// parameters taking precedence over defaults.
+	DefaultProvisionParameters *runtime.RawExtension `json:"defaultProvisionParameters,omitempty"`
 }
 
 // ClusterServicePlanSpec represents details about a ClusterServicePlan.
@@ -969,6 +983,10 @@ type ServiceInstanceStatus struct {
 	// DeprovisionStatus describes what has been done to deprovision the
 	// ServiceInstance.
 	DeprovisionStatus ServiceInstanceDeprovisionStatus `json:"deprovisionStatus"`
+
+	// DefaultProvisionParameters are the default parameters applied to this
+	// instance.
+	DefaultProvisionParameters *runtime.RawExtension `json:"defaultProvisionParameters,omitempty"`
 }
 
 // ServiceInstanceCondition contains condition information about an Instance.
@@ -1372,6 +1390,8 @@ const (
 	FilterSpecClusterServiceClassName = "spec.clusterServiceClass.name"
 	// SpecServiceClassName is only used for plans, the parent service class name.
 	FilterSpecServiceClassName = "spec.serviceClass.name"
+	// FilterSpecFree is only used for plans, determines if the plan is free.
+	FilterSpecFree = "spec.free"
 )
 
 // SecretTransform is a single transformation that is applied to the
@@ -1442,7 +1462,7 @@ type AddKeyTransform struct {
 }
 
 // AddKeysFromTransform specifies that Service Catalog should merge
-// an existing secret into the the Secret associated with the ServiceBinding.
+// an existing secret into the Secret associated with the ServiceBinding.
 // For example, given the following AddKeysFromTransform:
 //     {"secretRef": {"namespace": "foo", "name": "bar"}}
 // the entries of the Secret "bar" from Namespace "foo" will be merged into

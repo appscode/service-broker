@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite tests="1" failures="0" time="90.185673208">
-      <testcase name="[service-catalog] Test MySQL Runs through the mysql broker" classname="e2e Suite" time="88.833564242"></testcase>
-      <testcase name="[service-catalog] Test PostgreSQL Runs through the postgresql broker" classname="e2e Suite" time="0">
+  <testsuite tests="1" failures="0" time="68.526399862">
+      <testcase name="[service-catalog] Test MySQL broker service Runs through the default plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch Runs through the elasticsearch broker" classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the default plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test MongoDb Runs through the mongodb broker" classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the ha-postgresql plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test Redis Runs through the redis broker" classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the default plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test Memcached Runs through the memcached broker" classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the elasticsearch-cluster plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
+      <testcase name="[service-catalog] Test MongoDb broker service Runs through the default plan" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test MongoDb broker service Runs through the mongodb-cluster plan" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test Redis broker service Runs through the default plan" classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] Test Memcached broker service Runs through the default plan" classname="e2e Suite" time="68.477838077"></testcase>
       <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>

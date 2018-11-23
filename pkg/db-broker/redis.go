@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type RedisProvider struct {
@@ -25,38 +26,41 @@ func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewRedisObj(name, namespace, storageClassName string) *api.Redis {
+func NewRedis(name, namespace, storageClassName string) *api.Redis {
 	return &api.Redis{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: api.RedisSpec{
-			Version:    jsonTypes.StrYo("4"),
-			DoNotPause: true,
-			Replicas:   types.Int32P(1),
-			Storage: corev1.PersistentVolumeClaimSpec{
+			Version: jsonTypes.StrYo("4.0-v1"),
+			Storage: &corev1.PersistentVolumeClaimSpec{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("1Gi"),
+						corev1.ResourceStorage: resource.MustParse("50Mi"),
 					},
 				},
 				StorageClassName: types.StringP(storageClassName),
+			},
+			TerminationPolicy: api.TerminationPolicyWipeOut,
+			ServiceTemplate: ofst.ServiceTemplateSpec{
+				Spec: ofst.ServiceSpec{
+					Type: corev1.ServiceTypeLoadBalancer,
+				},
 			},
 		},
 	}
 }
 
-func (p RedisProvider) Create(name, namespace string) error {
+func (p RedisProvider) Create(planID, name, namespace string) error {
 	glog.Infof("Creating redis obj %q in namespace %q...", name, namespace)
-	rd := NewRedisObj(name, namespace, p.storageClassName)
+	rd := NewRedis(name, namespace, p.storageClassName)
 
 	if _, err := p.extClient.Redises(rd.Namespace).Create(rd); err != nil {
 		return err
 	}
 
 	return nil
-	//return waitForRedisBeReady(p.extClient, name, namespace)
 }
 
 func (p RedisProvider) Delete(name, namespace string) error {
@@ -67,7 +71,7 @@ func (p RedisProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	if rd.Spec.DoNotPause {
+	if rd.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
 		if err := patchRedis(p.extClient, rd); err != nil {
 			return err
 		}
@@ -77,12 +81,7 @@ func (p RedisProvider) Delete(name, namespace string) error {
 		return err
 	}
 
-	glog.Infof("Deleting dormant database obj %q from namespace %q...", name, namespace)
-	if err := patchDormantDatabase(p.extClient, name, namespace); err != nil {
-		return err
-	}
-
-	return p.extClient.DormantDatabases(namespace).Delete(name, deleteInBackground())
+	return nil
 }
 
 func (p RedisProvider) Bind(
@@ -90,44 +89,37 @@ func (p RedisProvider) Bind(
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
+	var (
+		user, password   string
+		connScheme, host string
+		port             int32
+	)
+
+	connScheme = "redis"
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
-	svcPort := service.Spec.Ports[0]
+	for _, p := range service.Spec.Ports {
+		if p.Name == "db" {
+			port = p.Port
+			break
+		}
+	}
 
-	host := buildHostFromService(service)
+	host = buildHostFromService(service)
+	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["rdDatabase"]; ok {
 		database = dbVal.(string)
 	}
 
-	//var user, password string
-	//userVal, ok := params["mgUser"]
-	//if ok {
-	//	user = userVal.(string)
-	//
-	//	passwordVal, ok := data["mgPassword"]
-	//	if !ok {
-	//		return nil, errors.Errorf("mongodb-password not found in secret keys")
-	//	}
-	//	password = passwordVal.(string)
-	//} else {
-	//	user = "root"
-	//
-	//	rootPassword, ok := data["password"]
-	//	if !ok {
-	//		return nil, errors.Errorf("mongodb-root-password not found in secret keys")
-	//	}
-	//	password = rootPassword.(string)
-	//}
-
 	creds := Credentials{
-		Protocol: svcPort.Name,
-		Port:     svcPort.Port,
+		Protocol: connScheme,
+		Port:     port,
 		Host:     host,
-		//Username: user,
-		//Password: password,
+		Username: user,
+		Password: password,
 		Database: database,
 	}
 	creds.URI = buildURI(creds)

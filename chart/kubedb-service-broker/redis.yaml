@@ -1,0 +1,13 @@
+id: redis
+name: redis
+description: The example service from the Redis database!
+bindable: true
+planupdatable: true
+metadata:
+  displayName: Example Redis DB service
+  imageUrl: https://redis.io/images/redis-white.png
+plans:
+- id: redis-4-0
+  name: default
+  description: The default plan for the 'redis' service
+  free: true

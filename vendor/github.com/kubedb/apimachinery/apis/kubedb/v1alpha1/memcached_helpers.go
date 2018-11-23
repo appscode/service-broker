@@ -2,57 +2,47 @@ package v1alpha1
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/appscode/kube-mon/api"
 	crdutils "github.com/appscode/kutil/apiextensions/v1beta1"
+	meta_util "github.com/appscode/kutil/meta"
+	"github.com/kubedb/apimachinery/apis"
+	"github.com/kubedb/apimachinery/apis/kubedb"
+	apps "k8s.io/api/apps/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
+	mona "kmodules.xyz/monitoring-agent-api/api/v1"
 )
 
-func (r Memcached) OffshootName() string {
-	return r.Name
+var _ apis.ResourceInfo = &Memcached{}
+
+func (m Memcached) OffshootName() string {
+	return m.Name
 }
 
-func (r Memcached) OffshootLabels() map[string]string {
+func (m Memcached) OffshootSelectors() map[string]string {
 	return map[string]string{
-		LabelDatabaseName: r.Name,
 		LabelDatabaseKind: ResourceKindMemcached,
+		LabelDatabaseName: m.Name,
 	}
 }
 
-func (r Memcached) DeploymentLabels() map[string]string {
-	labels := r.OffshootLabels()
-	for key, val := range r.Labels {
-		if !strings.HasPrefix(key, GenericKey+"/") && !strings.HasPrefix(key, MemcachedKey+"/") {
-			labels[key] = val
-		}
-	}
-	return labels
+func (m Memcached) OffshootLabels() map[string]string {
+	return meta_util.FilterKeys(GenericKey, m.OffshootSelectors(), m.Labels)
 }
 
-func (r Memcached) DeploymentAnnotations() map[string]string {
-	annotations := make(map[string]string)
-	for key, val := range r.Annotations {
-		if !strings.HasPrefix(key, GenericKey+"/") && !strings.HasPrefix(key, MemcachedKey+"/") {
-			annotations[key] = val
-		}
-	}
-	return annotations
-}
-
-func (r Memcached) ResourceShortCode() string {
+func (m Memcached) ResourceShortCode() string {
 	return ResourceCodeMemcached
 }
 
-func (r Memcached) ResourceKind() string {
+func (m Memcached) ResourceKind() string {
 	return ResourceKindMemcached
 }
 
-func (r Memcached) ResourceSingular() string {
+func (m Memcached) ResourceSingular() string {
 	return ResourceSingularMemcached
 }
 
-func (r Memcached) ResourcePlural() string {
+func (m Memcached) ResourcePlural() string {
 	return ResourcePluralMemcached
 }
 
@@ -60,20 +50,48 @@ func (m Memcached) ServiceName() string {
 	return m.OffshootName()
 }
 
-func (m Memcached) ServiceMonitorName() string {
+type memcachedApp struct {
+	*Memcached
+}
+
+func (r memcachedApp) Name() string {
+	return fmt.Sprintf("kubedb:%s:%s:%s", ResourceSingularMemcached, r.Memcached.Namespace, r.Memcached.Name)
+}
+
+func (r memcachedApp) Type() appcat.AppType {
+	return appcat.AppType(fmt.Sprintf("%s/%s", kubedb.GroupName, ResourceSingularMemcached))
+}
+
+func (r Memcached) AppBindingMeta() appcat.AppBindingMeta {
+	return &memcachedApp{&r}
+}
+
+type memcachedStatsService struct {
+	*Memcached
+}
+
+func (m memcachedStatsService) GetNamespace() string {
+	return m.Memcached.GetNamespace()
+}
+
+func (m memcachedStatsService) ServiceName() string {
+	return m.OffshootName() + "-stats"
+}
+
+func (m memcachedStatsService) ServiceMonitorName() string {
 	return fmt.Sprintf("kubedb-%s-%s", m.Namespace, m.Name)
 }
 
-func (m Memcached) Path() string {
-	return fmt.Sprintf("/kubedb.com/v1alpha1/namespaces/%s/%s/%s/metrics", m.Namespace, m.ResourcePlural(), m.Name)
+func (m memcachedStatsService) Path() string {
+	return "/metrics"
 }
 
-func (m Memcached) Scheme() string {
+func (m memcachedStatsService) Scheme() string {
 	return ""
 }
 
-func (m *Memcached) StatsAccessor() api.StatsAccessor {
-	return m
+func (m Memcached) StatsService() mona.StatsAccessor {
+	return &memcachedStatsService{&m}
 }
 
 func (m *Memcached) GetMonitoringVendor() string {
@@ -90,6 +108,7 @@ func (m Memcached) CustomResourceDefinition() *apiextensions.CustomResourceDefin
 		Singular:      ResourceSingularMemcached,
 		Kind:          ResourceKindMemcached,
 		ShortNames:    []string{ResourceCodeMemcached},
+		Categories:    []string{"datastore", "kubedb", "appscode", "all"},
 		ResourceScope: string(apiextensions.NamespaceScoped),
 		Versions: []apiextensions.CustomResourceDefinitionVersion{
 			{
@@ -104,7 +123,7 @@ func (m Memcached) CustomResourceDefinition() *apiextensions.CustomResourceDefin
 		SpecDefinitionName:      "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.Memcached",
 		EnableValidation:        true,
 		GetOpenAPIDefinitions:   GetOpenAPIDefinitions,
-		EnableStatusSubresource: EnableStatusSubresource,
+		EnableStatusSubresource: apis.EnableStatusSubresource,
 		AdditionalPrinterColumns: []apiextensions.CustomResourceColumnDefinition{
 			{
 				Name:     "Version",
@@ -122,5 +141,60 @@ func (m Memcached) CustomResourceDefinition() *apiextensions.CustomResourceDefin
 				JSONPath: ".metadata.creationTimestamp",
 			},
 		},
-	}, setNameSchema)
+	}, apis.SetNameSchema)
+}
+
+func (m *Memcached) SetDefaults() {
+	if m == nil {
+		return
+	}
+	m.Spec.SetDefaults()
+}
+
+func (m *MemcachedSpec) SetDefaults() {
+	if m == nil {
+		return
+	}
+
+	// migrate first to avoid incorrect defaulting
+	if m.DoNotPause {
+		m.TerminationPolicy = TerminationPolicyDoNotTerminate
+		m.DoNotPause = false
+	}
+	if len(m.NodeSelector) > 0 {
+		m.PodTemplate.Spec.NodeSelector = m.NodeSelector
+		m.NodeSelector = nil
+	}
+	if m.Resources != nil {
+		m.PodTemplate.Spec.Resources = *m.Resources
+		m.Resources = nil
+	}
+	if m.Affinity != nil {
+		m.PodTemplate.Spec.Affinity = m.Affinity
+		m.Affinity = nil
+	}
+	if len(m.SchedulerName) > 0 {
+		m.PodTemplate.Spec.SchedulerName = m.SchedulerName
+		m.SchedulerName = ""
+	}
+	if len(m.Tolerations) > 0 {
+		m.PodTemplate.Spec.Tolerations = m.Tolerations
+		m.Tolerations = nil
+	}
+	if len(m.ImagePullSecrets) > 0 {
+		m.PodTemplate.Spec.ImagePullSecrets = m.ImagePullSecrets
+		m.ImagePullSecrets = nil
+	}
+
+	// perform defaulting
+	if m.UpdateStrategy.Type == "" {
+		m.UpdateStrategy.Type = apps.RollingUpdateDeploymentStrategyType
+	}
+	if m.TerminationPolicy == "" {
+		m.TerminationPolicy = TerminationPolicyPause
+	}
+}
+
+func (e *MemcachedSpec) GetSecrets() []string {
+	return nil
 }

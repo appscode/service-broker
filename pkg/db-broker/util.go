@@ -81,7 +81,7 @@ func waitForMySQLBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace s
 func patchRedis(extClient cs.KubedbV1alpha1Interface, rd *api.Redis) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchRedis(extClient, rd, func(in *api.Redis) *api.Redis {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil
@@ -94,7 +94,7 @@ func patchRedis(extClient cs.KubedbV1alpha1Interface, rd *api.Redis) error {
 func patchMemcached(extClient cs.KubedbV1alpha1Interface, mc *api.Memcached) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchMemcached(extClient, mc, func(in *api.Memcached) *api.Memcached {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil
@@ -107,7 +107,7 @@ func patchMemcached(extClient cs.KubedbV1alpha1Interface, mc *api.Memcached) err
 func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchMongoDB(extClient, mg, func(in *api.MongoDB) *api.MongoDB {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil
@@ -120,7 +120,7 @@ func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB) error {
 func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsearch) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchElasticsearch(extClient, es, func(in *api.Elasticsearch) *api.Elasticsearch {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil
@@ -133,7 +133,7 @@ func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsea
 func patchPostgreSQL(extClient cs.KubedbV1alpha1Interface, pgsql *api.Postgres) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchPostgres(extClient, pgsql, func(in *api.Postgres) *api.Postgres {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil
@@ -146,7 +146,7 @@ func patchPostgreSQL(extClient cs.KubedbV1alpha1Interface, pgsql *api.Postgres) 
 func patchMySQL(extClient cs.KubedbV1alpha1Interface, mysql *api.MySQL) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
 		if _, _, err := util.PatchMySQL(extClient, mysql, func(in *api.MySQL) *api.MySQL {
-			in.Spec.DoNotPause = false
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
 			return false, nil

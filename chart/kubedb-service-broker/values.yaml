@@ -29,5 +29,17 @@ resources: {}
   # requests:
   #  cpu: 100m
   #  memory: 128Mi
+
+# enable kubedb
 kubedb:
   enabled: true
+
+# enable kubedb-catalog
+kubedbCatalog:
+  enabled: true
+
+# The path where catalogs for different database service plans are stored
+catalogPath: /etc/config/catalogs
+
+# storageClassName for database storage
+storageClass: standard
