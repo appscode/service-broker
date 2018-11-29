@@ -31,6 +31,8 @@ spec:
 #        - "8080"
         - --catalog-path
         - ${CATALOG_PATH}
+        - --catalog-names
+        - "${CATALOG_NAMES}"
         - -v
         - "5"
         - -logtostderr
@@ -39,13 +41,10 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-        - mountPath: "${CATALOG_PATH}"
-          name: catalogs-volume
+        - mountPath: "${CATALOG_PATH}/kubedb"
+          name: kubedb-volume
       volumes:
-      - name: catalogs-volume
+      - name: kubedb-volume
         configMap:
-          name: catalogs
-          defaultMode: 511
-#          items:
-#          - key: mysql.yaml
-#            path: mysql
+          name: kubedb
+#          defaultMode: 511

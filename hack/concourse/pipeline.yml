@@ -18,7 +18,7 @@ resources:
   type: git
   tags: [cncf]
   source:
-    uri: https://github.com/kubedb/service-broker
+    uri: https://github.com/appscode/service-broker
     branch: master
 
 - name: repo-status

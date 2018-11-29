@@ -2,7 +2,7 @@
 set -eou pipefail
 
 GOPATH=$(go env GOPATH)
-REPO_ROOT=$GOPATH/src/github.com/kubedb/service-broker
+REPO_ROOT=$GOPATH/src/github.com/appscode/service-broker
 
 pushd $REPO_ROOT
 source "$REPO_ROOT/hack/libbuild/common/lib.sh"
@@ -21,11 +21,11 @@ export IMAGE_PULL_POLICY=IfNotPresent
 export IMAGE_PULL_SECRET=
 export PORT=8080
 export CATALOG_PATH="/etc/config/catalogs"
+export CATALOG_NAMES=""
 export STORAGE_CLASS=standard
 
-export KUBEDB_VERSION="0.9.0-rc.0"
 export KUBEDB_ENV=${KUBEDB_ENV:-prod}
-export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/kubedb/service-broker/master/"
+export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/"
 if [ "$KUBEDB_ENV" = "dev" ]; then
     export SCRIPT_LOCATION="cat "
     export TAG=$TAG
@@ -53,6 +53,7 @@ show_help() {
     echo "    --image-pull-secret       name of secret used to pull service broker image"
     echo "    --port                    port number at which the broker will expose"
     echo "    --catalogPath             the path of catalogs for different service plans"
+    echo "    --catalogNames            comma seperated names of the catalogs for different service plans"
     echo "    --storage-class           name of the storage-class for database storage"
 }
 
@@ -97,6 +98,10 @@ while test $# -gt 0; do
             export CATALOG_PATH=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
+        --catalogNames*)
+            export CATALOG_NAMES=`echo $1 | sed -e 's/^[^=]*=//g'`
+            shift
+            ;;
         --storage-class*)
             export STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
@@ -120,16 +125,14 @@ echo "IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY"
 echo "IMAGE_PULL_SECRET=$IMAGE_PULL_SECRET"
 echo "PORT=$PORT"
 echo "CATALOG_PATH=$CATALOG_PATH"
+echo "CATALOG_NAMES=$CATALOG_NAMES"
 echo "STORAGE_CLASS=$STORAGE_CLASS"
-echo ""
-
-echo "KUBEDB_VERSION=$KUBEDB_VERSION"
 echo ""
 
 build() {
     pushd $REPO_ROOT
         mkdir -p hack/docker
-        go build -o hack/docker/service-broker cmd/servicebroker/main.go
+        go build -o hack/docker/service-broker cmd/service-broker/main.go
 #        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
 
         pushd hack/docker
@@ -147,10 +150,6 @@ EOL
 
         rm -rf hack/docker
     popd
-}
-
-install_kubedb() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/${KUBEDB_VERSION}/hack/deploy/kubedb.sh| bash
 }
 
 ensure_onessl() {
@@ -195,8 +194,10 @@ deploy_service_broker() {
         kubectl create ns $NAMESPACE
     fi
 
-    echo "$PWD"
-    kubectl create configmap catalogs --namespace $NAMESPACE --from-file=hack/deploy/catalogs
+    local catalogNames=(${CATALOG_NAMES//[,]/ })
+    for catalog in "${catalogNames[@]}"; do
+        kubectl create configmap $catalog --namespace $NAMESPACE --from-file=hack/deploy/catalogs/$catalog
+    done
     ${SCRIPT_LOCATION}hack/deploy/deployment.yaml | $ONESSL envsubst | kubectl apply -f -
     ${SCRIPT_LOCATION}hack/deploy/service.yaml | $ONESSL envsubst | kubectl apply -f -
     ${SCRIPT_LOCATION}hack/deploy/rbac.yaml | $ONESSL envsubst | kubectl apply -f -
@@ -212,20 +213,17 @@ deploy_service_broker() {
 
 run() {
     pushd $REPO_ROOT
-        install_kubedb
-        echo ""
-
         ensure_onessl
         deploy_service_broker
     popd
 }
 
 uninstall() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/${KUBEDB_VERSION}/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
-    echo ""
-
     # delete configmap
-    kubectl delete configmap catalogs --namespace $NAMESPACE
+    local catalogNames=(${CATALOG_NAMES//[,]/ })
+    for catalog in "${catalogNames[@]}"; do
+        kubectl delete configmap $catalog --namespace $NAMESPACE
+    done
     # delete service-broker
     kubectl delete service -l app=$APP --namespace $NAMESPACE
     kubectl delete deployment -l app=$APP --namespace $NAMESPACE
