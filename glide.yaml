@@ -1,4 +1,4 @@
-package: github.com/kubedb/service-broker
+package: github.com/appscode/service-broker
 import:
 - package: github.com/appscode/go
   version: master

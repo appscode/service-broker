@@ -32,7 +32,7 @@ resources: {}
 
 # custom config about catalogs
 catalogs:
-  names: ["kubedb", "guard"]
+  names: ["kubedb"]
 
   # The path where catalogs for different database service plans are stored
   path: /etc/config/catalogs

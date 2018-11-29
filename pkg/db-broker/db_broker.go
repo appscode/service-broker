@@ -26,7 +26,7 @@ type Client struct {
 	namespace  string
 	kubeClient kubernetes.Interface
 
-	catalogProviders  map[string]map[string]Provider
+	catalogProviders map[string]map[string]Provider
 }
 
 func NewClient(kubeConfigPath, storageClassName string) *Client {
