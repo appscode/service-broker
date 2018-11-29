@@ -3,8 +3,8 @@ package e2e
 import (
 	"time"
 
-	"github.com/kubedb/service-broker/test/e2e/framework"
-	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/appscode/service-broker/test/e2e/framework"
+	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

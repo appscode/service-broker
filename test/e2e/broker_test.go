@@ -1,9 +1,9 @@
 package e2e
 
 import (
-	"github.com/kubedb/service-broker/test/e2e/framework"
-	"github.com/kubedb/service-broker/test/util"
-	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/appscode/service-broker/test/e2e/framework"
+	"github.com/appscode/service-broker/test/util"
+	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
