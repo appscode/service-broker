@@ -26,23 +26,23 @@ type Client struct {
 	namespace  string
 	kubeClient kubernetes.Interface
 
-	catalogPath string
-	providers   map[string]Provider
+	catalogProviders  map[string]map[string]Provider
 }
 
-func NewClient(catalogPath, kubeConfigPath, storageClassName string) *Client {
+func NewClient(kubeConfigPath, storageClassName string) *Client {
 	config := getConfig(kubeConfigPath)
 	return &Client{
-		kubeClient:  loadInClusterClient(config),
-		namespace:   loadNamespace(kubeConfigPath),
-		catalogPath: catalogPath,
-		providers: map[string]Provider{
-			"mysql":         NewMySQLProvider(config, storageClassName),
-			"postgresql":    NewPostgreSQLProvider(config, storageClassName),
-			"elasticsearch": NewElasticsearchProvider(config, storageClassName),
-			"mongodb":       NewMongoDbProvider(config, storageClassName),
-			"redis":         NewRedisProvider(config, storageClassName),
-			"memcached":     NewMemcachedProvider(config),
+		kubeClient: loadInClusterClient(config),
+		namespace:  loadNamespace(kubeConfigPath),
+		catalogProviders: map[string]map[string]Provider{
+			"kubedb": map[string]Provider{
+				"mysql":         NewMySQLProvider(config, storageClassName),
+				"postgresql":    NewPostgreSQLProvider(config, storageClassName),
+				"elasticsearch": NewElasticsearchProvider(config, storageClassName),
+				"mongodb":       NewMongoDbProvider(config, storageClassName),
+				"redis":         NewRedisProvider(config, storageClassName),
+				"memcached":     NewMemcachedProvider(config),
+			},
 		},
 	}
 }
@@ -82,31 +82,46 @@ func loadNamespace(kubeConfigPath string) string {
 	panic("could not detect current namespace")
 }
 
-func (c *Client) GetCatalog() ([]osb.Service, error) {
+func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.Service, error) {
 	glog.Infoln("Listing services for catalog...")
 
 	services := []osb.Service{}
-	for providerName, _ := range c.providers {
-		out, err := ioutil.ReadFile(filepath.Join(c.catalogPath, fmt.Sprintf("%s.yaml", providerName)))
-		if err != nil {
-			return nil, err
-		}
+	for _, catalog := range catalogNames {
+		if providers, ok := c.catalogProviders[catalog]; ok {
+			for providerName, _ := range providers {
+				out, err := ioutil.ReadFile(filepath.Join(catalogPath, catalog, fmt.Sprintf("%s.yaml", providerName)))
+				if err != nil {
+					return nil, err
+				}
 
-		service := osb.Service{}
-		if err = yaml.Unmarshal(out, &service); err != nil {
-			return nil, err
+				service := osb.Service{}
+				if err = yaml.Unmarshal(out, &service); err != nil {
+					return nil, err
+				}
+				services = append(services, service)
+			}
 		}
-		services = append(services, service)
 	}
 
 	glog.Infoln("Service list has been completed for catalog")
 	return services, nil
 }
 
-func (c *Client) Provision(serviceID, planID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
+func (c *Client) Provision(
+	catalogNames []string, serviceID, planID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
 	glog.Infof("getting provider %q", serviceID)
-	provider, ok := c.providers[serviceID]
-	if !ok {
+	var (
+		provider Provider
+		exists   bool
+	)
+	for _, catalog := range catalogNames {
+		if providers, ok := c.catalogProviders[catalog]; ok {
+			if provider, exists = providers[serviceID]; exists {
+				break
+			}
+		}
+	}
+	if !exists {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
@@ -118,6 +133,7 @@ func (c *Client) Provision(serviceID, planID, dbObjName, namespace string, provi
 }
 
 func (c *Client) Bind(
+	catalogNames []string,
 	dbObjName, serviceID, planID string,
 	bindParams, provisionParams map[string]interface{}) (map[string]interface{}, error) {
 
@@ -147,22 +163,43 @@ func (c *Client) Bind(
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
-	var creds *Credentials
-	provider, ok := c.providers[serviceID]
-	if ok {
-		creds, err = provider.Bind(*service, params, data)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
+	var (
+		provider Provider
+		exists   bool
+	)
+	for _, catalog := range catalogNames {
+		if providers, ok := c.catalogProviders[catalog]; ok {
+			if provider, exists = providers[serviceID]; exists {
+				break
+			}
 		}
+	}
+	if !exists {
+		return nil, errors.Errorf("No %q provider found", serviceID)
+	}
+
+	creds, err := provider.Bind(*service, params, data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 	}
 
 	return creds.ToMap(), nil
 }
 
-func (c *Client) Deprovision(serviceID, dbObjName string) error {
+func (c *Client) Deprovision(catalogNames []string, serviceID, dbObjName string) error {
 	glog.Infof("getting provider for %q", serviceID)
-	provider, ok := c.providers[serviceID]
-	if !ok {
+	var (
+		provider Provider
+		exists   bool
+	)
+	for _, catalog := range catalogNames {
+		if providers, ok := c.catalogProviders[catalog]; ok {
+			if provider, exists = providers[serviceID]; exists {
+				break
+			}
+		}
+	}
+	if !exists {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
