@@ -1,5 +1,0 @@
-01. Check until the kubedb-service-broker pod is running:
-  kubectl get pods --namespace {{ .Release.Namespace }} --watch
-02. See the logs from the container of kubedb-service-broker pod:
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "kubedb-service-broker.name" . }},release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
-  kubectl logs -f --namespace {{ .Release.Namespace }} $POD_NAME

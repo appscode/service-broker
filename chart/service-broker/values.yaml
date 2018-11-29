@@ -30,16 +30,12 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
-# enable kubedb
-kubedb:
-  enabled: true
+# custom config about catalogs
+catalogs:
+  names: ["kubedb", "guard"]
 
-# enable kubedb-catalog
-kubedbCatalog:
-  enabled: true
-
-# The path where catalogs for different database service plans are stored
-catalogPath: /etc/config/catalogs
+  # The path where catalogs for different database service plans are stored
+  path: /etc/config/catalogs
 
 # storageClassName for database storage
 storageClass: standard
