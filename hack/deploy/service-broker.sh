@@ -24,9 +24,9 @@ export CATALOG_PATH="/etc/config/catalogs"
 export CATALOG_NAMES=""
 export STORAGE_CLASS=standard
 
-export KUBEDB_ENV=${KUBEDB_ENV:-prod}
+export KUBEDB_ENV=${APPSCODE_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/"
-if [ "$KUBEDB_ENV" = "dev" ]; then
+if [ "$APPSCODE_ENV" = "dev" ]; then
     export SCRIPT_LOCATION="cat "
     export TAG=$TAG
     export IMAGE_PULL_POLICY=Always
