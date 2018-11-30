@@ -8,9 +8,9 @@ pushd $REPO_ROOT
 source "$REPO_ROOT/hack/libbuild/common/lib.sh"
 detect_tag ''
 
-export DOCKER_REGISTRY=${DOCKER_REGISTRY:-kubedb}
+export DOCKER_REGISTRY=${DOCKER_REGISTRY:-appscode}
 export IMG=service-broker
-export TAG=${TAG:-latest}
+export TAG=${TAG:-0.1.0}
 export ONESSL=
 
 export NAME=service-broker
@@ -21,10 +21,10 @@ export IMAGE_PULL_POLICY=IfNotPresent
 export IMAGE_PULL_SECRET=
 export PORT=8080
 export CATALOG_PATH="/etc/config/catalogs"
-export CATALOG_NAMES=""
+export CATALOG_NAMES="kubedb"
 export STORAGE_CLASS=standard
 
-export KUBEDB_ENV=${APPSCODE_ENV:-prod}
+export APPSCODE_ENV=${APPSCODE_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/"
 if [ "$APPSCODE_ENV" = "dev" ]; then
     export SCRIPT_LOCATION="cat "
@@ -35,9 +35,9 @@ fi
 export CMD=
 
 show_help() {
-    echo "build.sh"
+    echo "service-broker.sh"
     echo " "
-    echo "build.sh [commands] [options]"
+    echo "service-broker.sh [commands] [options]"
     echo " "
     echo "commands:"
     echo "---------"
@@ -49,8 +49,9 @@ show_help() {
     echo "--------"
     echo "-h, --help                    show brief help"
     echo "-n, --namespace=NAMESPACE     specify namespace (default: $NAMESPACE)"
-    echo "    --docker-registry         docker registry used to pull stash images (default: $DOCKER_REGISTRY)"
-    echo "    --image-pull-secret       name of secret used to pull service broker image"
+    echo "    --docker-registry         docker registry used to pull service-broker image (default: $DOCKER_REGISTRY)"
+    echo "    --tag                     tag for service-broker image"
+    echo "    --image-pull-secret       name of secret used to pull service-broker image"
     echo "    --port                    port number at which the broker will expose"
     echo "    --catalogPath             the path of catalogs for different service plans"
     echo "    --catalogNames            comma seperated names of the catalogs for different service plans"
@@ -83,6 +84,10 @@ while test $# -gt 0; do
             ;;
         --docker-registry*)
             export DOCKER_REGISTRY=`echo $1 | sed -e 's/^[^=]*=//g'`
+            shift
+            ;;
+        --tag*)
+            export TAG=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --image-pull-secret*)
