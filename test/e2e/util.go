@@ -118,6 +118,15 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 									ContainerPort: 8080,
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(8080),
+										Scheme: corev1.URISchemeHTTP,
+									},
+								},
+							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									MountPath: "/etc/config/catalogs/kubedb",

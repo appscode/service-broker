@@ -44,6 +44,11 @@ spec:
             - name: http
               containerPort: {{ .Values.containerPort }}
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.containerPort }}
+              scheme: HTTP
           volumeMounts:
 {{- $currentScope := . }}
 {{- range $item := .Values.catalogs.names }}

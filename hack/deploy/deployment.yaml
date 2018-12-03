@@ -40,6 +40,11 @@ spec:
         - ${STORAGE_CLASS}
         ports:
         - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: ${PORT}
+            scheme: HTTP
         volumeMounts:
         - mountPath: "${CATALOG_PATH}/kubedb"
           name: kubedb-volume
