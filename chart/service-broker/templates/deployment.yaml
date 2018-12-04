@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "service-broker.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "service-broker.name" . }}
+    chart: {{ template "service-broker.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "service-broker.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "service-broker.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "service-broker.fullname" . }}
+      imagePullSecrets: {{ .Values.imagePullSecrets }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "service-broker"
+          args:
+            - --port
+            - "{{ .Values.containerPort }}"
+            - --catalog-path
+            - "{{ .Values.catalogs.path }}"
+            - --catalog-names
+            - {{ include "service-broker.catalogNames" . | quote }}
+            - -v
+            - "{{ .Values.logLabel }}"
+            - -logtostderr
+            - --storage-class
+            - "{{ .Values.storageClass }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.containerPort }}
+              scheme: HTTP
+          volumeMounts:
+{{- $currentScope := . }}
+{{- range $item := .Values.catalogs.names }}
+  {{- with $currentScope }}
+            - mountPath: {{ printf "%s/%s" .Values.catalogs.path $item }}
+              name: {{ printf "%s-volume" $item }}
+  {{- end }}
+{{- end }}
+
+      volumes:
+{{- range $item := .Values.catalogs.names }}
+        - name: {{ printf "%s-volume" $item }}
+          configMap:
+            name: {{ $item }}
+#            defaultMode: 511
+{{- end }}

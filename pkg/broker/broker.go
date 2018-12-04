@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/appscode/go/crypto/rand"
+	"github.com/appscode/service-broker/pkg/db-broker"
 	"github.com/golang/glog"
-	"github.com/kubedb/service-broker/pkg/db-broker"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
@@ -18,15 +19,16 @@ import (
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(o Options) (*Broker, error) {
-	brClient := db_broker.NewClient(o.CatalogPath, o.KubeConfig, o.StorageClass)
+	brClient := db_broker.NewClient(o.KubeConfig, o.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
 	return &Broker{
-		Client:      brClient,
-		async:       o.Async,
-		catalogPath: o.CatalogPath,
-		instances:   make(map[string]*exampleInstance, 10),
+		Client:       brClient,
+		async:        o.Async,
+		catalogPath:  o.CatalogPath,
+		catalogNames: strings.Split(o.CatalogNames, ","),
+		instances:    make(map[string]*exampleInstance, 10),
 	}, nil
 }
 
@@ -39,6 +41,8 @@ type Broker struct {
 
 	// The path for catalogs
 	catalogPath string
+	// names of the catalogs those will provided by the broker
+	catalogNames []string
 
 	// Synchronize go routines.
 	sync.RWMutex
@@ -51,7 +55,7 @@ var _ broker.Interface = &Broker{}
 
 func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, error) {
 	// Your catalog broker logic goes here
-	services, err := b.Client.GetCatalog()
+	services, err := b.Client.GetCatalog(b.catalogPath, b.catalogNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +103,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 
 	glog.Infof("Provissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	namespace := request.Context["namespace"].(string)
-	err := b.Client.Provision(request.ServiceID, request.PlanID, exampleInstance.DbObjName, namespace, request.Parameters)
+	err := b.Client.Provision(b.catalogNames, request.ServiceID, request.PlanID, exampleInstance.DbObjName, namespace, request.Parameters)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -131,7 +135,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 		return nil, errors.New(msg)
 	}
 
-	err := b.Client.Deprovision(request.ServiceID, instance.DbObjName)
+	err := b.Client.Deprovision(b.catalogNames, request.ServiceID, instance.DbObjName)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -169,7 +173,7 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 		return nil, errors.New(msg)
 	}
 
-	creds, err := b.Client.Bind(instance.DbObjName, request.ServiceID, request.PlanID, request.Parameters, instance.Params)
+	creds, err := b.Client.Bind(b.catalogNames, instance.DbObjName, request.ServiceID, request.PlanID, request.Parameters, instance.Params)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err

@@ -1,0 +1,62 @@
+# Default values for service-broker.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  registry: appscode
+  repository: service-broker
+  tag: latest
+
+  ## Specify a imagePullPolicy
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+
+## Optionally specify an array of imagePullSecrets.
+## Secrets must be manually created in the namespace.
+## ref: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+##
+imagePullSecrets: []
+
+## Specify the port number at which the Service-Broker rest server exposes
+## and also specify the container port number
+##
+containerPort: 8080
+
+## Log level for operator
+logLabel: 5
+
+service:
+  ## Specify the type of service
+  type: ClusterIP
+
+  ## Specify the sevice port number
+  port: 80
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+# custom config about catalogs
+catalogs:
+  ## Contain the List of catalogs names those can be installed by this service-broker
+  names: ["kubedb"]
+
+  # The path where catalogs for different database service plans are stored
+  path: /etc/config/catalogs
+
+# storageClassName for storage
+storageClass: standard

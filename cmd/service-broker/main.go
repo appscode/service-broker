@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/appscode/service-broker/pkg/broker"
 	"github.com/golang/glog"
-	"github.com/kubedb/service-broker/pkg/broker"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
 	"github.com/pmorie/osb-broker-lib/pkg/server"

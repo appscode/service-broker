@@ -1,34 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite tests="1" failures="0" time="68.526399862">
-      <testcase name="[service-catalog] Test MySQL broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the ha-postgresql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the elasticsearch-cluster plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test MongoDb broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test MongoDb broker service Runs through the mongodb-cluster plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Redis broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Memcached broker service Runs through the default plan" classname="e2e Suite" time="68.477838077"></testcase>
-      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
+  <testsuite tests="11" failures="0" time="597.353612712">
+      <testcase name="[service-catalog] Test MySQL broker service Runs through the default plan" classname="e2e Suite" time="45.324070841"></testcase>
+      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the default plan" classname="e2e Suite" time="45.005457125"></testcase>
+      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the ha-postgresql plan" classname="e2e Suite" time="48.845320134"></testcase>
+      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the default plan" classname="e2e Suite" time="77.649930589"></testcase>
+      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the elasticsearch-cluster plan" classname="e2e Suite" time="75.043076393"></testcase>
+      <testcase name="[service-catalog] Test MongoDb broker service Runs through the default plan" classname="e2e Suite" time="52.659567727"></testcase>
+      <testcase name="[service-catalog] Test MongoDb broker service Runs through the mongodb-cluster plan" classname="e2e Suite" time="111.105302388"></testcase>
+      <testcase name="[service-catalog] Test Redis broker service Runs through the default plan" classname="e2e Suite" time="47.208339946"></testcase>
+      <testcase name="[service-catalog] Test Memcached broker service Runs through the default plan" classname="e2e Suite" time="57.008137456"></testcase>
+      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="3.717313685"></testcase>
+      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="33.741121041"></testcase>
   </testsuite>

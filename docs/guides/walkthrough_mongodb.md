@@ -1,6 +1,6 @@
 # Walkthrough Mongodb
 
-If we've `Kubedb Service Broker` installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
+If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
 
 This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
 
@@ -21,71 +21,75 @@ postgresql      postgresql
 redis           redis
 
 $ svcat get classes
-      NAME        NAMESPACE            DESCRIPTION
-+---------------+-----------+--------------------------------+
-  elasticsearch               The example service from the
-                              ElasticSearch database!
-  memcached                   The example service from the
-                              Memcache database!
-  mongodb                     The example service from the
-                              MongoDB database!
-  mysql                       The example service from the
-                              MySQL database!
-  postgresql                  The example service from the
-                              PostgreSQL database!
-  redis                       The example service from the
-                              Redis database!
+      NAME        NAMESPACE                     DESCRIPTION
++---------------+-----------+-------------------------------------------------+
+  elasticsearch               The example service from the ElasticSearch
+                              database!
+  memcached                   The example service from the Memcache database!
+  mongodb                     The example service from the MongoDB database!
+  mysql                       The example service from the MySQL database!
+  postgresql                  The example service from the PostgreSQL
+                              database!
+  redis                       The example service from the Redis database!
 ```
 
 > **NOTE:** The above kubectl command uses a custom set of columns. The **`NAME`** field is the Kubernetes name of the `ClusterServiceClass` and the **`EXTERNAL NAME`** field is the human-readable name for the service that the broker returns.
 
-Now, describe the `ClusterServiceClass` named `mongodb` from `Kubedb Service Broker`.
+Now, describe the `mongodb` class from `Service Broker`.
 
 ```console
 $ svcat describe class mongodb
-  Name:          mongodb
-  Description:   The example service from the MongoDB database!  
-  UUID:          mongodb
-  Status:        Active
+  Name:              mongodb
+  Scope:             cluster
+  Description:       The example service from the MongoDB database!
+  Kubernetes Name:   mongodb
+  Status:            Active
   Tags:
-  Broker:        service-broker
+  Broker:            service-broker
 
 Plans:
-   NAME              DESCRIPTION
-+---------+--------------------------------+
-  default   The default plan for the
-            'mongodb' service
+       NAME                  DESCRIPTION
++-----------------+--------------------------------+
+  default           The default plan for the
+                    'mongodb' service
+  mongodb-cluster   This plan is for getting a
+                    simple mongodb cluster under
+                    the 'mongodb' service
 ```
 
 To view the details of the `default` plan of `mongodb` class:
 
 ```console
 $ kubectl get clusterserviceplans -o=custom-columns=NAME:.metadata.name,EXTERNAL\ NAME:.spec.externalName
-NAME                EXTERNAL NAME
-elasticsearch-5-6   default
-memcached-1-5-4     default
-mongodb-3-4         default
-mysql-5-7           default
-postgresql-9-6      default
-redis-4-0           default
+NAME                        EXTERNAL NAME
+elasticsearch-6-3           default
+elasticsearch-cluster-6-3   elasticsearch-cluster
+ha-postgresql-10-2          ha-postgresql
+memcached-1-5-4             default
+mongodb-3-6                 default
+mongodb-cluster-3-6         mongodb-cluster
+mysql-8-0                   default
+postgresql-10-2             default
+redis-4-0                   default
 
-$ svcat get plan mongodb/default
-   NAME      CLASS             DESCRIPTION
-+---------+---------+--------------------------------+
-  default   mongodb   The default plan for the
-                      'mongodb' service
+$ svcat get plan mongodb/default --scope cluster
+   NAME     NAMESPACE    CLASS                   DESCRIPTION
++---------+-----------+---------+--------------------------------------------+
+  default               mongodb   The default plan for the 'mongodb' service
 
-$ svcat describe plan mongodb/default
-  Name:          default
-  Description:   The default plan for the 'mongodb' service  
-  UUID:          mongodb-3-4
-  Status:        Active
-  Free:          true
-  Class:         mongodb
+$ svcat describe plan mongodb/default --scope cluster
+  Name:              default
+  Description:       The default plan for the 'mongodb' service
+  Kubernetes Name:   mongodb-3-6
+  Status:            Active
+  Free:              true
+  Class:             mongodb
 
 Instances:
 No instances defined
 ```
+
+> Here we,ve used `--scope` flag to specify that our `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServiceBroker` resources are cluster scoped (not namespaced scope)
 
 ## Provisioning: Creating a New ServiceInstance
 
@@ -100,13 +104,13 @@ $ kubectl create -f docs/examples/mongodb-instance.yaml
 serviceinstance.servicecatalog.k8s.io "my-broker-mongodb-instance" created
 ```
 
-After it is created, the service catalog controller will communicate with the `Kubedb Service Broker` server to initaiate provisioning. Now, see the details:
+After it is created, the service catalog controller will communicate with the service broker server to initaiate provisioning. Now, see the details:
 
 ```console
 $ svcat describe instance my-broker-mongodb-instance --namespace service-broker
   Name:        my-broker-mongodb-instance
   Namespace:   service-broker
-  Status:      Ready - The instance was provisioned successfully @ 2018-07-30 06:50:22 +0000 UTC  
+  Status:      Ready - The instance was provisioned successfully @ 2018-12-03 11:18:10 +0000 UTC
   Class:       mongodb
   Plan:        default
 
@@ -129,7 +133,7 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  creationTimestamp: 2018-07-30T06:50:22Z
+  creationTimestamp: 2018-12-03T11:18:09Z
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
@@ -137,30 +141,42 @@ metadata:
     app: service-broker
   name: my-broker-mongodb-instance
   namespace: service-broker
-  resourceVersion: "97"
+  resourceVersion: "1123"
   selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/serviceinstances/my-broker-mongodb-instance
-  uid: d4627019-93c4-11e8-bf8e-0242ac110008
+  uid: 1d416d67-f6ed-11e8-89f4-0242ac110003
 spec:
   clusterServiceClassExternalName: mongodb
   clusterServiceClassRef:
     name: mongodb
   clusterServicePlanExternalName: default
   clusterServicePlanRef:
-    name: mongodb-3-4
-  externalID: d4626fc8-93c4-11e8-bf8e-0242ac110008
+    name: mongodb-3-6
+  externalID: 1d416d29-f6ed-11e8-89f4-0242ac110003
   updateRequests: 0
+  userInfo:
+    groups:
+    - system:masters
+    - system:authenticated
+    uid: ""
+    username: minikube-user
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-07-30T06:50:22Z
+  - lastTransitionTime: 2018-12-03T11:18:10Z
     message: The instance was provisioned successfully
     reason: ProvisionedSuccessfully
     status: "True"
     type: Ready
   deprovisionStatus: Required
   externalProperties:
-    clusterServicePlanExternalID: mongodb-3-4
+    clusterServicePlanExternalID: mongodb-3-6
     clusterServicePlanExternalName: default
+    userInfo:
+      groups:
+      - system:masters
+      - system:authenticated
+      uid: ""
+      username: minikube-user
   observedGeneration: 1
   orphanMitigationInProgress: false
   provisionStatus: Provisioned
@@ -176,7 +192,7 @@ $ kubectl create -f docs/examples/mongodb-binding.yaml
 servicebinding.servicecatalog.k8s.io "my-broker-mongodb-binding" created
 ```
 
-Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with `Kubedb Service Broker` server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
+Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the service broker server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
 
 ```console
 $ kubectl get servicebindings my-broker-mongodb-binding --namespace service-broker -o=custom-columns=NAME:.metadata.name,INSTANCE\ REF:.spec.instanceRef.name,SECRET\ NAME:.spec.secretName
@@ -184,14 +200,14 @@ NAME                        INSTANCE REF                 SECRET NAME
 my-broker-mongodb-binding   my-broker-mongodb-instance   my-broker-mongodb-secret
 
 $ svcat get bindings --namespace service-broker
-            NAME                NAMESPACE               INSTANCE            STATUS  
+            NAME                NAMESPACE               INSTANCE            STATUS
 +---------------------------+----------------+----------------------------+--------+
   my-broker-mongodb-binding   service-broker   my-broker-mongodb-instance   Ready
 
 $ svcat describe bindings my-broker-mongodb-binding --namespace service-broker
   Name:        my-broker-mongodb-binding
   Namespace:   service-broker
-  Status:      Ready - Injected bind result @ 2018-07-30 06:57:33 +0000 UTC  
+  Status:      Ready - Injected bind result @ 2018-12-03 11:19:47 +0000 UTC
   Secret:      my-broker-mongodb-secret
   Instance:    my-broker-mongodb-instance
 
@@ -199,12 +215,11 @@ Parameters:
   No parameters defined
 
 Secret Data:
-  Protocol   2 bytes
-  host       51 bytes  
-  password   16 bytes  
+  Protocol   7 bytes
+  host       51 bytes
+  password   16 bytes
   port       5 bytes
-  uri        84 bytes  
-  user       4 bytes
+  uri        89 bytes
   username   4 bytes
 ```
 
@@ -220,7 +235,7 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  creationTimestamp: 2018-07-30T06:57:32Z
+  creationTimestamp: 2018-12-03T11:19:47Z
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
@@ -228,23 +243,35 @@ metadata:
     app: service-broker
   name: my-broker-mongodb-binding
   namespace: service-broker
-  resourceVersion: "102"
+  resourceVersion: "1126"
   selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/servicebindings/my-broker-mongodb-binding
-  uid: d4e72d03-93c5-11e8-bf8e-0242ac110008
+  uid: 57aee948-f6ed-11e8-89f4-0242ac110003
 spec:
-  externalID: d4e72cc6-93c5-11e8-bf8e-0242ac110008
+  externalID: 57aee8a2-f6ed-11e8-89f4-0242ac110003
   instanceRef:
     name: my-broker-mongodb-instance
   secretName: my-broker-mongodb-secret
+  userInfo:
+    groups:
+    - system:masters
+    - system:authenticated
+    uid: ""
+    username: minikube-user
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-07-30T06:57:33Z
+  - lastTransitionTime: 2018-12-03T11:19:47Z
     message: Injected bind result
     reason: InjectedBindResult
     status: "True"
     type: Ready
-  externalProperties: {}
+  externalProperties:
+    userInfo:
+      groups:
+      - system:masters
+      - system:authenticated
+      uid: ""
+      username: minikube-user
   orphanMitigationInProgress: false
   reconciledGeneration: 1
   unbindStatus: Required
@@ -254,11 +281,11 @@ Here, the status has `Ready` condition which means the binding is now ready for 
 
 ```console
 $ kubectl get secrets --namespace service-broker
-NAME                            TYPE                                  DATA      AGE
-default-token-c5qbd             kubernetes.io/service-account-token   3         2h
-mongodb-3-4-rnazvi-auth         Opaque                                2         15m
-my-broker-mongodb-secret        Opaque                                7         8m
-service-broker-token-m6hsm      kubernetes.io/service-account-token   3         2h
+NAME                         TYPE                                  DATA   AGE
+default-token-ghn5f          kubernetes.io/service-account-token   3      120m
+mongodb-3-6-cd255o-auth      Opaque                                2      3m49s
+my-broker-mongodb-secret     Opaque                                6      2m12s
+service-broker-token-wgp82   kubernetes.io/service-account-token   3      120m
 ```
 
 ## Unbinding: Deleting the ServiceBinding
@@ -277,10 +304,10 @@ After completion of unbinding, the `Secret` named `my-broker-mongodb-secret` sho
 
 ```console
 $ kubectl get secrets --namespace service-broker
-NAME                         TYPE                                  DATA      AGE
-default-token-c5qbd          kubernetes.io/service-account-token   3         2h
-mongodb-3-4-rnazvi-auth      Opaque                                2         30m
-service-broker-token-m6hsm   kubernetes.io/service-account-token   3         2h
+NAME                         TYPE                                  DATA   AGE
+default-token-ghn5f          kubernetes.io/service-account-token   3      121m
+mongodb-3-6-cd255o-auth      Opaque                                2      4m38s
+service-broker-token-wgp82   kubernetes.io/service-account-token   3      121m
 ```
 
 ## Deprovisioning: Deleting the ServiceInstance
@@ -304,6 +331,6 @@ $ kubectl get clusterserviceclasses
 No resources found.
 
 $ svcat get classes
-  NAME   NAMESPACE   DESCRIPTION  
+  NAME   NAMESPACE   DESCRIPTION
 +------+-----------+-------------+
 ```

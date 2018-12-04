@@ -1,6 +1,6 @@
 # Walkthrough Elasticsearch
 
-If we've `Kubedb Service Broker` installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
+If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
 
 This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
 
@@ -21,71 +21,77 @@ postgresql      postgresql
 redis           redis
 
 $ svcat get classes
-      NAME        NAMESPACE            DESCRIPTION
-+---------------+-----------+--------------------------------+
-  elasticsearch               The example service from the
-                              ElasticSearch database!
-  memcached                   The example service from the
-                              Memcache database!
-  mongodb                     The example service from the
-                              MongoDB database!
-  mysql                       The example service from the
-                              MySQL database!
-  postgresql                  The example service from the
-                              PostgreSQL database!
-  redis                       The example service from the
-                              Redis database!
+      NAME        NAMESPACE                     DESCRIPTION
++---------------+-----------+-------------------------------------------------+
+  elasticsearch               The example service from the ElasticSearch
+                              database!
+  memcached                   The example service from the Memcache database!
+  mongodb                     The example service from the MongoDB database!
+  mysql                       The example service from the MySQL database!
+  postgresql                  The example service from the PostgreSQL
+                              database!
+  redis                       The example service from the Redis database!
 ```
 
 > **NOTE:** The above kubectl command uses a custom set of columns. The **`NAME`** field is the Kubernetes name of the `ClusterServiceClass` and the **`EXTERNAL NAME`** field is the human-readable name for the service that the broker returns.
 
-Now, describe the `ClusterServiceClass` named `elasticsearch` from `Kubedb Service Broker`.
+Now, describe the `elasticsearch` class from `Service Broker`.
 
 ```console
-$ svcat describe class elasticsearch
-  Name:          elasticsearch
-  Description:   The example service from the ElasticSearch database!  
-  UUID:          elasticsearch
-  Status:        Active
+$ vcat describe class elasticsearch
+  Name:              elasticsearch
+  Scope:             cluster
+  Description:       The example service from the ElasticSearch database!
+  Kubernetes Name:   elasticsearch
+  Status:            Active
   Tags:
-  Broker:        service-broker
+  Broker:            service-broker
 
 Plans:
-   NAME              DESCRIPTION
-+---------+--------------------------------+
-  default   The default plan for the
-            'elasticsearch' service
+          NAME                     DESCRIPTION
++-----------------------+--------------------------------+
+  default                 The default plan for the
+                          'elasticsearch' service
+  elasticsearch-cluster   This plan is for getting a
+                          simple elasticsearch cluster
+                          under the 'elasticsearch'
+                          service
 ```
 
 To view the details of the `default` plan of `elasticsearch` class:
 
 ```console
 $ kubectl get clusterserviceplans -o=custom-columns=NAME:.metadata.name,EXTERNAL\ NAME:.spec.externalName
-NAME                EXTERNAL NAME
-elasticsearch-5-6   default
-memcached-1-5-4     default
-mongodb-3-4         default
-mysql-5-7           default
-postgresql-9-6      default
-redis-4-0           default
+NAME                        EXTERNAL NAME
+elasticsearch-6-3           default
+elasticsearch-cluster-6-3   elasticsearch-cluster
+ha-postgresql-10-2          ha-postgresql
+memcached-1-5-4             default
+mongodb-3-6                 default
+mongodb-cluster-3-6         mongodb-cluster
+mysql-8-0                   default
+postgresql-10-2             default
+redis-4-0                   default
 
-$ svcat get plan elasticsearch/default
-   NAME         CLASS                DESCRIPTION
-+---------+---------------+--------------------------------+
-  default   elasticsearch   The default plan for the
-                            'elasticsearch' service
+$ svcat get plan elasticsearch/default --scope cluster
+   NAME     NAMESPACE       CLASS                    DESCRIPTION
++---------+-----------+---------------+---------------------------------------+
+  default               elasticsearch   The default plan for the
+                                        'elasticsearch' service
 
-$ svcat describe plan elasticsearch/default
-  Name:          default
-  Description:   The default plan for the 'elasticsearch' service  
-  UUID:          elasticsearch-5-6
-  Status:        Active
-  Free:          true
-  Class:         elasticsearch
+$ svcat describe plan elasticsearch/default --scope cluster
+  Name:              default
+  Description:       The default plan for the 'elasticsearch' service
+  Kubernetes Name:   elasticsearch-6-3
+  Status:            Active
+  Free:              true
+  Class:             elasticsearch
 
 Instances:
 No instances defined
 ```
+
+> Here we,ve used `--scope` flag to specify that our `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServiceBroker` resources are cluster scoped (not namespaced scope)
 
 ## Provisioning: Creating a New ServiceInstance
 
@@ -100,13 +106,13 @@ $ kubectl create -f docs/examples/elasticsearch-instance.yaml
 serviceinstance.servicecatalog.k8s.io "my-broker-elasticsearch-instance" created
 ```
 
-After it is created, the service catalog controller will communicate with the `Kubedb Service Broker` server to initaiate provisioning. Now, see the details:
+After it is created, the service catalog controller will communicate with the service broker server to initaiate provisioning. Now, see the details:
 
 ```console
 $ svcat describe instance my-broker-elasticsearch-instance --namespace service-broker
   Name:        my-broker-elasticsearch-instance
   Namespace:   service-broker
-  Status:      Ready - The instance was provisioned successfully @ 2018-07-30 06:03:09 +0000 UTC  
+  Status:      Ready - The instance was provisioned successfully @ 2018-12-03 10:32:54 +0000 UTC
   Class:       elasticsearch
   Plan:        default
 
@@ -129,7 +135,7 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  creationTimestamp: 2018-07-30T06:03:08Z
+  creationTimestamp: 2018-12-03T10:32:53Z
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
@@ -137,30 +143,42 @@ metadata:
     app: service-broker
   name: my-broker-elasticsearch-instance
   namespace: service-broker
-  resourceVersion: "62"
+  resourceVersion: "1101"
   selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/serviceinstances/my-broker-elasticsearch-instance
-  uid: 3bb18f37-93be-11e8-bf8e-0242ac110008
+  uid: ca8d7d6d-f6e6-11e8-89f4-0242ac110003
 spec:
   clusterServiceClassExternalName: elasticsearch
   clusterServiceClassRef:
     name: elasticsearch
   clusterServicePlanExternalName: default
   clusterServicePlanRef:
-    name: elasticsearch-5-6
-  externalID: 3bb18f04-93be-11e8-bf8e-0242ac110008
+    name: elasticsearch-6-3
+  externalID: ca8d7d35-f6e6-11e8-89f4-0242ac110003
   updateRequests: 0
+  userInfo:
+    groups:
+    - system:masters
+    - system:authenticated
+    uid: ""
+    username: minikube-user
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-07-30T06:03:09Z
+  - lastTransitionTime: 2018-12-03T10:32:54Z
     message: The instance was provisioned successfully
     reason: ProvisionedSuccessfully
     status: "True"
     type: Ready
   deprovisionStatus: Required
   externalProperties:
-    clusterServicePlanExternalID: elasticsearch-5-6
+    clusterServicePlanExternalID: elasticsearch-6-3
     clusterServicePlanExternalName: default
+    userInfo:
+      groups:
+      - system:masters
+      - system:authenticated
+      uid: ""
+      username: minikube-user
   observedGeneration: 1
   orphanMitigationInProgress: false
   provisionStatus: Provisioned
@@ -176,7 +194,7 @@ $ kubectl create -f docs/examples/elasticsearch-binding.yaml
 servicebinding.servicecatalog.k8s.io "my-broker-elasticsearch-binding" created
 ```
 
-Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with `Kubedb Service Broker` server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
+Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the service broker server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
 
 ```console
 $ kubectl get servicebindings my-broker-elasticsearch-binding --namespace service-broker -o=custom-columns=NAME:.metadata.name,INSTANCE\ REF:.spec.instanceRef.name,SECRET\ NAME:.spec.secretName
@@ -184,14 +202,14 @@ NAME                              INSTANCE REF                       SECRET NAME
 my-broker-elasticsearch-binding   my-broker-elasticsearch-instance   my-broker-elasticsearch-secret
 
 $ svcat get bindings --namespace service-broker
-               NAME                   NAMESPACE                  INSTANCE               STATUS  
+               NAME                   NAMESPACE                  INSTANCE               STATUS
 +---------------------------------+----------------+----------------------------------+--------+
   my-broker-elasticsearch-binding   service-broker   my-broker-elasticsearch-instance   Ready
 
 $ svcat describe bindings my-broker-elasticsearch-binding --namespace service-broker
   Name:        my-broker-elasticsearch-binding
   Namespace:   service-broker
-  Status:      Ready - Injected bind result @ 2018-07-30 07:39:50 +0000 UTC  
+  Status:      Ready - Injected bind result @ 2018-12-03 10:34:11 +0000 UTC
   Secret:      my-broker-elasticsearch-secret
   Instance:    my-broker-elasticsearch-instance
 
@@ -199,19 +217,13 @@ Parameters:
   No parameters defined
 
 Secret Data:
-  ADMIN_PASSWORD          8 bytes
-  Protocol                4 bytes
-  READALL_PASSWORD        8 bytes
-  host                    57 bytes
-  password                8 bytes
-  port                    4 bytes
-  sg_action_groups.yml    430 bytes  
-  sg_config.yml           240 bytes  
-  sg_internal_users.yml   156 bytes  
-  sg_roles.yml            312 bytes  
-  sg_roles_mapping.yml    73 bytes
-  uri                     84 bytes
-  username                5 bytes
+  Protocol   5 bytes
+  host       57 bytes
+  password   8 bytes
+  port       4 bytes
+  rootCert   1139 bytes
+  uri        85 bytes
+  username   5 bytes
 ```
 
 You can see the secret data by passing `--show-secrets` flag to the above command. The yaml configuration of this `ServiceBinding` resource is as follows:
@@ -226,7 +238,7 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  creationTimestamp: 2018-07-30T07:39:49Z
+  creationTimestamp: 2018-12-03T10:34:10Z
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
@@ -234,23 +246,35 @@ metadata:
     app: service-broker
   name: my-broker-elasticsearch-binding
   namespace: service-broker
-  resourceVersion: "149"
+  resourceVersion: "1104"
   selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/servicebindings/my-broker-elasticsearch-binding
-  uid: bd3404e7-93cb-11e8-bf8e-0242ac110008
+  uid: f8acf9f6-f6e6-11e8-89f4-0242ac110003
 spec:
-  externalID: bd340499-93cb-11e8-bf8e-0242ac110008
+  externalID: f8acf9c4-f6e6-11e8-89f4-0242ac110003
   instanceRef:
     name: my-broker-elasticsearch-instance
   secretName: my-broker-elasticsearch-secret
+  userInfo:
+    groups:
+    - system:masters
+    - system:authenticated
+    uid: ""
+    username: minikube-user
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-07-30T07:39:50Z
+  - lastTransitionTime: 2018-12-03T10:34:11Z
     message: Injected bind result
     reason: InjectedBindResult
     status: "True"
     type: Ready
-  externalProperties: {}
+  externalProperties:
+    userInfo:
+      groups:
+      - system:masters
+      - system:authenticated
+      uid: ""
+      username: minikube-user
   orphanMitigationInProgress: false
   reconciledGeneration: 1
   unbindStatus: Required
@@ -260,12 +284,12 @@ Here, the status has `Ready` condition which means the binding is now ready for 
 
 ```console
 $ kubectl get secrets --namespace service-broker
-NAME                             TYPE                                  DATA      AGE
-default-token-c5qbd              kubernetes.io/service-account-token   3         2h
-elasticsearch-5-6-ptq4gv-auth    Opaque                                7         6m
-elasticsearch-5-6-ptq4gv-cert    Opaque                                4         6m
-my-broker-elasticsearch-secret   Opaque                                13        4m
-service-broker-token-m6hsm       kubernetes.io/service-account-token   3         2h
+NAME                             TYPE                                  DATA   AGE
+default-token-ghn5f              kubernetes.io/service-account-token   3      77m
+elasticsearch-6-3-bfmkzv-auth    Opaque                                9      6m5s
+elasticsearch-6-3-bfmkzv-cert    Opaque                                6      6m5s
+my-broker-elasticsearch-secret   Opaque                                7      4m50s
+service-broker-token-wgp82       kubernetes.io/service-account-token   3      77m
 ```
 
 ## Unbinding: Deleting the ServiceBinding
@@ -284,11 +308,11 @@ After completion of unbinding, the `Secret` named `my-broker-elasticsearch-secre
 
 ```console
 $ kubectl get secrets --namespace service-broker
-NAME                            TYPE                                  DATA      AGE
-default-token-c5qbd             kubernetes.io/service-account-token   3         2h
-elasticsearch-5-6-ptq4gv-auth   Opaque                                7         7m
-elasticsearch-5-6-ptq4gv-cert   Opaque                                4         7m
-service-broker-token-m6hsm      kubernetes.io/service-account-token   3         2h
+NAME                            TYPE                                  DATA   AGE
+default-token-ghn5f             kubernetes.io/service-account-token   3      79m
+elasticsearch-6-3-bfmkzv-auth   Opaque                                9      7m22s
+elasticsearch-6-3-bfmkzv-cert   Opaque                                6      7m22s
+service-broker-token-wgp82      kubernetes.io/service-account-token   3      79m
 ```
 
 ## Deprovisioning: Deleting the ServiceInstance
@@ -312,6 +336,6 @@ $ kubectl get clusterserviceclasses
 No resources found.
 
 $ svcat get classes
-  NAME   NAMESPACE   DESCRIPTION  
+  NAME   NAMESPACE   DESCRIPTION
 +------+-----------+-------------+
 ```

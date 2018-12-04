@@ -6,8 +6,8 @@ import (
 
 	logs "github.com/appscode/go/log/golog"
 	"github.com/appscode/kutil/tools/clientcmd"
+	"github.com/appscode/service-broker/test/e2e/framework"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
-	"github.com/kubedb/service-broker/test/e2e/framework"
 	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"

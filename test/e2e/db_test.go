@@ -1,11 +1,9 @@
 package e2e
 
 import (
-	"fmt"
-
-	kubedb_util "github.com/kubedb/service-broker/pkg/db-broker"
-	"github.com/kubedb/service-broker/test/e2e/framework"
-	"github.com/kubedb/service-broker/test/util"
+	kubedb_util "github.com/appscode/service-broker/pkg/db-broker"
+	"github.com/appscode/service-broker/test/e2e/framework"
+	"github.com/appscode/service-broker/test/util"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,7 +34,6 @@ var _ = Describe("[service-catalog]", func() {
 
 		brokerName = f.BaseName
 		brokerNamespace = f.Namespace.Name
-		fmt.Println(">>>>>>>>>>>>> broker image =", brokerImageFlag)
 
 		By("Creating a service account for service broker")
 		_, err := f.KubeClient.CoreV1().

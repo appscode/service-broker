@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "kubedb-service-broker.name" -}}
+{{- define "service-broker.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "kubedb-service-broker.fullname" -}}
+{{- define "service-broker.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,6 +27,19 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "kubedb-service-broker.chart" -}}
+{{- define "service-broker.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+template for "--catalog-names" flag values
+*/}}
+{{- define "service-broker.catalogNames" }}
+{{- range $i, $item := .Values.catalogs.names }}
+  {{- if eq ($i) 0 }}
+    {{- $item }}
+  {{- else }}
+    {{- printf ",%s" $item }}
+  {{- end }}
+{{- end}}
+{{- end }}

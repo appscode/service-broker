@@ -36,7 +36,7 @@ func NewCatalogConfigMap(name, namespace string) (*corev1.ConfigMap, error) {
 		memcached     string
 		redis         string
 	)
-	catalogPath := filepath.Join("..", "..", "hack", "deploy", "catalogs")
+	catalogPath := filepath.Join("..", "..", "hack", "deploy", "catalogs", "kubedb")
 	if data, err = ioutil.ReadFile(filepath.Join(catalogPath, "mysql.yaml")); err != nil {
 		return nil, err
 	}
@@ -105,6 +105,8 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 								"8080",
 								"--catalog-path",
 								"/etc/config/catalogs",
+								"--catalog-names",
+								"kubedb",
 								"-v",
 								"5",
 								"-logtostderr",
@@ -116,17 +118,26 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 									ContainerPort: 8080,
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(8080),
+										Scheme: corev1.URISchemeHTTP,
+									},
+								},
+							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									MountPath: "/etc/config/catalogs",
-									Name:      "catalogs-volume",
+									MountPath: "/etc/config/catalogs/kubedb",
+									Name:      "kubedb-volume",
 								},
 							},
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "catalogs-volume",
+							Name: "kubedb-volume",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
