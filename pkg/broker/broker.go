@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/appscode/go/crypto/rand"
@@ -18,16 +17,16 @@ import (
 // NewBroker is a hook that is called with the Options the program is run
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
-func NewBroker(o Options) (*Broker, error) {
-	brClient := db_broker.NewClient(o.KubeConfig, o.StorageClass)
+func NewBroker(s *ExtraOptions) (*Broker, error) {
+	brClient := db_broker.NewClient(s.KubeConfig, s.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
 	return &Broker{
 		Client:       brClient,
-		async:        o.Async,
-		catalogPath:  o.CatalogPath,
-		catalogNames: strings.Split(o.CatalogNames, ","),
+		async:        s.Async,
+		catalogPath:  s.CatalogPath,
+		catalogNames: s.CatalogNames,
 		instances:    make(map[string]*exampleInstance, 10),
 	}, nil
 }

@@ -101,6 +101,7 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 								"service-broker",
 							},
 							Args: []string{
+								"run",
 								"--port",
 								"8080",
 								"--catalog-path",
@@ -109,7 +110,7 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 								"kubedb",
 								"-v",
 								"5",
-								"-logtostderr",
+								"--logtostderr",
 								"--storage-class",
 								storageClass,
 							},
@@ -121,8 +122,8 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
 									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/healthz",
-										Port: intstr.FromInt(8080),
+										Path:   "/healthz",
+										Port:   intstr.FromInt(8080),
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
