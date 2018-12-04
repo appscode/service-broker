@@ -1,6 +1,6 @@
 # Walkthrough Postgres
 
-If we've `AppsCode Service-Broker` installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
+If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
 
 This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
 
@@ -21,41 +21,41 @@ postgresql      postgresql
 redis           redis
 
 $ svcat get classes
-      NAME        NAMESPACE                     DESCRIPTION                    
+      NAME        NAMESPACE                     DESCRIPTION
 +---------------+-----------+-------------------------------------------------+
-  elasticsearch               The example service from the ElasticSearch       
-                              database!                                        
-  memcached                   The example service from the Memcache database!  
-  mongodb                     The example service from the MongoDB database!   
-  mysql                       The example service from the MySQL database!     
-  postgresql                  The example service from the PostgreSQL          
-                              database!                                        
-  redis                       The example service from the Redis database!     
+  elasticsearch               The example service from the ElasticSearch
+                              database!
+  memcached                   The example service from the Memcache database!
+  mongodb                     The example service from the MongoDB database!
+  mysql                       The example service from the MySQL database!
+  postgresql                  The example service from the PostgreSQL
+                              database!
+  redis                       The example service from the Redis database!
 ```
 
 > **NOTE:** The above kubectl command uses a custom set of columns. The **`NAME`** field is the Kubernetes name of the `ClusterServiceClass` and the **`EXTERNAL NAME`** field is the human-readable name for the service that the broker returns.
 
-Now, describe the `postgresql` class from the `Service-Broker`.
+Now, describe the `postgresql` class from the `Service Broker`.
 
 ```console
 $ svcat describe class postgresql
-  Name:              postgresql                                         
-  Scope:             cluster                                            
-  Description:       The example service from the PostgreSQL database!  
-  Kubernetes Name:   postgresql                                         
-  Status:            Active                                             
-  Tags:                                                                 
-  Broker:            service-broker                                     
+  Name:              postgresql
+  Scope:             cluster
+  Description:       The example service from the PostgreSQL database!
+  Kubernetes Name:   postgresql
+  Status:            Active
+  Tags:
+  Broker:            service-broker
 
 Plans:
-      NAME                 DESCRIPTION            
+      NAME                 DESCRIPTION
 +---------------+--------------------------------+
-  ha-postgresql   This plan is for getting HA     
-                  postgres database under the     
-                  `postgresql` service            
-  default         This plan is for getting        
-                  standalone postgres database    
-                  under the `postgresql` service  
+  ha-postgresql   This plan is for getting HA
+                  postgres database under the
+                  `postgresql` service
+  default         This plan is for getting
+                  standalone postgres database
+                  under the `postgresql` service
 ```
 
 To view the details of the `default` plan of `postgresql` class:
@@ -74,19 +74,19 @@ postgresql-10-2             default
 redis-4-0                   default
 
 $ svcat get plan postgresql/default --scope cluster
-   NAME     NAMESPACE     CLASS                    DESCRIPTION                 
+   NAME     NAMESPACE     CLASS                    DESCRIPTION
 +---------+-----------+------------+------------------------------------------+
-  default               postgresql   This plan is for getting standalone       
-                                     postgres database under the `postgresql`  
-                                     service                                   
+  default               postgresql   This plan is for getting standalone
+                                     postgres database under the `postgresql`
+                                     service
 
 $ svcat describe plan postgresql/default --scope cluster
-  Name:              default                                                                               
-  Description:       This plan is for getting standalone postgres database under the `postgresql` service  
-  Kubernetes Name:   postgresql-10-2                                                                       
-  Status:            Active                                                                                
-  Free:              true                                                                                  
-  Class:             postgresql                                                                            
+  Name:              default
+  Description:       This plan is for getting standalone postgres database under the `postgresql` service
+  Kubernetes Name:   postgresql-10-2
+  Status:            Active
+  Free:              true
+  Class:             postgresql
 
 Instances:
 No instances defined
@@ -107,15 +107,15 @@ $ kubectl create -f docs/examples/postgresql-instance.yaml
 serviceinstance.servicecatalog.k8s.io/my-broker-postgresql-instance created
 ```
 
-After it is created, the service catalog controller will communicate with the `Service-Broker` server to initaiate provisioning. Now, see the details:
+After it is created, the service catalog controller will communicate with the service broker server to initaiate provisioning. Now, see the details:
 
 ```console
 $ svcat describe instance my-broker-postgresql-instance --namespace service-broker
-  Name:        my-broker-postgresql-instance                                                      
-  Namespace:   service-broker                                                                     
-  Status:      Ready - The instance was provisioned successfully @ 2018-12-03 09:27:04 +0000 UTC  
-  Class:       postgresql                                                                         
-  Plan:        default                                                                            
+  Name:        my-broker-postgresql-instance
+  Namespace:   service-broker
+  Status:      Ready - The instance was provisioned successfully @ 2018-12-03 09:27:04 +0000 UTC
+  Class:       postgresql
+  Plan:        default
 
 Parameters:
   No parameters defined
@@ -195,7 +195,7 @@ $ kubectl create -f docs/examples/postgresql-binding.yaml
 servicebinding.servicecatalog.k8s.io "my-broker-postgresql-binding" created
 ```
 
-Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the `Service-Broker` server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
+Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the service broker server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
 
 ```console
 $ kubectl get servicebindings my-broker-postgresql-binding --namespace service-broker -o=custom-columns=NAME:.metadata.name,INSTANCE\ REF:.spec.instanceRef.name,SECRET\ NAME:.spec.secretName
@@ -203,28 +203,28 @@ NAME                           INSTANCE REF                    SECRET NAME
 my-broker-postgresql-binding   my-broker-postgresql-instance   my-broker-postgresql-secret
 
 $ svcat get bindings --namespace service-broker
-              NAME                 NAMESPACE                INSTANCE              STATUS  
+              NAME                 NAMESPACE                INSTANCE              STATUS
 +------------------------------+----------------+-------------------------------+--------+
-  my-broker-postgresql-binding   service-broker   my-broker-postgresql-instance   Ready   
+  my-broker-postgresql-binding   service-broker   my-broker-postgresql-instance   Ready
 
 $ svcat describe bindings my-broker-postgresql-binding --namespace service-broker
-  Name:        my-broker-postgresql-binding                                  
-  Namespace:   service-broker                                                
-  Status:      Ready - Injected bind result @ 2018-12-03 09:41:04 +0000 UTC  
-  Secret:      my-broker-postgresql-secret                                   
-  Instance:    my-broker-postgresql-instance                                 
+  Name:        my-broker-postgresql-binding
+  Namespace:   service-broker
+  Status:      Ready - Injected bind result @ 2018-12-03 09:41:04 +0000 UTC
+  Secret:      my-broker-postgresql-secret
+  Instance:    my-broker-postgresql-instance
 
 Parameters:
   No parameters defined
 
 Secret Data:
-  Protocol   10 bytes   
-  database   8 bytes    
-  host       55 bytes   
-  password   16 bytes   
-  port       4 bytes    
-  uri        108 bytes  
-  username   8 bytes    
+  Protocol   10 bytes
+  database   8 bytes
+  host       55 bytes
+  password   16 bytes
+  port       4 bytes
+  uri        108 bytes
+  username   8 bytes
 ```
 
 You can see the secret data by passing `--show-secrets` flag to the above command. The yaml configuration of this `ServiceBinding` resource is as follows:
@@ -337,6 +337,6 @@ $ kubectl get clusterserviceclasses
 No resources found.
 
 $ svcat get classes
-  NAME   NAMESPACE   DESCRIPTION  
+  NAME   NAMESPACE   DESCRIPTION
 +------+-----------+-------------+
 ```

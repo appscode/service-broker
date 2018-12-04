@@ -6,9 +6,9 @@ To check the installation you need the Service Catalog onto your cluster. So, th
 
 > After satisfying the prerequisites, all commands in this document assume that you're operating out of the root of this repository.
 
-## Install Service-Broker
+## Install Service Broker
 
-`AppsCode Service-Broker` can be installed via a script or as a Helm chart.
+`AppsCode Service Broker` can be installed via a script or as a Helm chart.
 
 - [Script](/docs/setup/install.md#Using-Script)
 - [Helm](/docs/setup/install.md#Using-Helm)
@@ -36,15 +36,15 @@ The installer script and associated yaml files can be found in the [hack/deploy]
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh | bash -s -- -h
 service-broker.sh
- 
+
 service-broker.sh [commands] [options]
- 
+
 commands:
 ---------
 build         builds and push the docker image for service-broker
 run           installs service-broker
 uninstall     uninstalls service-broker
- 
+
 options:
 --------
 -h, --help                    show brief help
@@ -58,10 +58,10 @@ options:
     --storage-class           name of the storage-class for database storage
 ```
 
-If you would like to run `Service-Broker` pod in your own namespace say `my-ns` namespace, pass the `--namespace=my-ns` flag:
+If you would like to run service broker pod in your own namespace say `my-ns` namespace, pass the `--namespace=my-ns` flag:
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh \ 
+$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh \
     | bash -s -- --namespace=my-ns
 ...
 ```
@@ -76,7 +76,7 @@ $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/ha
 
 ### Using Helm
 
-`Service-Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart/). To install the chart with the release name `my-release`:
+`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart/). To install the chart with the release name `my-release`:
 
 ```console
 $ helm install --name my-release --namespace service-broker chart/service-broker/
@@ -85,7 +85,7 @@ $ helm install --name my-release --namespace service-broker chart/service-broker
 
 ### Verify installation
 
-To check whether `Service-broker` pod has started or not, run the following command:
+To check whether service broker pod has started or not, run the following command:
 
 ```console
 # for script installation
@@ -104,7 +104,7 @@ service-broker   my-release-service-broker-7d8cc8dcc-q7c6m   1/1   Running   0  
 
 Once the pods is running, you can cancel the above command by typing `Ctrl+C`.
 
-Now, to confirm `ClusterServiceBroker`, `ClusterServiceClass`, `ClusterServicePlan` have been registered by the `Service-Broker`, run the following command:
+Now, to confirm `ClusterServiceBroker`, `ClusterServiceClass`, `ClusterServicePlan` have been registered by the `Service Broker`, run the following command:
 
 ```console
 $ kubectl get clusterservicebrokers -l app=service-broker
@@ -137,48 +137,48 @@ You can get the same thing in a different manner using Service Catalog CLI `svca
 
 ```console
 $ svcat get brokers
-       NAME        NAMESPACE                            URL                             STATUS  
+       NAME        NAMESPACE                            URL                             STATUS
 +----------------+-----------+--------------------------------------------------------+--------+
   service-broker               http://service-broker.service-broker.svc.cluster.local   Ready
 
 $ svcat get classes
-      NAME        NAMESPACE                     DESCRIPTION                    
+      NAME        NAMESPACE                     DESCRIPTION
 +---------------+-----------+-------------------------------------------------+
-  elasticsearch               The example service from the ElasticSearch       
-                              database!                                        
-  memcached                   The example service from the Memcache database!  
-  mongodb                     The example service from the MongoDB database!   
-  mysql                       The example service from the MySQL database!     
-  postgresql                  The example service from the PostgreSQL          
-                              database!                                        
+  elasticsearch               The example service from the ElasticSearch
+                              database!
+  memcached                   The example service from the Memcache database!
+  mongodb                     The example service from the MongoDB database!
+  mysql                       The example service from the MySQL database!
+  postgresql                  The example service from the PostgreSQL
+                              database!
   redis                       The example service from the Redis database!
 
 $ svcat get plans
-          NAME            NAMESPACE       CLASS                DESCRIPTION            
+          NAME            NAMESPACE       CLASS                DESCRIPTION
 +-----------------------+-----------+---------------+--------------------------------+
-  default                             elasticsearch   The default plan for the        
-                                                      'elasticsearch' service         
-  elasticsearch-cluster               elasticsearch   This plan is for getting a      
-                                                      simple elasticsearch cluster    
-                                                      under the 'elasticsearch'       
-                                                      service                         
-  default                             memcached       The default plan for the        
-                                                      'memcached' service             
-  default                             mongodb         The default plan for the        
-                                                      'mongodb' service               
-  mongodb-cluster                     mongodb         This plan is for getting a      
-                                                      simple mongodb cluster under    
-                                                      the 'mongodb' service           
-  default                             mysql           The default plan for the        
-                                                      'mysql' service                 
-  ha-postgresql                       postgresql      This plan is for getting HA     
-                                                      postgres database under the     
-                                                      `postgresql` service            
-  default                             postgresql      This plan is for getting        
-                                                      standalone postgres database    
-                                                      under the `postgresql` service  
-  default                             redis           The default plan for the        
+  default                             elasticsearch   The default plan for the
+                                                      'elasticsearch' service
+  elasticsearch-cluster               elasticsearch   This plan is for getting a
+                                                      simple elasticsearch cluster
+                                                      under the 'elasticsearch'
+                                                      service
+  default                             memcached       The default plan for the
+                                                      'memcached' service
+  default                             mongodb         The default plan for the
+                                                      'mongodb' service
+  mongodb-cluster                     mongodb         This plan is for getting a
+                                                      simple mongodb cluster under
+                                                      the 'mongodb' service
+  default                             mysql           The default plan for the
+                                                      'mysql' service
+  ha-postgresql                       postgresql      This plan is for getting HA
+                                                      postgres database under the
+                                                      `postgresql` service
+  default                             postgresql      This plan is for getting
+                                                      standalone postgres database
+                                                      under the `postgresql` service
+  default                             redis           The default plan for the
                                                       'redis' service
 ```
 
-Now, you are ready to use `Service-broker`.
+Now, you are ready to use service broker.

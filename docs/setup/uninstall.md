@@ -1,6 +1,6 @@
-# Uninstall Service-Broker
+# Uninstall Service Broker
 
-To uninstall `Service-broker`, run the following command:
+To uninstall service broker, run the following command:
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh | bash -s -- uninstall

@@ -12,7 +12,7 @@ NAME             URL                                                      STATUS
 service-broker   http://service-broker.service-broker.svc.cluster.local   Ready    41s
 
 $ svcat get brokers
-       NAME        NAMESPACE                            URL                             STATUS  
+       NAME        NAMESPACE                            URL                             STATUS
 +----------------+-----------+--------------------------------------------------------+--------+
   service-broker               http://service-broker.service-broker.svc.cluster.local   Ready
 ```
@@ -23,9 +23,9 @@ We can check the status of the broker:
 
 ```console
 $ svcat describe broker service-broker
-  Name:     service-broker                                                                            
-  URL:      http://service-broker.service-broker.svc.cluster.local                                    
-  Status:   Ready - Successfully fetched catalog entries from broker @ 2018-12-03 05:04:37 +0000 UTC 
+  Name:     service-broker
+  URL:      http://service-broker.service-broker.svc.cluster.local
+  Status:   Ready - Successfully fetched catalog entries from broker @ 2018-12-03 05:04:37 +0000 UTC
 ```
 
 Here is the yaml configuration of this resource.
@@ -72,7 +72,7 @@ status:
 
 ## Viewing ClusterServiceClasses
 
-There is a `ClusterServiceClass` for each service that the `AppsCode Service-Broker` provides. To view these `ClusterServiceClass` resources:
+There is a `ClusterServiceClass` for each service that the AppsCode Service Broker provides. To view these `ClusterServiceClass` resources:
 
 ```console
 $ kubectl get clusterserviceclasses -o=custom-columns=NAME:.metadata.name,EXTERNAL\ NAME:.spec.externalName
@@ -85,37 +85,37 @@ postgresql      postgresql
 redis           redis
 
 $ svcat get classes
-      NAME        NAMESPACE                     DESCRIPTION                    
+      NAME        NAMESPACE                     DESCRIPTION
 +---------------+-----------+-------------------------------------------------+
-  elasticsearch               The example service from the ElasticSearch       
-                              database!                                        
-  memcached                   The example service from the Memcache database!  
-  mongodb                     The example service from the MongoDB database!   
-  mysql                       The example service from the MySQL database!     
-  postgresql                  The example service from the PostgreSQL          
-                              database!                                        
-  redis                       The example service from the Redis database!     
+  elasticsearch               The example service from the ElasticSearch
+                              database!
+  memcached                   The example service from the Memcache database!
+  mongodb                     The example service from the MongoDB database!
+  mysql                       The example service from the MySQL database!
+  postgresql                  The example service from the PostgreSQL
+                              database!
+  redis                       The example service from the Redis database!
 ```
 
 > **NOTE:** The above kubectl command uses a custom set of columns. The **`NAME`** field is the Kubernetes name of the `ClusterServiceClass` and the **`EXTERNAL NAME`** field is the human-readable name for the service that the broker returns.
 
-Here is the details for service `mysql` from `Kubedb` by `AppsCode`.
+Here is the details for service `mysql` from KubeDB by `AppsCode`.
 
 ```console
 $ svcat describe class mysql
-  Name:              mysql                                         
-  Scope:             cluster                                       
-  Description:       The example service from the MySQL database!  
-  Kubernetes Name:   mysql                                         
-  Status:            Active                                        
-  Tags:                                                            
-  Broker:            service-broker                                
+  Name:              mysql
+  Scope:             cluster
+  Description:       The example service from the MySQL database!
+  Kubernetes Name:   mysql
+  Status:            Active
+  Tags:
+  Broker:            service-broker
 
 Plans:
-   NAME              DESCRIPTION            
+   NAME              DESCRIPTION
 +---------+--------------------------------+
-  default   The default plan for the        
-            'mysql' service                 
+  default   The default plan for the
+            'mysql' service
 ```
 
 Here is the yaml configuration of `ClusterServiceClass` named `mysql`.
@@ -191,12 +191,12 @@ As an example, to view the details of the `default` plan of `mysql` class:
 
 ```console
 $ svcat describe plan mysql/default --scope cluster
-  Name:              default                                   
-  Description:       The default plan for the 'mysql' service  
-  Kubernetes Name:   mysql-8-0                                 
-  Status:            Active                                    
-  Free:              true                                      
-  Class:             mysql                                     
+  Name:              default
+  Description:       The default plan for the 'mysql' service
+  Kubernetes Name:   mysql-8-0
+  Status:            Active
+  Free:              true
+  Class:             mysql
 
 Instances:
 No instances defined
