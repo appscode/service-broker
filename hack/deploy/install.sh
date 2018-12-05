@@ -137,7 +137,7 @@ echo ""
 build() {
     pushd $REPO_ROOT
         mkdir -p hack/docker
-        go build -o hack/docker/service-broker cmd/service-broker/main.go
+        go build -o hack/docker/service-broker cmd/service-broker/*.go
 #        cp hack/dev/kubedb.sh hack/docker/kubedb.sh
 
         pushd hack/docker

@@ -29,6 +29,7 @@ spec:
           command:
             - "service-broker"
           args:
+            - run
             - --port
             - "{{ .Values.containerPort }}"
             - --catalog-path
@@ -37,7 +38,7 @@ spec:
             - {{ include "service-broker.catalogNames" . | quote }}
             - -v
             - "{{ .Values.logLabel }}"
-            - -logtostderr
+            - --logtostderr
             - --storage-class
             - "{{ .Values.storageClass }}"
           ports:

@@ -26,6 +26,7 @@ spec:
         command:
         - "service-broker"
         args:
+        - run
         - --port
         - "${PORT}"
 #        - "8080"
@@ -35,7 +36,7 @@ spec:
         - "${CATALOG_NAMES}"
         - -v
         - "5"
-        - -logtostderr
+        - --logtostderr
         - --storage-class
         - ${STORAGE_CLASS}
         ports:
