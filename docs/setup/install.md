@@ -2,6 +2,12 @@
 
 ## Prerequisites
 
+First you need to have the software services by AppsCode installed in the cluster. Currently AppsCode Service Broker supports the following software service:
+
+ - Kubedb
+
+So we need to have Kubedb installed to go forward. To install Kubedb see [here](https://kubedb.com/docs/0.9.0-rc.1/setup/install/).
+
 To check the installation you need the Service Catalog onto your cluster. So, this document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://svc-cat.io/docs/install/). Optionally you may install the Service Catalog CLI (nammed `svcat`) from the `installing-the-service-catalog-cli` section.
 
 > After satisfying the prerequisites, all commands in this document assume that you're operating out of the root of this repository.
@@ -18,8 +24,20 @@ To check the installation you need the Service Catalog onto your cluster. So, th
 To install `Apps Service Broker` in your Kubernetes cluster, run the following command:
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh | bash -s -- run
+$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash
 ...
+
+namespace/service-broker created
+configmap/kubedb created
+deployment.apps/service-broker created
+service/service-broker created
+serviceaccount/service-broker created
+clusterrolebinding.rbac.authorization.k8s.io/service-broker created
+clusterservicebroker.servicecatalog.k8s.io/service-broker created
+
+waiting until service-broker deployment is ready
+
+Successfully installed service-broker in service-broker namespace!
 ```
 
 After successful installation, you should have a `service-broker-***` pod running in the `service-broker` namespace.
@@ -34,16 +52,13 @@ service-broker-***       1/1       Running   0          48s
 The installer script and associated yaml files can be found in the [hack/deploy](https://github.com/appscode/service-broker/tree/master/hack/deploy) folder. You can see the full list of flags available to installer using `-h` flag.
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh | bash -s -- -h
-service-broker.sh
+$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash -s -- -h
+checking kubeconfig context
+minikube
 
-service-broker.sh [commands] [options]
+install.sh - install service-broker
 
-commands:
----------
-build         builds and push the docker image for service-broker
-run           installs service-broker
-uninstall     uninstalls service-broker
+install.sh [options]
 
 options:
 --------
@@ -54,14 +69,15 @@ options:
     --image-pull-secret       name of secret used to pull service-broker image
     --port                    port number at which the broker will expose
     --catalogPath             the path of catalogs for different service plans
-    --catalogNames            comma seperated names of the catalogs for different service plans
+    --catalogNames            comma separated names of the catalogs for different service plans
     --storage-class           name of the storage-class for database storage
+    --uninstall               uninstall service-broker
 ```
 
 If you would like to run service broker pod in your own namespace say `my-ns` namespace, pass the `--namespace=my-ns` flag:
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh \
+$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
     | bash -s -- --namespace=my-ns
 ...
 ```
@@ -69,7 +85,7 @@ $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/ha
 If you are using a private docker registry, then to pass the name of your private registry and a image pull secret use flags `--docker-registry` and `--image-pull-secret` respectively.
 
 ```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/service-broker.sh \
+$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
     | bash -s -- --docker-registry=MY_REGISTRY [--image-pull-secret=SECRET_NAME]
 ...
 ```
