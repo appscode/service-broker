@@ -161,8 +161,6 @@ def install():
 def default():
     gen()
     fmt()
-    vet()
-    lint()
     install()
 
 
