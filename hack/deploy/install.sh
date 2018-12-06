@@ -56,6 +56,51 @@ detect_tag() {
   export commit_timestamp
 }
 
+onessl_found() {
+  # https://stackoverflow.com/a/677212/244009
+  if [[ -x "$(command -v onessl)" ]]; then
+    onessl wait-until-has -h >/dev/null 2>&1 || {
+      # old version of onessl found
+      echo "Found outdated onessl"
+      return 1
+    }
+    export ONESSL=onessl
+    return 0
+  fi
+  return 1
+}
+
+onessl_found || {
+  echo "Downloading onessl ..."
+  # ref: https://stackoverflow.com/a/27776822/244009
+  case "$(uname -s)" in
+    Darwin)
+      curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-darwin-amd64
+      chmod +x onessl
+      export ONESSL=./onessl
+      ;;
+
+    Linux)
+      curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-linux-amd64
+      chmod +x onessl
+      export ONESSL=./onessl
+      ;;
+
+    CYGWIN* | MINGW32* | MSYS*)
+      curl -fsSL -o onessl.exe https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-windows-amd64.exe
+      chmod +x onessl.exe
+      export ONESSL=./onessl.exe
+      ;;
+    *)
+      echo 'other OS'
+      ;;
+  esac
+}
+
+# ref: https://stackoverflow.com/a/7069755/244009
+# ref: https://jonalmeida.com/posts/2013/05/26/different-ways-to-implement-flags-in-bash/
+# ref: http://tldp.org/LDP/abs/html/comparison-ops.html
+
 export DOCKER_REGISTRY=${DOCKER_REGISTRY:-appscode}
 export IMG=service-broker
 export TAG=${TAG:-0.1.0}
@@ -83,9 +128,9 @@ if [[ "$APPSCODE_ENV" == "dev" ]]; then
 fi
 
 show_help() {
-    echo "service-broker.sh - install service-broker"
+    echo "install.sh - install service-broker"
     echo " "
-    echo "service-broker.sh [options]"
+    echo "install.sh [options]"
     echo " "
     echo "options:"
     echo "--------"
@@ -208,47 +253,6 @@ if [[ "$UNINSTALL" -eq 1 ]]; then
     echo "Successfully uninstalled service-broker!"
     exit 0
 fi
-
-onessl_found() {
-  # https://stackoverflow.com/a/677212/244009
-  if [[ -x "$(command -v onessl)" ]]; then
-    onessl wait-until-has -h >/dev/null 2>&1 || {
-      # old version of onessl found
-      echo "Found outdated onessl"
-      return 1
-    }
-    export ONESSL=onessl
-    return 0
-  fi
-  return 1
-}
-
-onessl_found || {
-  echo "Downloading onessl ..."
-  # ref: https://stackoverflow.com/a/27776822/244009
-  case "$(uname -s)" in
-    Darwin)
-      curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-darwin-amd64
-      chmod +x onessl
-      export ONESSL=./onessl
-      ;;
-
-    Linux)
-      curl -fsSL -o onessl https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-linux-amd64
-      chmod +x onessl
-      export ONESSL=./onessl
-      ;;
-
-    CYGWIN* | MINGW32* | MSYS*)
-      curl -fsSL -o onessl.exe https://github.com/kubepack/onessl/releases/download/0.9.0/onessl-windows-amd64.exe
-      chmod +x onessl.exe
-      export ONESSL=./onessl.exe
-      ;;
-    *)
-      echo 'other OS'
-      ;;
-  esac
-}
 
 found=0
 ns=($(kubectl get ns -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
