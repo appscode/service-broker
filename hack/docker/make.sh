@@ -44,6 +44,7 @@ RUN set -x \
 COPY service-broker /usr/bin/service-broker
 
 USER nobody:nobody
+ENTRYPOINT ["service-broker"]
 EOL
   local cmd="docker build --pull -t $DOCKER_REGISTRY/$IMG:$TAG ."
   echo $cmd; $cmd
