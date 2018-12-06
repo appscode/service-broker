@@ -3,19 +3,19 @@ package db_broker
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"path/filepath"
 )
 
 const (
@@ -35,7 +35,7 @@ func NewClient(kubeConfigPath, storageClassName string) *Client {
 		kubeClient: loadInClusterClient(config),
 		namespace:  loadNamespace(kubeConfigPath),
 		catalogProviders: map[string]map[string]Provider{
-			"kubedb": map[string]Provider{
+			"kubedb": {
 				"mysql":         NewMySQLProvider(config, storageClassName),
 				"postgresql":    NewPostgreSQLProvider(config, storageClassName),
 				"elasticsearch": NewElasticsearchProvider(config, storageClassName),
@@ -88,7 +88,7 @@ func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.S
 	services := []osb.Service{}
 	for _, catalog := range catalogNames {
 		if providers, ok := c.catalogProviders[catalog]; ok {
-			for providerName, _ := range providers {
+			for providerName := range providers {
 				out, err := ioutil.ReadFile(filepath.Join(catalogPath, catalog, fmt.Sprintf("%s.yaml", providerName)))
 				if err != nil {
 					return nil, err

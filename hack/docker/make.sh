@@ -32,13 +32,18 @@ build_binary() {
 
 build_docker() {
   pushd $REPO_ROOT/hack/docker
-  cp $DIST/service-broker/service-broker service-broker
+  cp $DIST/service-broker/service-broker-linux-amd64 service-broker
   chmod 755 service-broker
 
   cat >Dockerfile <<EOL
-FROM ubuntu
+FROM alpine
 
-COPY service-broker /bin/service-broker
+RUN set -x \
+  && apk add --update --no-cache ca-certificates
+
+COPY service-broker /usr/bin/service-broker
+
+USER nobody:nobody
 EOL
   local cmd="docker build --pull -t $DOCKER_REGISTRY/$IMG:$TAG ."
   echo $cmd; $cmd

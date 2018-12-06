@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/spf13/pflag"
 	"os"
 	"os/signal"
 	"path"
@@ -17,6 +16,7 @@ import (
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
 	"github.com/pmorie/osb-broker-lib/pkg/server"
 	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/pflag"
 )
 
 type BrokerServerOptions struct {

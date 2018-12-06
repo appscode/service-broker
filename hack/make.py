@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 # http://stackoverflow.com/a/14050282
 def check_antipackage():
     from sys import version_info
@@ -51,43 +52,53 @@ libbuild.BIN_MATRIX = {
 if libbuild.ENV not in ['prod']:
     libbuild.BIN_MATRIX['service-broker']['distro'] = {
         'alpine': ['amd64'],
-        'linux': ['amd64']
+        libbuild.GOHOSTOS: [libbuild.GOHOSTARCH]
     }
+
 libbuild.BUCKET_MATRIX = {
     'prod': 'gs://appscode-cdn',
     'dev': 'gs://appscode-dev'
 }
 
+
 def call(cmd, stdin=None, cwd=libbuild.REPO_ROOT):
     print(cmd)
     return subprocess.call([expandvars(cmd)], shell=True, stdin=stdin, cwd=cwd)
+
 
 def die(status):
     if status:
         sys.exit(status)
 
+
 def check_output(cmd, stdin=None, cwd=libbuild.REPO_ROOT):
     print(cmd)
     return subprocess.check_output([expandvars(cmd)], shell=True, stdin=stdin, cwd=cwd)
+
 
 def version():
     # json.dump(BUILD_METADATA, sys.stdout, sort_keys=True, indent=2)
     for k in sorted(BUILD_METADATA):
         print(k + '=' + BUILD_METADATA[k])
 
+
 def fmt():
     libbuild.ungroup_go_imports('cmd', 'pkg', 'test')
     die(call('goimports -w cmd pkg test'))
     call('gofmt -s -w cmd pkg test')
 
+
 def vet():
     call('go vet ./cmd/... ./pkg/... ./test/...')
+
 
 def lint():
     call('golint ./cmd/... ./pkg/... ./test/...')
 
+
 def gen():
     return
+
 
 def build_cmd(name):
     cfg = libbuild.BIN_MATRIX[name]
@@ -102,10 +113,12 @@ def build_cmd(name):
         else:
             libbuild.go_build(name, libbuild.GOHOSTOS, libbuild.GOHOSTARCH, entrypoint, compress, upx)
 
+
 def build_cmds():
     gen()
     for name in libbuild.BIN_MATRIX:
         build_cmd(name)
+
 
 def build(name=None):
     if name:
@@ -115,6 +128,7 @@ def build(name=None):
             build_cmd(name)
     else:
         build_cmds()
+
 
 def push(name=None):
     if name:
@@ -127,6 +141,7 @@ def push(name=None):
             if os.path.isdir(d):
                 push_bin(d)
 
+
 def push_bin(bindir):
     call('rm -f *.md5', cwd=bindir)
     call('rm -f *.sha1', cwd=bindir)
@@ -134,11 +149,14 @@ def push_bin(bindir):
         if os.path.isfile(bindir + '/' + f):
             libbuild.upload_to_cloud(bindir, f, BUILD_METADATA['version'])
 
+
 def update_registry():
     libbuild.update_registry(BUILD_METADATA['version'])
 
+
 def install():
-    die(call(libbuild.GOC + ' install ./...'))
+    die(call('GO15VENDOREXPERIMENT=1 ' + libbuild.GOC + ' install ./...'))
+
 
 def default():
     gen()
@@ -147,8 +165,9 @@ def default():
     lint()
     install()
 
+
 def test(type, *args):
-    die(call(libbuild.GOC + ' install ./...'))
+    install()
 
     if os.path.exists(libbuild.REPO_ROOT + "/hack/configs/.env"):
         print 'Loading env file'

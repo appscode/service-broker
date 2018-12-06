@@ -2,11 +2,11 @@ package e2e
 
 import (
 	"flag"
+	"path/filepath"
 
 	"github.com/appscode/go/flags"
 	logs "github.com/appscode/go/log/golog"
 	"k8s.io/client-go/util/homedir"
-	"path/filepath"
 )
 
 type E2EOptions struct {

@@ -1,14 +1,15 @@
 package e2e
 
 import (
-	"github.com/appscode/go/types"
 	"io/ioutil"
+	"path/filepath"
+
+	"github.com/appscode/go/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"path/filepath"
 )
 
 func Int32Ptr(i int32) *int32 {

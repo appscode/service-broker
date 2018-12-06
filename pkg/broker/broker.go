@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/appscode/go/crypto/rand"
-	"github.com/appscode/service-broker/pkg/db-broker"
+	db_broker "github.com/appscode/service-broker/pkg/db-broker"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
