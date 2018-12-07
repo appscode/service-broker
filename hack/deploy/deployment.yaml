@@ -1,56 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ${NAME}
-  namespace: ${NAMESPACE}
+  name: ${SERVICE_BROKER_NAME}
+  namespace: ${SERVICE_BROKER_NAMESPACE}
   labels:
-    app: ${APP}
+    app: service-broker
 spec:
   replicas: 1
-#  strategy:
-#    type: RollingUpdate
   selector:
     matchLabels:
-      app: ${APP}
+      app: service-broker
   template:
     metadata:
       labels:
-        app: ${APP}
+        app: service-broker
     spec:
-      serviceAccountName: ${SERVICE_ACCOUNT}
-      imagePullSecrets: [${IMAGE_PULL_SECRET}]
+      serviceAccountName: ${SERVICE_BROKER_SERVICE_ACCOUNT}
+      imagePullSecrets: [${SERVICE_BROKER_IMAGE_PULL_SECRET}]
       containers:
-      - name: ${NAME}
-        image: ${DOCKER_REGISTRY}/${IMG}:${TAG}
-        imagePullPolicy: ${IMAGE_PULL_POLICY}
+      - name: ${SERVICE_BROKER_NAME}
+        image: ${SERVICE_BROKER_DOCKER_REGISTRY}/${SERVICE_BROKER_IMAGE}:${SERVICE_BROKER_IMAGE_TAG}
+        imagePullPolicy: ${SERVICE_BROKER_IMAGE_PULL_POLICY}
         command:
         - "service-broker"
         args:
         - run
         - --port
-        - "${PORT}"
-#        - "8080"
+        - "${SERVICE_BROKER_PORT}"
         - --catalog-path
-        - ${CATALOG_PATH}
+        - ${SERVICE_BROKER_CATALOG_PATH}
         - --catalog-names
-        - "${CATALOG_NAMES}"
+        - "${SERVICE_BROKER_CATALOG_NAMES}"
         - -v
         - "5"
         - --logtostderr
         - --storage-class
-        - ${STORAGE_CLASS}
+        - ${SERVICE_BROKER_STORAGE_CLASS}
         ports:
         - containerPort: 8080
         readinessProbe:
           httpGet:
             path: /healthz
-            port: ${PORT}
+            port: ${SERVICE_BROKER_PORT}
             scheme: HTTP
         volumeMounts:
-        - mountPath: "${CATALOG_PATH}/kubedb"
+        - mountPath: "${SERVICE_BROKER_CATALOG_PATH}/kubedb"
           name: kubedb-volume
       volumes:
       - name: kubedb-volume
         configMap:
           name: kubedb
-#          defaultMode: 511

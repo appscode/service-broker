@@ -1,13 +1,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: ${NAME}
-  namespace: ${NAMESPACE}
+  name: ${SERVICE_BROKER_NAME}
+  namespace: ${SERVICE_BROKER_NAMESPACE}
   labels:
-    app: ${APP}
+    app: service-broker
 spec:
   selector:
-    app: ${APP}
+    app: service-broker
   ports:
   - protocol: TCP
     port: 80

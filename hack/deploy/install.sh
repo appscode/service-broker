@@ -101,30 +101,27 @@ onessl_found || {
 # ref: https://jonalmeida.com/posts/2013/05/26/different-ways-to-implement-flags-in-bash/
 # ref: http://tldp.org/LDP/abs/html/comparison-ops.html
 
-export DOCKER_REGISTRY=${DOCKER_REGISTRY:-appscode}
-export IMG=service-broker
-export TAG=${TAG:-0.1.0}
-export ONESSL=
-
-export NAME=service-broker
-export NAMESPACE=service-broker
-export SERVICE_ACCOUNT="$NAME"
-export APP=service-broker
-export IMAGE_PULL_POLICY=IfNotPresent
-export IMAGE_PULL_SECRET=
-export PORT=8080
-export CATALOG_PATH="/etc/config/catalogs"
-export CATALOG_NAMES="kubedb"
-export STORAGE_CLASS=standard
-export UNINSTALL=0
+export SERVICE_BROKER_DOCKER_REGISTRY=${SERVICE_BROKER_DOCKER_REGISTRY:-appscode}
+export SERVICE_BROKER_IMAGE=service-broker
+export SERVICE_BROKER_IMAGE_TAG=${SERVICE_BROKER_IMAGE_TAG:-0.1.0}
+export SERVICE_BROKER_NAME=service-broker
+export SERVICE_BROKER_NAMESPACE=kube-system
+export SERVICE_BROKER_SERVICE_ACCOUNT="$SERVICE_BROKER_NAME"
+export SERVICE_BROKER_IMAGE_PULL_SECRET=
+export SERVICE_BROKER_IMAGE_PULL_POLICY=IfNotPresent
+export SERVICE_BROKER_PORT=8080
+export SERVICE_BROKER_CATALOG_PATH="/etc/config/catalogs"
+export SERVICE_BROKER_CATALOG_NAMES="kubedb"
+export SERVICE_BROKER_STORAGE_CLASS=standard
+export SERVICE_BROKER_UNINSTALL=0
 
 export APPSCODE_ENV=${APPSCODE_ENV:-prod}
 export SCRIPT_LOCATION="curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/"
 if [[ "$APPSCODE_ENV" == "dev" ]]; then
     detect_tag
     export SCRIPT_LOCATION="cat "
-    export TAG=${TAG}
-    export IMAGE_PULL_POLICY=Always
+    export SERVICE_BROKER_IMAGE_TAG=${TAG}
+    export SERVICE_BROKER_IMAGE_PULL_POLICY=Always
 fi
 
 show_help() {
@@ -135,9 +132,8 @@ show_help() {
     echo "options:"
     echo "--------"
     echo "-h, --help                    show brief help"
-    echo "-n, --namespace=NAMESPACE     specify namespace (default: $NAMESPACE)"
-    echo "    --docker-registry         docker registry used to pull service-broker image (default: $DOCKER_REGISTRY)"
-    echo "    --tag                     tag for service-broker image"
+    echo "-n, --namespace=NAMESPACE     specify namespace (default: $SERVICE_BROKER_NAMESPACE)"
+    echo "    --docker-registry         docker registry used to pull service-broker image (default: $SERVICE_BROKER_DOCKER_REGISTRY)"
     echo "    --image-pull-secret       name of secret used to pull service-broker image"
     echo "    --port                    port number at which the broker will expose"
     echo "    --catalogPath             the path of catalogs for different service plans"
@@ -155,7 +151,7 @@ while test $# -gt 0; do
         -n)
             shift
             if test $# -gt 0; then
-                export NAMESPACE=$1
+                export SERVICE_BROKER_NAMESPACE=$1
             else
                 echo "no namespace specified"
                 exit 1
@@ -163,40 +159,36 @@ while test $# -gt 0; do
             shift
             ;;
         --namespace*)
-            export NAMESPACE=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_NAMESPACE=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --docker-registry*)
-            export DOCKER_REGISTRY=`echo $1 | sed -e 's/^[^=]*=//g'`
-            shift
-            ;;
-        --tag*)
-            export TAG=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_DOCKER_REGISTRY=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --image-pull-secret*)
             secret=`echo $1 | sed -e 's/^[^=]*=//g'`
-            export IMAGE_PULL_SECRET="name: '$secret'"
+            export SERVICE_BROKER_IMAGE_PULL_SECRET="name: '$secret'"
             shift
             ;;
         --port*)
-            export PORT=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_PORT=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --catalogPath*)
-            export CATALOG_PATH=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_CATALOG_PATH=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --catalogNames*)
-            export CATALOG_NAMES=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_CATALOG_NAMES=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --storage-class*)
-            export STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
+            export SERVICE_BROKER_STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --uninstall)
-          export UNINSTALL=1
+          export SERVICE_BROKER_UNINSTALL=1
           shift
           ;;
         *)
@@ -206,39 +198,23 @@ while test $# -gt 0; do
     esac
 done
 
-echo "DOCKER_REGISTRY=$DOCKER_REGISTRY"
-echo "IMG=$IMG"
-echo "TAG=$TAG"
-echo "NAME=$NAME"
-echo "NAMESPACE=$NAMESPACE"
-echo "SERVICE_ACCOUNT=$SERVICE_ACCOUNT"
-echo "APP=$APP"
-echo "IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY"
-echo "IMAGE_PULL_SECRET=$IMAGE_PULL_SECRET"
-echo "PORT=$PORT"
-echo "CATALOG_PATH=$CATALOG_PATH"
-echo "CATALOG_NAMES=$CATALOG_NAMES"
-echo "STORAGE_CLASS=$STORAGE_CLASS"
-echo "UNINSTALL=$UNINSTALL"
-echo ""
-
-if [[ "$UNINSTALL" -eq 1 ]]; then
+if [[ "$SERVICE_BROKER_UNINSTALL" -eq 1 ]]; then
      # delete configmap
-    catalogNames=(${CATALOG_NAMES//[,]/ })
+    catalogNames=(${SERVICE_BROKER_CATALOG_NAMES//[,]/ })
     for catalog in "${catalogNames[@]}"; do
-        kubectl delete configmap ${catalog} --namespace ${NAMESPACE}
+        kubectl delete configmap ${catalog} --namespace ${SERVICE_BROKER_NAMESPACE}
     done
     # delete service-broker
-    kubectl delete service -l app=${APP} --namespace ${NAMESPACE}
-    kubectl delete deployment -l app=${APP} --namespace ${NAMESPACE}
+    kubectl delete service -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
+    kubectl delete deployment -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
     # delete RBAC objects, if --rbac flag was used.
-    kubectl delete serviceaccount -l app=${APP} --namespace ${NAMESPACE}
-    kubectl delete clusterrolebindings -l app=${APP}
+    kubectl delete serviceaccount -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
+    kubectl delete clusterrolebindings -l app=service-broker
 
     echo
     echo "waiting for service-broker pod to stop running"
     for (( ; ; )); do
-        pods=($(kubectl get pods --all-namespaces -l app=${APP} -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+        pods=($(kubectl get pods --all-namespaces -l app=service-broker -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
         total=${#pods[*]}
         if [[ ${total} -eq 0 ]] ; then
             break
@@ -246,28 +222,19 @@ if [[ "$UNINSTALL" -eq 1 ]]; then
         sleep 2
     done
 
-    kubectl delete clusterservicebroker -l app=${APP}
-    kubectl delete ns ${NAMESPACE}
+    kubectl delete clusterservicebroker -l app=service-broker
 
     echo
     echo "Successfully uninstalled service-broker!"
     exit 0
 fi
 
-found=0
-ns=($(kubectl get ns -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
-for n in "${ns[@]}"; do
-    if [[ "$n" = "$NAMESPACE" ]]; then
-        export found=1
-    fi
-done
-if [[ "$found" -eq 0 ]]; then
-    kubectl create ns ${NAMESPACE}
-fi
+env | sort | grep SERVICE_BROKER*
+echo ""
 
-catalogNames=(${CATALOG_NAMES//[,]/ })
+catalogNames=(${SERVICE_BROKER_CATALOG_NAMES//[,]/ })
 for catalog in "${catalogNames[@]}"; do
-    kubectl create configmap ${catalog} --namespace ${NAMESPACE} --from-file=hack/deploy/catalogs/${catalog}
+    kubectl create configmap ${catalog} --namespace ${SERVICE_BROKER_NAMESPACE} --from-file=hack/deploy/catalogs/${catalog}
 done
 ${SCRIPT_LOCATION}hack/deploy/deployment.yaml | ${ONESSL} envsubst | kubectl apply -f -
 ${SCRIPT_LOCATION}hack/deploy/service.yaml | ${ONESSL} envsubst | kubectl apply -f -
@@ -276,7 +243,7 @@ ${SCRIPT_LOCATION}hack/deploy/cluster_service_broker.yaml | ${ONESSL} envsubst |
 
 echo
 echo "waiting until service-broker deployment is ready"
-${ONESSL} wait-until-ready deployment ${NAME} --namespace ${NAMESPACE} || { echo "service-broker deployment failed to be ready"; exit 1; }
+${ONESSL} wait-until-ready deployment ${SERVICE_BROKER_NAME} --namespace ${SERVICE_BROKER_NAMESPACE} || { echo "service-broker deployment failed to be ready"; exit 1; }
 
 echo
-echo "Successfully installed service-broker in $NAMESPACE namespace!"
+echo "Successfully installed service-broker in $SERVICE_BROKER_NAMESPACE namespace!"
