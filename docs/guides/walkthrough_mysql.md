@@ -1,5 +1,11 @@
 # Walkthrough MySQL
 
+To keep things isolated, this tutorial uses a separate namespace called `service-broker` throughout this tutorial.
+
+```console
+$ kubectl create ns service-broker
+namespace/service-broker created
+
 If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
 
 This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.

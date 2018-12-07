@@ -21,29 +21,29 @@ To check the installation you need the Service Catalog onto your cluster. So, th
 
 ### Using Script
 
-To install `Apps Service Broker` in your Kubernetes cluster, run the following command:
+To install `AppsCode Service Broker` in your Kubernetes cluster, run the following command:
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash
 ...
 
-namespace/service-broker created
 configmap/kubedb created
 deployment.apps/service-broker created
 service/service-broker created
 serviceaccount/service-broker created
+clusterrole.rbac.authorization.k8s.io/service-broker created
 clusterrolebinding.rbac.authorization.k8s.io/service-broker created
 clusterservicebroker.servicecatalog.k8s.io/service-broker created
 
 waiting until service-broker deployment is ready
 
-Successfully installed service-broker in service-broker namespace!
+Successfully installed service-broker in kube-system namespace!
 ```
 
-After successful installation, you should have a `service-broker-***` pod running in the `service-broker` namespace.
+After successful installation, you should have a `service-broker-***` pod running in the `kube-system` namespace.
 
 ```console
-$ kubectl get pods -n service-broker | grep service-broker
+$ kubectl get pods -n kube-system | grep service-broker
 service-broker-***       1/1       Running   0          48s
 ```
 
@@ -53,9 +53,6 @@ The installer script and associated yaml files can be found in the [hack/deploy]
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash -s -- -h
-checking kubeconfig context
-minikube
-
 install.sh - install service-broker
 
 install.sh [options]
@@ -63,9 +60,8 @@ install.sh [options]
 options:
 --------
 -h, --help                    show brief help
--n, --namespace=NAMESPACE     specify namespace (default: service-broker)
+-n, --namespace=NAMESPACE     specify namespace (default: kube-system)
     --docker-registry         docker registry used to pull service-broker image (default: appscode)
-    --tag                     tag for service-broker image
     --image-pull-secret       name of secret used to pull service-broker image
     --port                    port number at which the broker will expose
     --catalogPath             the path of catalogs for different service plans
@@ -74,15 +70,22 @@ options:
     --uninstall               uninstall service-broker
 ```
 
-If you would like to run service broker pod in your own namespace say `my-ns` namespace, pass the `--namespace=my-ns` flag:
+If you would like to run service broker pod in your own namespace say `my-ns` namespace, first create it and then pass the `--namespace=my-ns` flag:
 
 ```console
+$ kubectl create namespace my-ns
+namespace/my-ns created
+
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
     | bash -s -- --namespace=my-ns
 ...
 ```
 
-If you are using a private docker registry, then to pass the name of your private registry and a image pull secret use flags `--docker-registry` and `--image-pull-secret` respectively.
+If you are using a private Docker registry, you need to pull the following docker images:
+
+ - [appscode/service-broker](https://hub.docker.com/r/appscode/service-broker)
+
+To pass the address of your private registry and optionally a image pull secret use flags `--docker-registry` and `--image-pull-secret` respectively.
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
@@ -92,12 +95,17 @@ $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/ha
 
 ### Using Helm
 
-`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](/chart/). To install the chart with the release name `my-release`:
+`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `my-release`:
 
 ```console
-$ helm install --name my-release --namespace service-broker chart/service-broker/
+$ helm repo add appscode https://charts.appscode.com/stable/
+$ helm repo update
+$ helm search appscode/service-broker
+$ helm install --name my-release --namespace kube-system appscode/service-broker
 ...
 ```
+
+To see the detailed configuration options, visit [here](https://github.com/appscode/service-broker/tree/master/chart/service-broker).
 
 ### Verify installation
 
@@ -107,15 +115,14 @@ To check whether service broker pod has started or not, run the following comman
 # for script installation
 $ kubectl get pods --all-namespaces -l app=service-broker --watch
 NAMESPACE        NAME                              READY   STATUS    RESTARTS   AGE
-service-broker   service-broker-6f4f7b554d-hcvdd   0/1     Pending   0          0s
-service-broker   service-broker-6f4f7b554d-hcvdd   0/1   Pending   0     0s
-service-broker   service-broker-6f4f7b554d-hcvdd   0/1   ContainerCreating   0     0s
-service-broker   service-broker-6f4f7b554d-hcvdd   1/1   Running   0     6s
+kube-system      service-broker-6f4f7b554d-hcvdd   0/1     Pending   0          0s
+kube-system      service-broker-6f4f7b554d-hcvdd   0/1   Pending   0     0s
+kube-system      service-broker-6f4f7b554d-hcvdd   0/1   ContainerCreating   0     0s
+kube-system      service-broker-6f4f7b554d-hcvdd   1/1   Running   0     6s
 
 # for helm installation
-service-broker   my-release-service-broker-7d8cc8dcc-q7c6m   0/1   ContainerCreating   0     0s
-service-broker   my-release-service-broker-7d8cc8dcc-q7c6m   1/1   Running   0     4s
-
+kube-system      my-release-service-broker-7d8cc8dcc-q7c6m   0/1   ContainerCreating   0     0s
+kube-system      my-release-service-broker-7d8cc8dcc-q7c6m   1/1   Running   0     4s
 ```
 
 Once the pods is running, you can cancel the above command by typing `Ctrl+C`.
@@ -153,9 +160,9 @@ You can get the same thing in a different manner using Service Catalog CLI `svca
 
 ```console
 $ svcat get brokers
-       NAME        NAMESPACE                            URL                             STATUS
-+----------------+-----------+--------------------------------------------------------+--------+
-  service-broker               http://service-broker.service-broker.svc.cluster.local   Ready
+       NAME        NAMESPACE                           URL                           STATUS
++----------------+-----------+-----------------------------------------------------+--------+
+  service-broker               http://service-broker.kube-system.svc.cluster.local   Ready
 
 $ svcat get classes
       NAME        NAMESPACE                     DESCRIPTION
