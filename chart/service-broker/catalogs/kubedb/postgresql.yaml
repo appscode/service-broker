@@ -1,17 +1,17 @@
 id: postgresql
 name: postgresql
-description: The example service from the PostgreSQL database!
+description: KubeDB managed PostgreSQL
 bindable: true
 planupdatable: true
 metadata:
-  displayName: Example PostgreSQL DB service
-  imageUrl: https://wiki.postgresql.org/images/3/30/PostgreSQL_logo.3colors.120x120.png
+  displayName: KubeDB managed PostgreSQL
+  imageUrl: https://cdn.appscode.com/images/logo/databases/postgresql.png
 plans:
 - id: postgresql-10-2
   name: default
-  description: This plan is for getting standalone postgres database under the `postgresql` service
+  description: The default plan for the `postgresql` service
   free: true
 - id: ha-postgresql-10-2
   name: ha-postgresql
-  description: This plan is for getting HA postgres database under the `postgresql` service
+  description: This plan is for getting HA PostgreSQL database
   free: true

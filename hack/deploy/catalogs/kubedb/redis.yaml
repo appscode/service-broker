@@ -1,11 +1,11 @@
 id: redis
 name: redis
-description: The example service from the Redis database!
+description: KubeDB managed Redis
 bindable: true
 planupdatable: true
 metadata:
-  displayName: Example Redis DB service
-  imageUrl: https://redis.io/images/redis-white.png
+  displayName: KubeDB managed Redis
+  imageUrl: https://cdn.appscode.com/images/logo/databases/redis.png
 plans:
 - id: redis-4-0
   name: default
