@@ -14,14 +14,14 @@ To check the installation you need the Service Catalog onto your cluster. So, th
 
 ## Install Service Broker
 
-`AppsCode Service Broker` can be installed via a script or as a Helm chart.
+AppsCode Service Broker can be installed via a script or as a Helm chart.
 
 - [Script](/docs/setup/install.md#Using-Script)
 - [Helm](/docs/setup/install.md#Using-Helm)
 
 ### Using Script
 
-To install `AppsCode Service Broker` in your Kubernetes cluster, run the following command:
+To install AppsCode Service Broker in your Kubernetes cluster, run the following command:
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash

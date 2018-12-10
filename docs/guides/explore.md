@@ -1,4 +1,4 @@
-# Explore through Broker Stuffs
+# Explore Service Broker
 
 To keep things isolated, this tutorial uses a separate namespace called `service-broker` throughout this tutorial.
 
