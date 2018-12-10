@@ -178,15 +178,22 @@ def test(type, *args):
     else:
         print '{test e2e}'
 
+
 def unit_test(args):
     st = ' '.join(args)
     die(call(libbuild.GOC + ' test -v . ./cmd/... ./pkg/...' + st))
+
 
 def e2e_test(args):
     st = ' '.join(args)
     die(call('goimports -w cmd pkg test'))
     call('gofmt -s -w cmd pkg test')
     die(call('ginkgo -r -v -progress -trace test/e2e -- ' + st))
+
+
+def revendor():
+    libbuild.revendor()
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
