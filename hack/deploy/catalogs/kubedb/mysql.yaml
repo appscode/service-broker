@@ -1,11 +1,11 @@
 id: mysql
 name: mysql
-description: The example service from the MySQL database!
+description: KubeDB managed MySQL
 bindable: true
 planupdatable: true
 metadata:
-  displayName: Example MySQL DB service
-  imageUrl: http://www.cgtechworld.in/images/Training/technologies/mysql.png
+  displayName: KubeDB managed MySQL
+  imageUrl: https://cdn.appscode.com/images/logo/databases/mysql.png
 plans:
 - id: mysql-8-0
   name: default

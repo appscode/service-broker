@@ -1,11 +1,11 @@
 id: mongodb
 name: mongodb
-description: The example service from the MongoDB database!
+description: KubeDB managed MongoDB
 bindable: true
 planupdatable: true
 metadata:
-  displayName: Example Mongo DB service
-  imageUrl: https://www.vectorlogo.zone/logos/mongodb/mongodb-card.png
+  displayName: KubeDB managed MongoDB
+  imageUrl: https://cdn.appscode.com/images/logo/databases/mongodb.png
 plans:
 - id: mongodb-3-6
   name: default
@@ -13,5 +13,5 @@ plans:
   free: true
 - id: mongodb-cluster-3-6
   name: mongodb-cluster
-  description: This plan is for getting a simple mongodb cluster under the 'mongodb' service
+  description: This plan is for getting a MongoDB 3.6 cluster
   free: true

@@ -1,8 +1,8 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ClusterServiceBroker
 metadata:
-  name: ${NAME}
+  name: ${SERVICE_BROKER_NAME}
   labels:
-    app: ${APP}
+    app: appscode-service-broker
 spec:
-  url: http://${NAME}.${NAMESPACE}.svc.cluster.local
+  url: http://${SERVICE_BROKER_NAME}.${SERVICE_BROKER_NAMESPACE}.svc.cluster.local

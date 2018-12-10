@@ -1,11 +1,11 @@
 id: elasticsearch
 name: elasticsearch
-description: The example service from the ElasticSearch database!
+description: KubeDB managed ElasticSearch
 bindable: true
 planupdatable: true
 metadata:
-  displayName: Example ElasticSearch DB service
-  imageUrl: https://d22e4d61ky6061.cloudfront.net/sites/default/files/Elasticsearch_1.png
+  displayName: KubeDB managed ElasticSearch
+  imageUrl: https://cdn.appscode.com/images/logo/databases/elasticsearch.png
 plans:
 - id: elasticsearch-6-3
   name: default
@@ -13,5 +13,5 @@ plans:
   free: true
 - id: elasticsearch-cluster-6-3
   name: elasticsearch-cluster
-  description: This plan is for getting a simple elasticsearch cluster under the 'elasticsearch' service
+  description: This plan is for getting an Elasticsearch 6.3 cluster
   free: true
