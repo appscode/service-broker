@@ -104,7 +104,7 @@ onessl_found || {
 export SERVICE_BROKER_DOCKER_REGISTRY=${SERVICE_BROKER_DOCKER_REGISTRY:-appscode}
 export SERVICE_BROKER_IMAGE=service-broker
 export SERVICE_BROKER_IMAGE_TAG=${SERVICE_BROKER_IMAGE_TAG:-0.1.0}
-export SERVICE_BROKER_NAME=service-broker
+export SERVICE_BROKER_NAME=appscode-service-broker
 export SERVICE_BROKER_NAMESPACE=kube-system
 export SERVICE_BROKER_SERVICE_ACCOUNT="$SERVICE_BROKER_NAME"
 export SERVICE_BROKER_IMAGE_PULL_SECRET=
@@ -202,19 +202,20 @@ if [[ "$SERVICE_BROKER_UNINSTALL" -eq 1 ]]; then
      # delete configmap
     catalogNames=(${SERVICE_BROKER_CATALOG_NAMES//[,]/ })
     for catalog in "${catalogNames[@]}"; do
-        kubectl delete configmap ${catalog} --namespace ${SERVICE_BROKER_NAMESPACE}
+        kubectl delete configmap ${catalog} --namespace ${SERVICE_BROKER_NAMESPACE} || true
     done
     # delete service-broker
-    kubectl delete service -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
-    kubectl delete deployment -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
+    kubectl delete service -l app=appscode-service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
+    kubectl delete deployment -l app=appscode-service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
     # delete RBAC objects, if --rbac flag was used.
-    kubectl delete serviceaccount -l app=service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
-    kubectl delete clusterrolebindings -l app=service-broker
+    kubectl delete serviceaccount -l app=appscode-service-broker --namespace ${SERVICE_BROKER_NAMESPACE}
+    kubectl delete clusterrolebindings -l app=appscode-service-broker
+    kubectl delete clusterroles -l app=appscode-service-broker
 
     echo
     echo "waiting for service-broker pod to stop running"
     for (( ; ; )); do
-        pods=($(kubectl get pods --all-namespaces -l app=service-broker -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+        pods=($(kubectl get pods --namespace $SERVICE_BROKER_NAMESPACE -l app=appscode-service-broker -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
         total=${#pods[*]}
         if [[ ${total} -eq 0 ]] ; then
             break
@@ -222,7 +223,7 @@ if [[ "$SERVICE_BROKER_UNINSTALL" -eq 1 ]]; then
         sleep 2
     done
 
-    kubectl delete clusterservicebroker -l app=service-broker
+    kubectl delete clusterservicebroker -l app=appscode-service-broker
 
     echo
     echo "Successfully uninstalled service-broker!"

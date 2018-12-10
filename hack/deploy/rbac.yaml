@@ -4,42 +4,42 @@ metadata:
   name: ${SERVICE_BROKER_SERVICE_ACCOUNT}
   namespace: ${SERVICE_BROKER_NAMESPACE}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: ${SERVICE_BROKER_NAME}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - services
-    verbs: ["get"]
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs: ["get", "list"]
-  - apiGroups:
-      - kubedb.com
-    resources:
-      - mysqls
-      - postgreses
-      - elasticsearches
-      - mongodbs
-      - memcacheds
-      - redises
-    verbs: ["get", "create", "delete", "patch"]
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs: ["get"]
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs: ["get", "list"]
+- apiGroups:
+  - kubedb.com
+  resources:
+  - mysqls
+  - postgreses
+  - elasticsearches
+  - mongodbs
+  - memcacheds
+  - redises
+  verbs: ["get", "create", "delete", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: ${SERVICE_BROKER_NAME}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

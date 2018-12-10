@@ -3,6 +3,6 @@ kind: ClusterServiceBroker
 metadata:
   name: ${SERVICE_BROKER_NAME}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   url: http://${SERVICE_BROKER_NAME}.${SERVICE_BROKER_NAMESPACE}.svc.cluster.local

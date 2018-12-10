@@ -4,16 +4,16 @@ metadata:
   name: ${SERVICE_BROKER_NAME}
   namespace: ${SERVICE_BROKER_NAMESPACE}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: service-broker
+      app: appscode-service-broker
   template:
     metadata:
       labels:
-        app: service-broker
+        app: appscode-service-broker
     spec:
       serviceAccountName: ${SERVICE_BROKER_SERVICE_ACCOUNT}
       imagePullSecrets: [${SERVICE_BROKER_IMAGE_PULL_SECRET}]

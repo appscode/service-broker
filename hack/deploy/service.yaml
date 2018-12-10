@@ -4,10 +4,10 @@ metadata:
   name: ${SERVICE_BROKER_NAME}
   namespace: ${SERVICE_BROKER_NAMESPACE}
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   selector:
-    app: service-broker
+    app: appscode-service-broker
   ports:
   - protocol: TCP
     port: 80
