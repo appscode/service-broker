@@ -1,6 +1,8 @@
 package db_broker
 
 import (
+	"encoding/json"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -26,11 +29,13 @@ func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provide
 	}
 }
 
-func NewPostgres(name, namespace, storageClassName string) *api.Postgres {
+func NewPostgres(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Postgres {
 	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.PostgresSpec{
 			Version:  jsonTypes.StrYo("10.2-v1"),
@@ -53,11 +58,30 @@ func NewPostgres(name, namespace, storageClassName string) *api.Postgres {
 	}
 }
 
-func (p PostgreSQLProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating postgres obj %q in namespace %q...", name, namespace)
+func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating postgres obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	pg := NewPostgres(name, namespace, p.storageClassName)
-	if planID == "ha-postgresql-10-2" {
+	var (
+		provisionInfoJson []byte
+		err               error
+	)
+
+	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	}
+	annotations := map[string]string{
+		"provision-info": string(provisionInfoJson),
+		//InstanceKey:        instanceID,
+		//ServiceKey:         serviceID,
+		//PlanKey:            planID,
+		//ProvisionParamsKey: string(paramsJson),
+	}
+	labels := map[string]string{
+		InstanceKey: provisionInfo.InstanceID,
+	}
+
+	pg := NewPostgres(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	if provisionInfo.PlanID == "ha-postgresql-10-2" {
 		pg.Spec.Replicas = types.Int32P(3)
 	}
 
@@ -77,7 +101,10 @@ func (p PostgreSQLProvider) Delete(name, namespace string) error {
 	}
 
 	if pgsql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchPostgreSQL(p.extClient, pgsql); err != nil {
+		if err := patchPostgreSQL(p.extClient, pgsql, func(in *api.Postgres) *api.Postgres {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -147,4 +174,21 @@ func (p PostgreSQLProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	postgreses, err := p.extClient.Postgreses(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(postgreses.Items) > 0 {
+		return instanceFromObjectMeta(postgreses.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

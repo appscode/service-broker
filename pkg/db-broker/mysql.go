@@ -1,6 +1,8 @@
 package db_broker
 
 import (
+	"encoding/json"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -26,11 +29,13 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMySQL(name, namespace, storageClassName string) *api.MySQL {
+func NewMySQL(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MySQL {
 	return &api.MySQL{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.MySQLSpec{
 			Version: jsonTypes.StrYo("8.0-v1"),
@@ -52,10 +57,29 @@ func NewMySQL(name, namespace, storageClassName string) *api.MySQL {
 	}
 }
 
-func (p MySQLProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	my := NewMySQL(name, namespace, p.storageClassName)
+func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating mysql obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
+	var (
+		provisionInfoJson []byte
+		err               error
+	)
+
+	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	}
+	annotations := map[string]string{
+		ProvisionInfoKey: string(provisionInfoJson),
+		//InstanceKey:        instanceID,
+		//ServiceKey:         serviceID,
+		//PlanKey:            planID,
+		//ProvisionParamsKey: string(paramsJson),
+	}
+	labels := map[string]string{
+		InstanceKey: provisionInfo.InstanceID,
+	}
+
+	my := NewMySQL(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 	if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
 		return err
 	}
@@ -66,13 +90,16 @@ func (p MySQLProvider) Create(planID, name, namespace string) error {
 func (p MySQLProvider) Delete(name, namespace string) error {
 	glog.Infof("Deleting mysql obj %q from namespace %q...", name, namespace)
 
-	mysql, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
+	my, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if mysql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMySQL(p.extClient, mysql); err != nil {
+	if my.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
+		if err := patchMySQL(p.extClient, my, func(in *api.MySQL) *api.MySQL {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -118,16 +145,16 @@ func (p MySQLProvider) Bind(
 	if ok {
 		user = userVal.(string)
 	} else {
-		mysqlUser, ok := data["user"]
+		mysqlUser, ok := data["username"]
 		if !ok {
-			return nil, errors.Errorf("mysql-user not found in secret keys")
+			return nil, errors.Errorf("username not found in secret keys")
 		}
 		user = mysqlUser.(string)
 	}
 
 	mysqlPassword, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("mysql-password not found in secret keys")
+		return nil, errors.Errorf("password not found in secret keys")
 	}
 	password = mysqlPassword.(string)
 
@@ -142,4 +169,21 @@ func (p MySQLProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	mysqls, err := p.extClient.MySQLs(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(mysqls.Items) > 0 {
+		return instanceFromObjectMeta(mysqls.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

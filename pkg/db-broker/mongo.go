@@ -1,6 +1,8 @@
 package db_broker
 
 import (
+	"encoding/json"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -26,11 +29,13 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMongoDB(name, namespace, storageClassName string) *api.MongoDB {
+func NewMongoDB(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.MongoDBSpec{
 			Version:     jsonTypes.StrYo("3.6-v1"),
@@ -53,8 +58,8 @@ func NewMongoDB(name, namespace, storageClassName string) *api.MongoDB {
 	}
 }
 
-func NewMongoDBCluster(name, namespace, storageClassName string) *api.MongoDB {
-	mg := NewMongoDB(name, namespace, storageClassName)
+func NewMongoDBCluster(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MongoDB {
+	mg := NewMongoDB(name, namespace, storageClassName, labels, annotations)
 	mg.Spec.Replicas = types.Int32P(3)
 	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
 		Name: "rs0",
@@ -63,16 +68,34 @@ func NewMongoDBCluster(name, namespace, storageClassName string) *api.MongoDB {
 	return mg
 }
 
-func (p MongoDbProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating mongodb obj %q in namespace %q...", name, namespace)
+func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating mongodb obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var mg *api.MongoDB
+	var (
+		mg                *api.MongoDB
+		provisionInfoJson []byte
+		err               error
+	)
 
-	switch planID {
+	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	}
+	annotations := map[string]string{
+		"provision-info": string(provisionInfoJson),
+		//InstanceKey:        instanceID,
+		//ServiceKey:         serviceID,
+		//PlanKey:            planID,
+		//ProvisionParamsKey: string(paramsJson),
+	}
+	labels := map[string]string{
+		InstanceKey: provisionInfo.InstanceID,
+	}
+
+	switch provisionInfo.PlanID {
 	case "mongodb-3-6":
-		mg = NewMongoDB(name, namespace, p.storageClassName)
+		mg = NewMongoDB(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 	case "mongodb-cluster-3-6":
-		mg = NewMongoDBCluster(name, namespace, p.storageClassName)
+		mg = NewMongoDBCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 	}
 
 	if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
@@ -91,7 +114,10 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 	}
 
 	if mg.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMongoDb(p.extClient, mg); err != nil {
+		if err := patchMongoDb(p.extClient, mg, func(in *api.MongoDB) *api.MongoDB {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -137,9 +163,9 @@ func (p MongoDbProvider) Bind(
 	if ok {
 		user = userVal.(string)
 	} else {
-		mgUser, ok := data["user"]
+		mgUser, ok := data["username"]
 		if !ok {
-			return nil, errors.Errorf("user not found in secret keys")
+			return nil, errors.Errorf("username not found in secret keys")
 		}
 		user = mgUser.(string)
 	}
@@ -161,4 +187,21 @@ func (p MongoDbProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	mongodbs, err := p.extClient.MongoDBs(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(mongodbs.Items) > 0 {
+		return instanceFromObjectMeta(mongodbs.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

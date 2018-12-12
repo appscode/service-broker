@@ -1,6 +1,8 @@
 package db_broker
 
 import (
+	"encoding/json"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -26,11 +29,13 @@ func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewRedis(name, namespace, storageClassName string) *api.Redis {
+func NewRedis(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Redis {
 	return &api.Redis{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.RedisSpec{
 			Version: jsonTypes.StrYo("4.0-v1"),
@@ -52,9 +57,29 @@ func NewRedis(name, namespace, storageClassName string) *api.Redis {
 	}
 }
 
-func (p RedisProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating redis obj %q in namespace %q...", name, namespace)
-	rd := NewRedis(name, namespace, p.storageClassName)
+func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating redis obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
+
+	var (
+		provisionInfoJson []byte
+		err               error
+	)
+
+	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	}
+	annotations := map[string]string{
+		"provision-info": string(provisionInfoJson),
+		//InstanceKey:        instanceID,
+		//ServiceKey:         serviceID,
+		//PlanKey:            planID,
+		//ProvisionParamsKey: string(paramsJson),
+	}
+	labels := map[string]string{
+		InstanceKey: provisionInfo.InstanceID,
+	}
+
+	rd := NewRedis(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 
 	if _, err := p.extClient.Redises(rd.Namespace).Create(rd); err != nil {
 		return err
@@ -72,7 +97,10 @@ func (p RedisProvider) Delete(name, namespace string) error {
 	}
 
 	if rd.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchRedis(p.extClient, rd); err != nil {
+		if err := patchRedis(p.extClient, rd, func(in *api.Redis) *api.Redis {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -125,4 +153,21 @@ func (p RedisProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	redises, err := p.extClient.Redises(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(redises.Items) > 0 {
+		return instanceFromObjectMeta(redises.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

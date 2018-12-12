@@ -3,14 +3,43 @@ package db_broker
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Provider interface {
 	Bind(service corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
-	Create(planID, name, namespace string) error
+	Create(provisionInfo ProvisionInfo, namespace string) error
 	Delete(name, namespace string) error
+	GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error)
+}
+
+type ProvisionInfo struct {
+	InstanceID string
+	ServiceID  string
+	PlanID     string
+	Params     map[string]interface{}
+
+	InstanceName string
+}
+
+func instanceFromObjectMeta(meta metav1.ObjectMeta) (*ProvisionInfo, error) {
+	var provisionInfo ProvisionInfo
+	err := json.Unmarshal([]byte(meta.Annotations[ProvisionInfoKey]), &provisionInfo)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshall provision info for instance %q", meta.Labels[InstanceKey])
+	}
+	return &provisionInfo, nil
+}
+
+func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
+	return p.InstanceID == q.InstanceID &&
+		p.ServiceID == q.ServiceID &&
+		p.PlanID == q.PlanID &&
+		reflect.DeepEqual(p.Params, q.Params)
 }
 
 type Credentials struct {

@@ -1,6 +1,8 @@
 package db_broker
 
 import (
+	"encoding/json"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -26,11 +29,13 @@ func NewElasticsearchProvider(config *rest.Config, storageClassName string) Prov
 	}
 }
 
-func NewElasticsearch(name, namespace, storageClassName string) *api.Elasticsearch {
+func NewElasticsearch(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.ElasticsearchSpec{
 			Version:   jsonTypes.StrYo("6.3-v1"),
@@ -54,11 +59,13 @@ func NewElasticsearch(name, namespace, storageClassName string) *api.Elasticsear
 	}
 }
 
-func NewElasticsearchCluster(name, namespace, storageClassName string) *api.Elasticsearch {
+func NewElasticsearchCluster(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Elasticsearch {
 	return &api.Elasticsearch{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: api.ElasticsearchSpec{
 			Version:           jsonTypes.StrYo("6.3-v1"),
@@ -112,16 +119,34 @@ func NewElasticsearchCluster(name, namespace, storageClassName string) *api.Elas
 	}
 }
 
-func (p ElasticsearchProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating elasticsearch obj %q in namespace %q...", name, namespace)
+func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating elasticsearch obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var es *api.Elasticsearch
+	var (
+		es                *api.Elasticsearch
+		provisionInfoJson []byte
+		err               error
+	)
 
-	switch planID {
+	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	}
+	annotations := map[string]string{
+		"provision-info": string(provisionInfoJson),
+		//InstanceKey:        instanceID,
+		//ServiceKey:         serviceID,
+		//PlanKey:            planID,
+		//ProvisionParamsKey: string(paramsJson),
+	}
+	labels := map[string]string{
+		InstanceKey: provisionInfo.InstanceID,
+	}
+
+	switch provisionInfo.PlanID {
 	case "elasticsearch-6-3":
-		es = NewElasticsearch(name, namespace, p.storageClassName)
+		es = NewElasticsearch(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 	case "elasticsearch-cluster-6-3":
-		es = NewElasticsearchCluster(name, namespace, p.storageClassName)
+		es = NewElasticsearchCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
 	}
 
 	if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
@@ -140,7 +165,10 @@ func (p ElasticsearchProvider) Delete(name, namespace string) error {
 	}
 
 	if es.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchElasticsearch(p.extClient, es); err != nil {
+		if err := patchElasticsearch(p.extClient, es, func(in *api.Elasticsearch) *api.Elasticsearch {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -219,4 +247,21 @@ func (p ElasticsearchProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	elasticsearches, err := p.extClient.Elasticsearches(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(elasticsearches.Items) > 0 {
+		return instanceFromObjectMeta(elasticsearches.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }
