@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite tests="1" failures="0" time="68.48394581">
+  <testsuite tests="1" failures="0" time="71.238413283">
       <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
+          <skipped></skipped>
+      </testcase>
+      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
       <testcase name="[service-catalog] Test MySQL broker service Runs through the default plan" classname="e2e Suite" time="0">
@@ -15,7 +18,7 @@
       <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the default plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the elasticsearch-cluster plan" classname="e2e Suite" time="68.353875881"></testcase>
+      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the elasticsearch-cluster plan" classname="e2e Suite" time="71.160138381"></testcase>
       <testcase name="[service-catalog] Test MongoDb broker service Runs through the default plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
@@ -26,9 +29,6 @@
           <skipped></skipped>
       </testcase>
       <testcase name="[service-catalog] Test Memcached broker service Runs through the default plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
   </testsuite>

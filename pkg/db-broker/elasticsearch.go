@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
-	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type ElasticsearchProvider struct {
@@ -50,11 +49,6 @@ func NewElasticsearch(name, namespace, storageClassName string, labels, annotati
 				StorageClassName: types.StringP(storageClassName),
 			},
 			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
 		},
 	}
 }
@@ -72,11 +66,6 @@ func NewElasticsearchCluster(name, namespace, storageClassName string, labels, a
 			EnableSSL:         true,
 			StorageType:       api.StorageTypeDurable,
 			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
 			Topology: &api.ElasticsearchClusterTopology{
 				Master: api.ElasticsearchNode{
 					Prefix:   "master",

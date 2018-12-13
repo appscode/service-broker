@@ -53,11 +53,6 @@ func NewMemcached(name, namespace string, labels, annotations map[string]string)
 				},
 			},
 			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
 		},
 	}
 }
