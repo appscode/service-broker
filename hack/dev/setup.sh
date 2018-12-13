@@ -14,7 +14,7 @@ run() {
         --catalog-path=hack/deploy/catalogs
 }
 
-deploy-broker-stuff() {
+install() {
     kubectl apply -f hack/dev/broker_for_locally_run.yaml
     kubectl apply -f hack/dev/service_for_locally_run.yaml
 }
