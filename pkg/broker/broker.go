@@ -78,6 +78,9 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 
 	// Check to see if this is the same instance
 	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	if err != nil {
+		return nil, err
+	}
 	if provisionInfo != nil {
 		if provisionInfo.Match(curProvisionInfo) {
 			response.Exists = true

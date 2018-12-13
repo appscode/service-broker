@@ -10,9 +10,8 @@ import (
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	k8sLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 )
 
@@ -28,7 +27,7 @@ func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provide
 	}
 }
 
-func NewPostgres(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Postgres {
+func NewPostgres(name, namespace string, labels, annotations map[string]string, spec api.PostgresSpec) *api.Postgres {
 	return &api.Postgres{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -36,19 +35,20 @@ func NewPostgres(name, namespace, storageClassName string, labels, annotations m
 			Labels:      labels,
 			Annotations: annotations,
 		},
-		Spec: api.PostgresSpec{
-			Version:  jsonTypes.StrYo("10.2-v1"),
-			Replicas: types.Int32P(1),
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-		},
+		Spec: spec,
+		//Spec: api.PostgresSpec{
+		//	Version:  jsonTypes.StrYo("10.2-v1"),
+		//	Replicas: types.Int32P(1),
+		//	Storage: &corev1.PersistentVolumeClaimSpec{
+		//		Resources: corev1.ResourceRequirements{
+		//			Requests: corev1.ResourceList{
+		//				corev1.ResourceStorage: resource.MustParse("50Mi"),
+		//			},
+		//		},
+		//		StorageClassName: types.StringP(storageClassName),
+		//	},
+		//	TerminationPolicy: api.TerminationPolicyWipeOut,
+		//},
 	}
 }
 
@@ -56,13 +56,23 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 	glog.Infof("Creating postgres obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
 	var (
+		pgSpec            api.PostgresSpec
+		pgSpecJson        []byte
 		provisionInfoJson []byte
 		err               error
 	)
 
+	if pgSpecJson, err = json.Marshal(provisionInfo.Params["pgSpec"]); err != nil {
+		return errors.Wrapf(err, "could not marshall value of pgSpec in provisioning params %v", provisionInfo.Params["pgSpec"])
+	}
+	if err = json.Unmarshal(pgSpecJson, &pgSpec); err != nil {
+		return errors.Errorf("could not unmarshal pgSpec in provisioning params %v", provisionInfo.Params["pgSpec"])
+	}
+
 	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
 		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
 	}
+
 	annotations := map[string]string{
 		"provision-info": string(provisionInfoJson),
 	}
@@ -70,11 +80,8 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 		InstanceKey: provisionInfo.InstanceID,
 	}
 
-	pg := NewPostgres(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	if provisionInfo.PlanID == "ha-postgresql-10-2" {
-		pg.Spec.Replicas = types.Int32P(3)
-	}
-
+	completePosgresSpec(&pgSpec, provisionInfo.PlanID)
+	pg := NewPostgres(provisionInfo.InstanceName, namespace, labels, annotations, pgSpec)
 	if _, err := p.extClient.Postgreses(pg.Namespace).Create(pg); err != nil {
 		return err
 	}
@@ -168,7 +175,7 @@ func (p PostgreSQLProvider) Bind(
 
 func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
 	postgreses, err := p.extClient.Postgreses(corev1.NamespaceAll).List(metav1.ListOptions{
-		LabelSelector: labels.Set{
+		LabelSelector: k8sLabels.Set{
 			InstanceKey: instanceID,
 		}.String(),
 	})
@@ -181,4 +188,28 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 	}
 
 	return nil, nil
+}
+
+func completePosgresSpec(pgSpec *api.PostgresSpec, planID string) {
+	if pgSpec.Version == "" {
+		pgSpec.Version = jsonTypes.StrYo("10.2-v1")
+	}
+
+	if pgSpec.Replicas == nil {
+		if planID == "ha-postgresql-10-2" {
+			pgSpec.Replicas = types.Int32P(3)
+		} else {
+			pgSpec.Replicas = types.Int32P(1)
+		}
+	}
+
+	if pgSpec.Storage == nil {
+		pgSpec.StorageType = api.StorageTypeEphemeral
+	} else {
+		pgSpec.StorageType = api.StorageTypeDurable
+	}
+
+	if pgSpec.TerminationPolicy == "" {
+		pgSpec.TerminationPolicy = api.TerminationPolicyWipeOut
+	}
 }
