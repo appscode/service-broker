@@ -1,11 +1,8 @@
 package db_broker
 
 const (
-	InstanceKey        = "instance"
-	ServiceKey         = "service"
-	PlanKey            = "plan"
-	ProvisionParamsKey = "provision"
-	ProvisionInfoKey   = "provision-info"
+	InstanceKey      = "instance"
+	ProvisionInfoKey = "provision-info"
 
 	NamespaceFilePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 

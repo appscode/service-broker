@@ -82,10 +82,6 @@ func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) e
 	}
 	annotations := map[string]string{
 		"provision-info": string(provisionInfoJson),
-		//InstanceKey:        instanceID,
-		//ServiceKey:         serviceID,
-		//PlanKey:            planID,
-		//ProvisionParamsKey: string(paramsJson),
 	}
 	labels := map[string]string{
 		InstanceKey: provisionInfo.InstanceID,

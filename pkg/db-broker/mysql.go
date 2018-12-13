@@ -70,10 +70,6 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 	}
 	annotations := map[string]string{
 		ProvisionInfoKey: string(provisionInfoJson),
-		//InstanceKey:        instanceID,
-		//ServiceKey:         serviceID,
-		//PlanKey:            planID,
-		//ProvisionParamsKey: string(paramsJson),
 	}
 	labels := map[string]string{
 		InstanceKey: provisionInfo.InstanceID,
