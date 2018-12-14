@@ -44,10 +44,6 @@ func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
 }
 
 func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string) error {
-	var (
-		err error
-	)
-
 	if _, found := p.Params["metadata"]; found {
 		if err := meta_util.Decode(p.Params["metadata"], meta); err != nil {
 			return err
