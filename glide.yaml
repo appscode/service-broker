@@ -30,7 +30,7 @@ import:
 - package: k8s.io/client-go
   version: v9.0.0
 - package: github.com/appscode/kutil
-  version: master
+  version: release-9.0
 - package: kmodules.xyz/offshoot-api
   repo: https://github.com/kmodules/offshoot-api.git
   vcs: git

@@ -118,12 +118,10 @@ type Credentials struct {
 // }
 func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
-	j, err := json.Marshal(c)
-	if err != nil {
+	if err := meta_util.Decode(&c, &result); err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(j, &result)
-	return result, err
+	return result, nil
 }
 
 func buildURI(c Credentials) string {

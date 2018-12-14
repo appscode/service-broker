@@ -1,5 +1,5 @@
-hash: 14b5083b1e7606482486f76a27419a8bcc37d7143283a718869f0eb4e77a59a8
-updated: 2018-12-14T19:30:30.101639669+06:00
+hash: a00d3a8b83a4f7cbc848d06a714c83c6fea22e086de5e07e19ea652aa74a6ec5
+updated: 2018-12-14T19:45:43.123361958+06:00
 imports:
 - name: cloud.google.com/go
   version: fe3d41e1ecb2ce36ad3a979037c9b9a2b726226f
@@ -260,8 +260,6 @@ imports:
   - doc
 - name: github.com/spf13/pflag
   version: 298182f68c66c05229eb03ac171abe6e309ee79a
-- name: github.com/tamalsaha/go-oneliners
-  version: 82a97ec58df4809a2bc57ebbbcc1e6a2feb78111
 - name: github.com/yudai/gojsondiff
   version: 0525c875b75ca60b9e67ddc44496aa16f21066b0
   subpackages:
