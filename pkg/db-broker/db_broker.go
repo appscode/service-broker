@@ -203,7 +203,7 @@ func (c *Client) Bind(
 		return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 	}
 
-	return creds.ToMap(), nil
+	return creds.ToMap()
 }
 
 func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName string) error {

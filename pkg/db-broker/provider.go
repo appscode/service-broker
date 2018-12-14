@@ -42,6 +42,64 @@ func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
 		reflect.DeepEqual(p.Params, q.Params)
 }
 
+func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string) error {
+	var (
+		err error
+	)
+
+	if _, found := p.Params["metadata"]; found {
+		var metaJson []byte
+		if metaJson, err = json.Marshal(p.Params["metadata"]); err != nil {
+			return errors.Wrapf(err, "could not marshal metadata in provisioning params %v", p.Params["metadata"])
+		}
+		if err = json.Unmarshal(metaJson, &meta); err != nil {
+			return errors.Errorf("could not unmarshal spec in provisioning params %v", p.Params["metadata"])
+		}
+	}
+
+	// set instance id at labels
+	if meta.Labels == nil {
+		meta.Labels = make(map[string]string)
+	}
+	meta.Labels[InstanceKey] = p.InstanceID
+
+	// set provision info at annotations
+	var provisionInfoJson []byte
+	if provisionInfoJson, err = json.Marshal(p); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", p)
+	}
+
+	if meta.Annotations == nil {
+		meta.Annotations = make(map[string]string)
+	}
+	meta.Annotations[ProvisionInfoKey] = string(provisionInfoJson)
+
+	meta.Name = p.InstanceName
+	meta.Namespace = namespace
+
+	return nil
+}
+
+func (p ProvisionInfo) applyToSpec(spec interface{}) error {
+	var (
+		pgSpecJson []byte
+		err        error
+	)
+
+	if _, found := p.Params["spec"]; !found {
+		return errors.New("spec is required for provisioning custom postgres")
+	}
+
+	if pgSpecJson, err = json.Marshal(p.Params["spec"]); err != nil {
+		return errors.Wrapf(err, "could not marshal spec in provisioning params %v", p.Params["spec"])
+	}
+	if err = json.Unmarshal(pgSpecJson, spec); err != nil {
+		return errors.Errorf("could not unmarshal spec in provisioning params %v", p.Params["spec"])
+	}
+
+	return nil
+}
+
 type Credentials struct {
 	Protocol string
 	URI      string `json:"uri,omitempty"`
@@ -65,11 +123,11 @@ type Credentials struct {
 //     "database": "dbname"
 //     }
 // }
-func (c Credentials) ToMap() map[string]interface{} {
+func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
 	j, _ := json.Marshal(c)
-	json.Unmarshal(j, &result)
-	return result
+	err := json.Unmarshal(j, &result)
+	return result, err
 }
 
 func buildURI(c Credentials) string {

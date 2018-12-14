@@ -7,11 +7,15 @@ metadata:
   displayName: KubeDB managed PostgreSQL
   imageUrl: https://cdn.appscode.com/images/logo/databases/postgresql.png
 plans:
-- id: postgresql-10-2
-  name: default
-  description: The default plan for the `postgresql` service
+- id: demo-postgresql
+  name: demo-postgresql
+  description: Demo for Standalone PostgreSQL database
   free: true
-- id: ha-postgresql-10-2
-  name: ha-postgresql
-  description: This plan is for getting HA PostgreSQL database
+- id: demo-ha-postgresql
+  name: demo-ha-postgresql
+  description: Demo for HA PostgreSQL database
+  free: true
+- id: custom-postgresql
+  name: custom-postgresql
+  description: Custom PostgreSQL database using user provided PostgresSpec
   free: true

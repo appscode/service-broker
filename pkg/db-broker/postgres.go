@@ -1,8 +1,6 @@
 package db_broker
 
 import (
-	"encoding/json"
-
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -27,62 +25,47 @@ func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provide
 	}
 }
 
-func NewPostgres(name, namespace string, labels, annotations map[string]string, spec api.PostgresSpec) *api.Postgres {
-	return &api.Postgres{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: spec,
-		//Spec: api.PostgresSpec{
-		//	Version:  jsonTypes.StrYo("10.2-v1"),
-		//	Replicas: types.Int32P(1),
-		//	Storage: &corev1.PersistentVolumeClaimSpec{
-		//		Resources: corev1.ResourceRequirements{
-		//			Requests: corev1.ResourceList{
-		//				corev1.ResourceStorage: resource.MustParse("50Mi"),
-		//			},
-		//		},
-		//		StorageClassName: types.StringP(storageClassName),
-		//	},
-		//	TerminationPolicy: api.TerminationPolicyWipeOut,
-		//},
+func DemoPostgresSpec() api.PostgresSpec {
+	return api.PostgresSpec{
+		Version:           jsonTypes.StrYo("10.2-v1"),
+		Replicas:          types.Int32P(1),
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
+}
+
+func DemoHAPostgresSpec() api.PostgresSpec {
+	pgSpec := DemoPostgresSpec()
+	pgSpec.Replicas = types.Int32P(3)
+
+	return pgSpec
 }
 
 func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating postgres obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
 	var (
-		pgSpec            api.PostgresSpec
-		pgSpecJson        []byte
-		provisionInfoJson []byte
-		err               error
+		pg  api.Postgres
+		err error
 	)
 
-	if pgSpecJson, err = json.Marshal(provisionInfo.Params["pgSpec"]); err != nil {
-		return errors.Wrapf(err, "could not marshall value of pgSpec in provisioning params %v", provisionInfo.Params["pgSpec"])
-	}
-	if err = json.Unmarshal(pgSpecJson, &pgSpec); err != nil {
-		return errors.Errorf("could not unmarshal pgSpec in provisioning params %v", provisionInfo.Params["pgSpec"])
+	// set metadata from provision info
+	if err = provisionInfo.applyToMetadata(&pg.ObjectMeta, namespace); err != nil {
+		return err
 	}
 
-	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case "demo-postgresql":
+		pg.Spec = DemoPostgresSpec()
+	case "demo-ha-postgresql":
+		pg.Spec = DemoHAPostgresSpec()
+	case "custom-postgresql":
+		if err = provisionInfo.applyToSpec(&pg.Spec); err != nil {
+			return err
+		}
 	}
 
-	annotations := map[string]string{
-		"provision-info": string(provisionInfoJson),
-	}
-	labels := map[string]string{
-		InstanceKey: provisionInfo.InstanceID,
-	}
-
-	completePosgresSpec(&pgSpec, provisionInfo.PlanID)
-	pg := NewPostgres(provisionInfo.InstanceName, namespace, labels, annotations, pgSpec)
-	if _, err := p.extClient.Postgreses(pg.Namespace).Create(pg); err != nil {
+	if _, err := p.extClient.Postgreses(pg.Namespace).Create(&pg); err != nil {
 		return err
 	}
 
@@ -136,7 +119,6 @@ func (p PostgreSQLProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := "postgres"
 	if dbVal, ok := params["pgsqlDatabase"]; ok {
@@ -188,28 +170,4 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 	}
 
 	return nil, nil
-}
-
-func completePosgresSpec(pgSpec *api.PostgresSpec, planID string) {
-	if pgSpec.Version == "" {
-		pgSpec.Version = jsonTypes.StrYo("10.2-v1")
-	}
-
-	if pgSpec.Replicas == nil {
-		if planID == "ha-postgresql-10-2" {
-			pgSpec.Replicas = types.Int32P(3)
-		} else {
-			pgSpec.Replicas = types.Int32P(1)
-		}
-	}
-
-	if pgSpec.Storage == nil {
-		pgSpec.StorageType = api.StorageTypeEphemeral
-	} else {
-		pgSpec.StorageType = api.StorageTypeDurable
-	}
-
-	if pgSpec.TerminationPolicy == "" {
-		pgSpec.TerminationPolicy = api.TerminationPolicyWipeOut
-	}
 }
