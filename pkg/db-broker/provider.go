@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	meta_util "github.com/appscode/kutil/meta"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,12 +49,8 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 	)
 
 	if _, found := p.Params["metadata"]; found {
-		var metaJson []byte
-		if metaJson, err = json.Marshal(p.Params["metadata"]); err != nil {
-			return errors.Wrapf(err, "could not marshal metadata in provisioning params %v", p.Params["metadata"])
-		}
-		if err = json.Unmarshal(metaJson, &meta); err != nil {
-			return errors.Errorf("could not unmarshal spec in provisioning params %v", p.Params["metadata"])
+		if err := meta_util.Decode(p.Params["metadata"], meta); err != nil {
+			return err
 		}
 	}
 
@@ -82,19 +79,15 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 
 func (p ProvisionInfo) applyToSpec(spec interface{}) error {
 	var (
-		pgSpecJson []byte
-		err        error
+		err error
 	)
 
 	if _, found := p.Params["spec"]; !found {
 		return errors.New("spec is required for provisioning custom postgres")
 	}
 
-	if pgSpecJson, err = json.Marshal(p.Params["spec"]); err != nil {
-		return errors.Wrapf(err, "could not marshal spec in provisioning params %v", p.Params["spec"])
-	}
-	if err = json.Unmarshal(pgSpecJson, spec); err != nil {
-		return errors.Errorf("could not unmarshal spec in provisioning params %v", p.Params["spec"])
+	if err = meta_util.Decode(p.Params["spec"], spec); err != nil {
+		return err
 	}
 
 	return nil
@@ -125,8 +118,11 @@ type Credentials struct {
 // }
 func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
-	j, _ := json.Marshal(c)
-	err := json.Unmarshal(j, &result)
+	j, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(j, &result)
 	return result, err
 }
 

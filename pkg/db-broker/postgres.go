@@ -59,7 +59,7 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 		pg.Spec = DemoPostgresSpec()
 	case "demo-ha-postgresql":
 		pg.Spec = DemoHAPostgresSpec()
-	case "custom-postgresql":
+	case "postgresql":
 		if err = provisionInfo.applyToSpec(&pg.Spec); err != nil {
 			return err
 		}

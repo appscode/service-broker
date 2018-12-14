@@ -15,7 +15,7 @@ plans:
   name: demo-ha-postgresql
   description: Demo for HA PostgreSQL database
   free: true
-- id: custom-postgresql
-  name: custom-postgresql
+- id: postgresql
+  name: postgresql
   description: Custom PostgreSQL database using user provided PostgresSpec
   free: true
