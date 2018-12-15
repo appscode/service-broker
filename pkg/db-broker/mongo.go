@@ -25,7 +25,7 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func DemoMongoDBSpec() api.MongoDBSpec {
+func demoMongoDBSpec() api.MongoDBSpec {
 	return api.MongoDBSpec{
 		Version:           jsonTypes.StrYo("3.6-v1"),
 		StorageType:       api.StorageTypeEphemeral,
@@ -33,8 +33,8 @@ func DemoMongoDBSpec() api.MongoDBSpec {
 	}
 }
 
-func DemoMongoDBClusterSpec() api.MongoDBSpec {
-	mgSpec := DemoMongoDBSpec()
+func demoMongoDBClusterSpec() api.MongoDBSpec {
+	mgSpec := demoMongoDBSpec()
 	mgSpec.Replicas = types.Int32P(3)
 	mgSpec.ReplicaSet = &api.MongoDBReplicaSet{
 		Name: "rs0",
@@ -56,9 +56,9 @@ func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) e
 	// set postgres spec
 	switch provisionInfo.PlanID {
 	case "demo-mongodb":
-		mg.Spec = DemoMongoDBSpec()
+		mg.Spec = demoMongoDBSpec()
 	case "demo-mongodb-cluster":
-		mg.Spec = DemoMongoDBClusterSpec()
+		mg.Spec = demoMongoDBClusterSpec()
 	case "mongodb":
 		if err := provisionInfo.applyToSpec(&mg.Spec); err != nil {
 			return err

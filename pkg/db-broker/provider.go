@@ -118,15 +118,7 @@ func buildURI(c Credentials) string {
 	if c.Database != "" {
 		uri = fmt.Sprintf("%s/%s", uri, c.Database)
 	}
-
 	return uri
-	//if c.Database == "" {
-	//	return fmt.Sprintf("%s://%s:%s@%s:%d",
-	//		c.Protocol, c.Username, c.Password, c.Host, c.Port)
-	//}
-	//
-	//return fmt.Sprintf("%s://%s:%s@%s:%d/%s",
-	//	c.Protocol, c.Username, c.Password, c.Host, c.Port, c.Database)
 }
 
 func buildHostFromService(service corev1.Service) string {

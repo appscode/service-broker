@@ -25,7 +25,7 @@ func NewElasticsearchProvider(config *rest.Config, storageClassName string) Prov
 	}
 }
 
-func DemoElasticsearchSpec() api.ElasticsearchSpec {
+func demoElasticsearchSpec() api.ElasticsearchSpec {
 	return api.ElasticsearchSpec{
 		Version:           jsonTypes.StrYo("6.3-v1"),
 		Replicas:          types.Int32P(1),
@@ -35,7 +35,7 @@ func DemoElasticsearchSpec() api.ElasticsearchSpec {
 	}
 }
 
-func DemoElasticsearchClusterSpec() api.ElasticsearchSpec {
+func demoElasticsearchClusterSpec() api.ElasticsearchSpec {
 	return api.ElasticsearchSpec{
 		Version:           jsonTypes.StrYo("6.3-v1"),
 		EnableSSL:         true,
@@ -71,9 +71,9 @@ func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace str
 	// set postgres spec
 	switch provisionInfo.PlanID {
 	case "demo-elasticsearch":
-		es.Spec = DemoElasticsearchSpec()
+		es.Spec = demoElasticsearchSpec()
 	case "demo-elasticsearch-cluster":
-		es.Spec = DemoElasticsearchClusterSpec()
+		es.Spec = demoElasticsearchClusterSpec()
 	case "elasticsearch":
 		if err := provisionInfo.applyToSpec(&es.Spec); err != nil {
 			return err

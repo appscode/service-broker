@@ -25,7 +25,7 @@ func NewMemcachedProvider(config *rest.Config) Provider {
 	}
 }
 
-func DemoMemcachedSpec() api.MemcachedSpec {
+func demoMemcachedSpec() api.MemcachedSpec {
 	return api.MemcachedSpec{
 		Version:  jsonTypes.StrYo("1.5.4-v1"),
 		Replicas: types.Int32P(3),
@@ -60,7 +60,7 @@ func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string)
 	// set postgres spec
 	switch provisionInfo.PlanID {
 	case "demo-memcached":
-		mc.Spec = DemoMemcachedSpec()
+		mc.Spec = demoMemcachedSpec()
 	case "memcached":
 		if err := provisionInfo.applyToSpec(&mc.Spec); err != nil {
 			return err

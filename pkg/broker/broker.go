@@ -97,7 +97,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		}
 	}
 
-	glog.Infof("Provissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
+	glog.Infof("Provisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	err = b.Client.Provision(b.catalogNames, *curProvisionInfo)
 	if err != nil {
 		glog.Errorln(err)
@@ -119,7 +119,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Deprovissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
+	glog.Infof("Deprovisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err

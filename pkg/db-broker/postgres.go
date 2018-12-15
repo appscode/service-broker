@@ -25,7 +25,7 @@ func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provide
 	}
 }
 
-func DemoPostgresSpec() api.PostgresSpec {
+func demoPostgresSpec() api.PostgresSpec {
 	return api.PostgresSpec{
 		Version:           jsonTypes.StrYo("10.2-v1"),
 		Replicas:          types.Int32P(1),
@@ -34,8 +34,8 @@ func DemoPostgresSpec() api.PostgresSpec {
 	}
 }
 
-func DemoHAPostgresSpec() api.PostgresSpec {
-	pgSpec := DemoPostgresSpec()
+func demoHAPostgresSpec() api.PostgresSpec {
+	pgSpec := demoPostgresSpec()
 	pgSpec.Replicas = types.Int32P(3)
 
 	return pgSpec
@@ -54,9 +54,9 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 	// set postgres spec
 	switch provisionInfo.PlanID {
 	case "demo-postgresql":
-		pg.Spec = DemoPostgresSpec()
+		pg.Spec = demoPostgresSpec()
 	case "demo-ha-postgresql":
-		pg.Spec = DemoHAPostgresSpec()
+		pg.Spec = demoHAPostgresSpec()
 	case "postgresql":
 		if err := provisionInfo.applyToSpec(&pg.Spec); err != nil {
 			return err
