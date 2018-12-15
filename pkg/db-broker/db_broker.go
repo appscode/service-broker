@@ -144,12 +144,7 @@ func (c *Client) GetProvisionInfo(catalogNames []string, instanceID, serviceID s
 		return nil, errors.Errorf("No %q provider found", serviceID)
 	}
 
-	provisionInfo, err := provider.GetProvisionInfo(instanceID, c.namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return provisionInfo, nil
+	return provider.GetProvisionInfo(instanceID, c.namespace)
 }
 
 func (c *Client) Bind(

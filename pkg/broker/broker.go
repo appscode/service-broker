@@ -122,7 +122,9 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	glog.Infof("Deprovissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
 	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Instance %q not found", request.InstanceID)
+		return nil, err
+	} else if provisionInfo == nil {
+		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
 	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName)
