@@ -1,11 +1,11 @@
 apiVersion: v1
-description: A Helm chart to install service-broker for AppsCode cloud services in Kubernetes cluster
+description: Run AppsCode cloud services on Kubernetes via the Open Service Broker API
 name: service-broker
 appVersion: "0.1.0"
 version: 0.1.0
 home: https://github.com/appscode/service-broker
+icon: https://cdn.appscode.com/images/icon/service-broker.png
 keywords:
- - Provision
- - Bind
- - Unbind
- - Deprovision
+ - service catalog
+ - service broker
+ - appscode

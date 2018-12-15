@@ -95,14 +95,13 @@ $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/ha
 
 ### Using Helm
 
-`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `my-release`:
+`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `appscode-service-broker`:
 
 ```console
 $ helm repo add appscode https://charts.appscode.com/stable/
 $ helm repo update
 $ helm search appscode/service-broker
-$ helm install --name my-release --namespace kube-system appscode/service-broker
-...
+$ helm install --name appscode-service-broker --namespace kube-system appscode/service-broker
 ```
 
 To see the detailed configuration options, visit [here](https://github.com/appscode/service-broker/tree/master/chart/service-broker).
@@ -113,16 +112,16 @@ To check whether service broker pod has started or not, run the following comman
 
 ```console
 # for script installation
-$ kubectl get pods --all-namespaces -l app=service-broker --watch
-NAMESPACE        NAME                              READY   STATUS    RESTARTS   AGE
-kube-system      service-broker-6f4f7b554d-hcvdd   0/1     Pending   0          0s
-kube-system      service-broker-6f4f7b554d-hcvdd   0/1   Pending   0     0s
-kube-system      service-broker-6f4f7b554d-hcvdd   0/1   ContainerCreating   0     0s
-kube-system      service-broker-6f4f7b554d-hcvdd   1/1   Running   0     6s
+$ kubectl get pods --all-namespaces -l app=appscode-service-broker --watch
+NAMESPACE        NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system      appscode-service-broker-6f4f7b554d-hcvdd   0/1     Pending   0          0s
+kube-system      appscode-service-broker-6f4f7b554d-hcvdd   0/1     Pending   0     0s
+kube-system      appscode-service-broker-6f4f7b554d-hcvdd   0/1     ContainerCreating   0     0s
+kube-system      appscode-service-broker-6f4f7b554d-hcvdd   1/1     Running   0     6s
 
 # for helm installation
-kube-system      my-release-service-broker-7d8cc8dcc-q7c6m   0/1   ContainerCreating   0     0s
-kube-system      my-release-service-broker-7d8cc8dcc-q7c6m   1/1   Running   0     4s
+kube-system      appscode-service-broker-7d8cc8dcc-q7c6m   0/1   ContainerCreating   0     0s
+kube-system      appscode-service-broker-7d8cc8dcc-q7c6m   1/1   Running   0     4s
 ```
 
 Once the pods is running, you can cancel the above command by typing `Ctrl+C`.
