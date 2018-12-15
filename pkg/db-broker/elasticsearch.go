@@ -1,8 +1,6 @@
 package db_broker
 
 import (
-	"encoding/json"
-
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,7 +8,6 @@ import (
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -28,81 +25,57 @@ func NewElasticsearchProvider(config *rest.Config, storageClassName string) Prov
 	}
 }
 
-func NewElasticsearch(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Elasticsearch {
-	return &api.Elasticsearch{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: api.ElasticsearchSpec{
-			Version:   jsonTypes.StrYo("6.3-v1"),
-			Replicas:  types.Int32P(1),
-			EnableSSL: true,
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("1Gi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-		},
+func DemoElasticsearchSpec() api.ElasticsearchSpec {
+	return api.ElasticsearchSpec{
+		Version:           jsonTypes.StrYo("6.3-v1"),
+		Replicas:          types.Int32P(1),
+		EnableSSL:         true,
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func NewElasticsearchCluster(name, namespace, storageClassName string, labels, annotations map[string]string) *api.Elasticsearch {
-	return &api.Elasticsearch{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: api.ElasticsearchSpec{
-			Version:           jsonTypes.StrYo("6.3-v1"),
-			EnableSSL:         true,
-			StorageType:       api.StorageTypeDurable,
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-			Topology: &api.ElasticsearchClusterTopology{
-				Master: api.ElasticsearchNode{
-					Prefix:   "master",
-					Replicas: types.Int32P(1),
-					Storage: &corev1.PersistentVolumeClaimSpec{
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceStorage: resource.MustParse("1Gi"),
-							},
-						},
-						StorageClassName: types.StringP(storageClassName),
-					},
-				},
-				Data: api.ElasticsearchNode{
-					Prefix:   "data",
-					Replicas: types.Int32P(2),
-					Storage: &corev1.PersistentVolumeClaimSpec{
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceStorage: resource.MustParse("1Gi"),
-							},
-						},
-						StorageClassName: types.StringP(storageClassName),
-					},
-				},
-				Client: api.ElasticsearchNode{
-					Prefix:   "client",
-					Replicas: types.Int32P(1),
-					Storage: &corev1.PersistentVolumeClaimSpec{
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceStorage: resource.MustParse("50Mi"),
-							},
-						},
-						StorageClassName: types.StringP(storageClassName),
-					},
-				},
+func DemoElasticsearchClusterSpec() api.ElasticsearchSpec {
+	return api.ElasticsearchSpec{
+		Version:           jsonTypes.StrYo("6.3-v1"),
+		EnableSSL:         true,
+		StorageType:       api.StorageTypeDurable,
+		TerminationPolicy: api.TerminationPolicyWipeOut,
+		Topology: &api.ElasticsearchClusterTopology{
+			Master: api.ElasticsearchNode{
+				Prefix:   "master",
+				Replicas: types.Int32P(1),
+				//Storage: &corev1.PersistentVolumeClaimSpec{
+				//	Resources: corev1.ResourceRequirements{
+				//		Requests: corev1.ResourceList{
+				//			corev1.ResourceStorage: resource.MustParse("1Gi"),
+				//		},
+				//	},
+				//	StorageClassName: types.StringP(storageClassName),
+				//},
+			},
+			Data: api.ElasticsearchNode{
+				Prefix:   "data",
+				Replicas: types.Int32P(2),
+				//Storage: &corev1.PersistentVolumeClaimSpec{
+				//	Resources: corev1.ResourceRequirements{
+				//		Requests: corev1.ResourceList{
+				//			corev1.ResourceStorage: resource.MustParse("1Gi"),
+				//		},
+				//	},
+				//	StorageClassName: types.StringP(storageClassName),
+				//},
+			},
+			Client: api.ElasticsearchNode{
+				Prefix:   "client",
+				Replicas: types.Int32P(1),
+				//Storage: &corev1.PersistentVolumeClaimSpec{
+				//	Resources: corev1.ResourceRequirements{
+				//		Requests: corev1.ResourceList{
+				//			corev1.ResourceStorage: resource.MustParse("50Mi"),
+				//		},
+				//	},
+				//	StorageClassName: types.StringP(storageClassName),
+				//},
 			},
 		},
 	}
@@ -112,33 +85,57 @@ func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace str
 	glog.Infof("Creating elasticsearch obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
 	var (
-		es                *api.Elasticsearch
-		provisionInfoJson []byte
-		err               error
+		es  api.Elasticsearch
+		err error
 	)
 
-	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	}
-	annotations := map[string]string{
-		"provision-info": string(provisionInfoJson),
-	}
-	labels := map[string]string{
-		InstanceKey: provisionInfo.InstanceID,
-	}
-
-	switch provisionInfo.PlanID {
-	case "elasticsearch-6-3":
-		es = NewElasticsearch(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	case "elasticsearch-cluster-6-3":
-		es = NewElasticsearchCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	}
-
-	if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
+	// set metadata from provision info
+	if err = provisionInfo.applyToMetadata(&es.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case "demo-elasticsearch":
+		es.Spec = DemoElasticsearchSpec()
+	case "demo-elasticsearch-cluster":
+		es.Spec = DemoElasticsearchClusterSpec()
+	case "elasticsearch":
+		if err = provisionInfo.applyToSpec(&es.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err = p.extClient.Elasticsearches(es.Namespace).Create(&es)
+
+	//var (
+	//	es                *api.Elasticsearch
+	//	provisionInfoJson []byte
+	//	err               error
+	//)
+	//
+	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	//}
+	//annotations := map[string]string{
+	//	"provision-info": string(provisionInfoJson),
+	//}
+	//labels := map[string]string{
+	//	InstanceKey: provisionInfo.InstanceID,
+	//}
+	//
+	//switch provisionInfo.PlanID {
+	//case "elasticsearch-6-3":
+	//	es = NewElasticsearch(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	//case "elasticsearch-cluster-6-3":
+	//	es = NewElasticsearchCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	//}
+	//
+	//if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
+	//	return err
+	//}
+
+	return err
 }
 
 func (p ElasticsearchProvider) Delete(name, namespace string) error {

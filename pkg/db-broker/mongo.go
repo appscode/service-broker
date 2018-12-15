@@ -1,8 +1,6 @@
 package db_broker
 
 import (
-	"encoding/json"
-
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,7 +8,6 @@ import (
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -28,71 +25,86 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMongoDB(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MongoDB {
-	return &api.MongoDB{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: api.MongoDBSpec{
-			Version:     jsonTypes.StrYo("3.6-v1"),
-			StorageType: api.StorageTypeDurable,
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-		},
+func DemoMongoDBSpec() api.MongoDBSpec {
+	return api.MongoDBSpec{
+		Version:     jsonTypes.StrYo("3.6-v1"),
+		StorageType: api.StorageTypeDurable,
+		//Storage: &corev1.PersistentVolumeClaimSpec{
+		//	Resources: corev1.ResourceRequirements{
+		//		Requests: corev1.ResourceList{
+		//			corev1.ResourceStorage: resource.MustParse("50Mi"),
+		//		},
+		//	},
+		//	StorageClassName: types.StringP(storageClassName),
+		//},
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func NewMongoDBCluster(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MongoDB {
-	mg := NewMongoDB(name, namespace, storageClassName, labels, annotations)
-	mg.Spec.Replicas = types.Int32P(3)
-	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
+func DemoMongoDBClusterSpec() api.MongoDBSpec {
+	mgSpec := DemoMongoDBSpec()
+	mgSpec.Replicas = types.Int32P(3)
+	mgSpec.ReplicaSet = &api.MongoDBReplicaSet{
 		Name: "rs0",
 	}
 
-	return mg
+	return mgSpec
 }
 
 func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating mongodb obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var (
-		mg                *api.MongoDB
-		provisionInfoJson []byte
-		err               error
-	)
+	var mg api.MongoDB
 
-	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	}
-	annotations := map[string]string{
-		"provision-info": string(provisionInfoJson),
-	}
-	labels := map[string]string{
-		InstanceKey: provisionInfo.InstanceID,
-	}
-
-	switch provisionInfo.PlanID {
-	case "mongodb-3-6":
-		mg = NewMongoDB(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	case "mongodb-cluster-3-6":
-		mg = NewMongoDBCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	}
-
-	if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&mg.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case "demo-mongodb":
+		mg.Spec = DemoMongoDBSpec()
+	case "demo-mongodb-cluster":
+		mg.Spec = DemoMongoDBClusterSpec()
+	case "mongodb":
+		if err := provisionInfo.applyToSpec(&mg.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.MongoDBs(mg.Namespace).Create(&mg)
+
+	return err
+
+	//var (
+	//	mg                *api.MongoDB
+	//	provisionInfoJson []byte
+	//	err               error
+	//)
+	//
+	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	//}
+	//annotations := map[string]string{
+	//	"provision-info": string(provisionInfoJson),
+	//}
+	//labels := map[string]string{
+	//	InstanceKey: provisionInfo.InstanceID,
+	//}
+	//
+	//switch provisionInfo.PlanID {
+	//case "mongodb-3-6":
+	//	mg = NewMongoDB(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	//case "mongodb-cluster-3-6":
+	//	mg = NewMongoDBCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	//}
+	//
+	//if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
+	//	return err
+	//}
+
+	//return nil
 }
 
 func (p MongoDbProvider) Delete(name, namespace string) error {

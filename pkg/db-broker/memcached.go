@@ -1,8 +1,6 @@
 package db_broker
 
 import (
-	"encoding/json"
-
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -27,61 +25,74 @@ func NewMemcachedProvider(config *rest.Config) Provider {
 	}
 }
 
-func NewMemcached(name, namespace string, labels, annotations map[string]string) *api.Memcached {
-	return &api.Memcached{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: api.MemcachedSpec{
-			Version:  jsonTypes.StrYo("1.5.4-v1"),
-			Replicas: types.Int32P(3),
-			PodTemplate: ofst.PodTemplateSpec{
-				Spec: ofst.PodSpec{
-					Resources: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("500m"),
-							corev1.ResourceMemory: resource.MustParse("128Mi"),
-						},
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("250m"),
-							corev1.ResourceMemory: resource.MustParse("64Mi"),
-						},
+func DemoMemcachedSpec() api.MemcachedSpec {
+	return api.MemcachedSpec{
+		Version:  jsonTypes.StrYo("1.5.4-v1"),
+		Replicas: types.Int32P(3),
+		PodTemplate: ofst.PodTemplateSpec{
+			Spec: ofst.PodSpec{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("500m"),
+						corev1.ResourceMemory: resource.MustParse("128Mi"),
+					},
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("250m"),
+						corev1.ResourceMemory: resource.MustParse("64Mi"),
 					},
 				},
 			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
 		},
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
 func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating memcached obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var (
-		provisionInfoJson []byte
-		err               error
-	)
+	var mc api.Memcached
 
-	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	}
-	annotations := map[string]string{
-		"provision-info": string(provisionInfoJson),
-	}
-	labels := map[string]string{
-		InstanceKey: provisionInfo.InstanceID,
-	}
-
-	mc := NewMemcached(provisionInfo.InstanceName, namespace, labels, annotations)
-
-	if _, err := p.extClient.Memcacheds(mc.Namespace).Create(mc); err != nil {
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&mc.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case "demo-memcached":
+		mc.Spec = DemoMemcachedSpec()
+	case "memcached":
+		if err := provisionInfo.applyToSpec(&mc.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.Memcacheds(mc.Namespace).Create(&mc)
+
+	return err
+
+	//var (
+	//	provisionInfoJson []byte
+	//	err               error
+	//)
+	//
+	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	//}
+	//annotations := map[string]string{
+	//	"provision-info": string(provisionInfoJson),
+	//}
+	//labels := map[string]string{
+	//	InstanceKey: provisionInfo.InstanceID,
+	//}
+	//
+	//mc := NewMemcached(provisionInfo.InstanceName, namespace, labels, annotations)
+	//
+	//if _, err := p.extClient.Memcacheds(mc.Namespace).Create(mc); err != nil {
+	//	return err
+	//}
+	//
+	//return nil
 }
 
 func (p MemcachedProvider) Delete(name, namespace string) error {

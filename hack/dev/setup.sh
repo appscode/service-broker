@@ -2,6 +2,29 @@
 
 set -eou pipefail
 
+show_help() {
+    echo "setup.sh - managing tool for developing service-broker locally"
+    echo " "
+    echo "setup.sh [args]"
+    echo " "
+    echo "args:"
+    echo "--------"
+    echo "-h, --help                    show brief help"
+    echo "run                           build and run the service-broker"
+    echo "install                       deploy clusterservicebroker, service and an endpoint for "
+    echo "-h, --help                    show brief help"
+    echo "-h, --help                    show brief help"
+    echo "-h, --help                    show brief help"
+    echo "-h, --help                    show brief help"
+    echo "-n, --namespace=NAMESPACE     specify namespace (default: $SERVICE_BROKER_NAMESPACE)"
+    echo "    --docker-registry         docker registry used to pull service-broker image (default: $SERVICE_BROKER_DOCKER_REGISTRY)"
+    echo "    --image-pull-secret       name of secret used to pull service-broker image"
+    echo "    --port                    port number at which the broker will expose"
+    echo "    --catalogPath             the path of catalogs for different service plans"
+    echo "    --catalogNames            comma separated names of the catalogs for different service plans"
+    echo "    --storage-class           name of the storage-class for database storage"
+    echo "    --uninstall               uninstall service-broker"
+}
 pushd $GOPATH/src/github.com/appscode/service-broker
 
 run() {
@@ -24,7 +47,7 @@ uninstall() {
     kubectl delete -f hack/dev/service_for_locally_run.yaml
 }
 
-install_kubed() {
+install_kubedb() {
     curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.9.0-rc.2/hack/deploy/kubedb.sh| bash
 }
 

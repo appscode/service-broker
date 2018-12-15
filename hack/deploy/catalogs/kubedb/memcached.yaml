@@ -7,7 +7,11 @@ metadata:
   displayName: KubeDB managed Memcache
   imageUrl: https://cdn.appscode.com/images/logo/databases/memcached.png
 plans:
-- id: memcached-1-5-4
-  name: default
-  description: The default plan for the 'memcached' service
+- id: demo-memcached
+  name: demo-memcached
+  description: Demo for Memcached database
+  free: true
+- id: memcached
+  name: memcached
+  description: Custom Memcached database using user provided MemcachedSpec
   free: true

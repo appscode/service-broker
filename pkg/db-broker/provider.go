@@ -57,8 +57,8 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 	meta.Labels[InstanceKey] = p.InstanceID
 
 	// set provision info at annotations
-	var provisionInfoJson []byte
-	if provisionInfoJson, err = json.Marshal(p); err != nil {
+	provisionInfoJson, err := json.Marshal(p)
+	if err != nil {
 		return errors.Wrapf(err, "could not marshall provisioning info %v", p)
 	}
 

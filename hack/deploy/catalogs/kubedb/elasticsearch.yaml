@@ -7,11 +7,15 @@ metadata:
   displayName: KubeDB managed ElasticSearch
   imageUrl: https://cdn.appscode.com/images/logo/databases/elasticsearch.png
 plans:
-- id: elasticsearch-6-3
-  name: default
-  description: The default plan for the 'elasticsearch' service
+- id: demo-elasticsearch
+  name: demo-elasticsearch
+  description: Demo for Standalone Elasticsearch database
   free: true
-- id: elasticsearch-cluster-6-3
-  name: elasticsearch-cluster
-  description: This plan is for getting an Elasticsearch 6.3 cluster
+- id: demo-elasticsearch-cluster
+  name: demo-elasticsearch-cluster
+  description: Demo for Elasticsearch cluster
+  free: true
+- id: elasticsearch
+  name: elasticsearch
+  description: Custom Elasticsearch database using user provided ElasticsearchSpec
   free: true

@@ -1,16 +1,12 @@
 package db_broker
 
 import (
-	"encoding/json"
-
 	jsonTypes "github.com/appscode/go/encoding/json/types"
-	"github.com/appscode/go/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -28,26 +24,10 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMySQL(name, namespace, storageClassName string, labels, annotations map[string]string) *api.MySQL {
-	return &api.MySQL{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Labels:      labels,
-			Annotations: annotations,
-		},
-		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("8.0-v1"),
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-		},
+func DemoMySQLSpec() api.MySQLSpec {
+	return api.MySQLSpec{
+		Version:           jsonTypes.StrYo("8.0-v1"),
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
@@ -55,26 +35,48 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 	glog.Infof("Creating mysql obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
 	var (
-		provisionInfoJson []byte
-		err               error
+		my  api.MySQL
+		err error
 	)
 
-	if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	}
-	annotations := map[string]string{
-		ProvisionInfoKey: string(provisionInfoJson),
-	}
-	labels := map[string]string{
-		InstanceKey: provisionInfo.InstanceID,
-	}
-
-	my := NewMySQL(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
+	// set metadata from provision info
+	if err = provisionInfo.applyToMetadata(&my.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case "demo-mysql":
+		my.Spec = DemoMySQLSpec()
+	case "mysql":
+		if err = provisionInfo.applyToSpec(&my.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err = p.extClient.MySQLs(my.Namespace).Create(&my)
+
+	//var (
+	//	provisionInfoJson []byte
+	//	err               error
+	//)
+	//
+	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
+	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
+	//}
+	//annotations := map[string]string{
+	//	ProvisionInfoKey: string(provisionInfoJson),
+	//}
+	//labels := map[string]string{
+	//	InstanceKey: provisionInfo.InstanceID,
+	//}
+	//
+	//my := NewMySQL(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
+	//if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
+	//	return err
+	//}
+
+	return err
 }
 
 func (p MySQLProvider) Delete(name, namespace string) error {

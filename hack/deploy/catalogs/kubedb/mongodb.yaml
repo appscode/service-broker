@@ -7,11 +7,15 @@ metadata:
   displayName: KubeDB managed MongoDB
   imageUrl: https://cdn.appscode.com/images/logo/databases/mongodb.png
 plans:
-- id: mongodb-3-6
-  name: default
-  description: The default plan for the 'mongodb' service
+- id: demo-mongodb
+  name: demo-mongodb
+  description: Demo for Standalone MongoDB database
   free: true
-- id: mongodb-cluster-3-6
-  name: mongodb-cluster
-  description: This plan is for getting a MongoDB 3.6 cluster
+- id: demo-mongodb-cluster
+  name: demo-mongodb-cluster
+  description: Demo for MongoDB cluster
+  free: true
+- id: mongodb
+  name: mongodb
+  description: Custom MongoDB database using user provided MongoDBSpec
   free: true
