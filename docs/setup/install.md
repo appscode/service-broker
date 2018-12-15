@@ -78,7 +78,6 @@ namespace/my-ns created
 
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
     | bash -s -- --namespace=my-ns
-...
 ```
 
 If you are using a private Docker registry, you need to pull the following docker images:
@@ -90,7 +89,6 @@ To pass the address of your private registry and optionally a image pull secret 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
     | bash -s -- --docker-registry=MY_REGISTRY [--image-pull-secret=SECRET_NAME]
-...
 ```
 
 ### Using Helm
@@ -101,7 +99,7 @@ $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/ha
 $ helm repo add appscode https://charts.appscode.com/stable/
 $ helm repo update
 $ helm search appscode/service-broker
-$ helm install --name appscode-service-broker --namespace kube-system appscode/service-broker
+$ helm install appscode/service-broker --name appscode-service-broker --namespace kube-system
 ```
 
 To see the detailed configuration options, visit [here](https://github.com/appscode/service-broker/tree/master/chart/service-broker).
