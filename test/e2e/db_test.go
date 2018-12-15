@@ -289,8 +289,8 @@ var _ = Describe("[service-catalog]", func() {
 		})
 
 		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "mysql-8-0"
+			serviceplanName = "demo-mysql"
+			serviceplanID = "demo-mysql"
 			test()
 		})
 	})
@@ -312,22 +312,22 @@ var _ = Describe("[service-catalog]", func() {
 		})
 
 		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "postgresql-10-2"
+			serviceplanName = "demo-postgresql"
+			serviceplanID = "demo-postgresql"
 			test()
 		})
 
 		It("Runs through the ha-postgresql plan", func() {
-			serviceplanName = "ha-postgresql"
-			serviceplanID = "ha-postgresql-10-2"
+			serviceplanName = "demo-ha-postgresql"
+			serviceplanID = "demo-ha-postgresql"
 			test()
 		})
 	})
 
 	Context("Test Elasticsearch broker service", func() {
 		JustBeforeEach(func() {
-			serviceclassName = "elasticsearch"
-			serviceclassID = "elasticsearch"
+			serviceclassName = "demo-elasticsearch"
+			serviceclassID = "demo-elasticsearch"
 
 			instanceName = "test-elasticsearchdb"
 			bindingName = "test-elasticsearch-binding"
