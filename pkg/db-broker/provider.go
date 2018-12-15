@@ -44,10 +44,6 @@ func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
 }
 
 func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string) error {
-	var (
-		err error
-	)
-
 	if _, found := p.Params["metadata"]; found {
 		if err := meta_util.Decode(p.Params["metadata"], meta); err != nil {
 			return err
@@ -61,15 +57,14 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 	meta.Labels[InstanceKey] = p.InstanceID
 
 	// set provision info at annotations
-	var provisionInfoJson []byte
-	if provisionInfoJson, err = json.Marshal(p); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", p)
-	}
-
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
-	meta.Annotations[ProvisionInfoKey] = string(provisionInfoJson)
+	if provisionInfoJson, err := json.Marshal(p); err != nil {
+		return errors.Wrapf(err, "could not marshall provisioning info %v", p)
+	} else {
+		meta.Annotations[ProvisionInfoKey] = string(provisionInfoJson)
+	}
 
 	meta.Name = p.InstanceName
 	meta.Namespace = namespace
@@ -78,19 +73,10 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 }
 
 func (p ProvisionInfo) applyToSpec(spec interface{}) error {
-	var (
-		err error
-	)
-
 	if _, found := p.Params["spec"]; !found {
 		return errors.New("spec is required for provisioning custom postgres")
 	}
-
-	if err = meta_util.Decode(p.Params["spec"], spec); err != nil {
-		return err
-	}
-
-	return nil
+	return meta_util.Decode(p.Params["spec"], spec)
 }
 
 type Credentials struct {
@@ -118,10 +104,8 @@ type Credentials struct {
 // }
 func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
-	if err := meta_util.Decode(&c, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	err := meta_util.Decode(&c, &result)
+	return result, err
 }
 
 func buildURI(c Credentials) string {
