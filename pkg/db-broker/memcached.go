@@ -70,29 +70,6 @@ func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string)
 	_, err := p.extClient.Memcacheds(mc.Namespace).Create(&mc)
 
 	return err
-
-	//var (
-	//	provisionInfoJson []byte
-	//	err               error
-	//)
-	//
-	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	//}
-	//annotations := map[string]string{
-	//	"provision-info": string(provisionInfoJson),
-	//}
-	//labels := map[string]string{
-	//	InstanceKey: provisionInfo.InstanceID,
-	//}
-	//
-	//mc := NewMemcached(provisionInfo.InstanceName, namespace, labels, annotations)
-	//
-	//if _, err := p.extClient.Memcacheds(mc.Namespace).Create(mc); err != nil {
-	//	return err
-	//}
-	//
-	//return nil
 }
 
 func (p MemcachedProvider) Delete(name, namespace string) error {
@@ -142,7 +119,6 @@ func (p MemcachedProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mcDatabase"]; ok {
@@ -173,7 +149,7 @@ func (p MemcachedProvider) GetProvisionInfo(instanceID, namespace string) (*Prov
 	}
 
 	if len(memcacheds.Items) > 0 {
-		return instanceFromObjectMeta(memcacheds.Items[0].ObjectMeta)
+		return provisionInfoFromObjectMeta(memcacheds.Items[0].ObjectMeta)
 	}
 
 	return nil, nil

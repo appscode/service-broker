@@ -161,6 +161,9 @@ func (c *Client) Bind(
 	for k, v := range provisionInfo.Params {
 		params[k] = v
 	}
+	for k, v := range provisionInfo.ExtraParams {
+		params[k] = v
+	}
 	for k, v := range bindParams {
 		params[k] = v
 	}

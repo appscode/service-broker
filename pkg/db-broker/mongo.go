@@ -27,16 +27,8 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 
 func DemoMongoDBSpec() api.MongoDBSpec {
 	return api.MongoDBSpec{
-		Version:     jsonTypes.StrYo("3.6-v1"),
-		StorageType: api.StorageTypeDurable,
-		//Storage: &corev1.PersistentVolumeClaimSpec{
-		//	Resources: corev1.ResourceRequirements{
-		//		Requests: corev1.ResourceList{
-		//			corev1.ResourceStorage: resource.MustParse("50Mi"),
-		//		},
-		//	},
-		//	StorageClassName: types.StringP(storageClassName),
-		//},
+		Version:           jsonTypes.StrYo("3.6-v1"),
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
@@ -76,35 +68,6 @@ func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) e
 	_, err := p.extClient.MongoDBs(mg.Namespace).Create(&mg)
 
 	return err
-
-	//var (
-	//	mg                *api.MongoDB
-	//	provisionInfoJson []byte
-	//	err               error
-	//)
-	//
-	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	//}
-	//annotations := map[string]string{
-	//	"provision-info": string(provisionInfoJson),
-	//}
-	//labels := map[string]string{
-	//	InstanceKey: provisionInfo.InstanceID,
-	//}
-	//
-	//switch provisionInfo.PlanID {
-	//case "mongodb-3-6":
-	//	mg = NewMongoDB(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//case "mongodb-cluster-3-6":
-	//	mg = NewMongoDBCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//}
-	//
-	//if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
-	//	return err
-	//}
-
-	//return nil
 }
 
 func (p MongoDbProvider) Delete(name, namespace string) error {
@@ -154,7 +117,6 @@ func (p MongoDbProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mgDatabase"]; ok {
@@ -202,7 +164,7 @@ func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*Provis
 	}
 
 	if len(mongodbs.Items) > 0 {
-		return instanceFromObjectMeta(mongodbs.Items[0].ObjectMeta)
+		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
 	}
 
 	return nil, nil

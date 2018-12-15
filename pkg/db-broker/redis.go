@@ -2,14 +2,11 @@ package db_broker
 
 import (
 	jsonTypes "github.com/appscode/go/encoding/json/types"
-	//"github.com/appscode/go/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-
-	//"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -29,15 +26,8 @@ func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 
 func DemoRedisSpec() api.RedisSpec {
 	return api.RedisSpec{
-		Version: jsonTypes.StrYo("4.0-v1"),
-		//Storage: &corev1.PersistentVolumeClaimSpec{
-		//	Resources: corev1.ResourceRequirements{
-		//		Requests: corev1.ResourceList{
-		//			corev1.ResourceStorage: resource.MustParse("50Mi"),
-		//		},
-		//	},
-		//	StorageClassName: types.StringP(storageClassName),
-		//},
+		Version:           jsonTypes.StrYo("4.0-v1"),
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
@@ -54,9 +44,9 @@ func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case "demo-memcached":
+	case "demo-redis":
 		rd.Spec = DemoRedisSpec()
-	case "memcached":
+	case "redis":
 		if err := provisionInfo.applyToSpec(&rd.Spec); err != nil {
 			return err
 		}
@@ -65,29 +55,6 @@ func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 	_, err := p.extClient.Redises(rd.Namespace).Create(&rd)
 
 	return err
-
-	//var (
-	//	provisionInfoJson []byte
-	//	err               error
-	//)
-	//
-	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	//}
-	//annotations := map[string]string{
-	//	"provision-info": string(provisionInfoJson),
-	//}
-	//labels := map[string]string{
-	//	InstanceKey: provisionInfo.InstanceID,
-	//}
-	//
-	//rd := NewRedis(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//
-	//if _, err := p.extClient.Redises(rd.Namespace).Create(rd); err != nil {
-	//	return err
-	//}
-	//
-	//return nil
 }
 
 func (p RedisProvider) Delete(name, namespace string) error {
@@ -137,7 +104,6 @@ func (p RedisProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["rdDatabase"]; ok {
@@ -168,7 +134,7 @@ func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 	}
 
 	if len(redises.Items) > 0 {
-		return instanceFromObjectMeta(redises.Items[0].ObjectMeta)
+		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
 	}
 
 	return nil, nil

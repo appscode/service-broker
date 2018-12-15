@@ -30,6 +30,7 @@ func DemoElasticsearchSpec() api.ElasticsearchSpec {
 		Version:           jsonTypes.StrYo("6.3-v1"),
 		Replicas:          types.Int32P(1),
 		EnableSSL:         true,
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
@@ -38,44 +39,20 @@ func DemoElasticsearchClusterSpec() api.ElasticsearchSpec {
 	return api.ElasticsearchSpec{
 		Version:           jsonTypes.StrYo("6.3-v1"),
 		EnableSSL:         true,
-		StorageType:       api.StorageTypeDurable,
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 		Topology: &api.ElasticsearchClusterTopology{
 			Master: api.ElasticsearchNode{
 				Prefix:   "master",
 				Replicas: types.Int32P(1),
-				//Storage: &corev1.PersistentVolumeClaimSpec{
-				//	Resources: corev1.ResourceRequirements{
-				//		Requests: corev1.ResourceList{
-				//			corev1.ResourceStorage: resource.MustParse("1Gi"),
-				//		},
-				//	},
-				//	StorageClassName: types.StringP(storageClassName),
-				//},
 			},
 			Data: api.ElasticsearchNode{
 				Prefix:   "data",
 				Replicas: types.Int32P(2),
-				//Storage: &corev1.PersistentVolumeClaimSpec{
-				//	Resources: corev1.ResourceRequirements{
-				//		Requests: corev1.ResourceList{
-				//			corev1.ResourceStorage: resource.MustParse("1Gi"),
-				//		},
-				//	},
-				//	StorageClassName: types.StringP(storageClassName),
-				//},
 			},
 			Client: api.ElasticsearchNode{
 				Prefix:   "client",
 				Replicas: types.Int32P(1),
-				//Storage: &corev1.PersistentVolumeClaimSpec{
-				//	Resources: corev1.ResourceRequirements{
-				//		Requests: corev1.ResourceList{
-				//			corev1.ResourceStorage: resource.MustParse("50Mi"),
-				//		},
-				//	},
-				//	StorageClassName: types.StringP(storageClassName),
-				//},
 			},
 		},
 	}
@@ -84,13 +61,10 @@ func DemoElasticsearchClusterSpec() api.ElasticsearchSpec {
 func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating elasticsearch obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var (
-		es  api.Elasticsearch
-		err error
-	)
+	var es api.Elasticsearch
 
 	// set metadata from provision info
-	if err = provisionInfo.applyToMetadata(&es.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&es.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
@@ -101,39 +75,12 @@ func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace str
 	case "demo-elasticsearch-cluster":
 		es.Spec = DemoElasticsearchClusterSpec()
 	case "elasticsearch":
-		if err = provisionInfo.applyToSpec(&es.Spec); err != nil {
+		if err := provisionInfo.applyToSpec(&es.Spec); err != nil {
 			return err
 		}
 	}
 
-	_, err = p.extClient.Elasticsearches(es.Namespace).Create(&es)
-
-	//var (
-	//	es                *api.Elasticsearch
-	//	provisionInfoJson []byte
-	//	err               error
-	//)
-	//
-	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	//}
-	//annotations := map[string]string{
-	//	"provision-info": string(provisionInfoJson),
-	//}
-	//labels := map[string]string{
-	//	InstanceKey: provisionInfo.InstanceID,
-	//}
-	//
-	//switch provisionInfo.PlanID {
-	//case "elasticsearch-6-3":
-	//	es = NewElasticsearch(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//case "elasticsearch-cluster-6-3":
-	//	es = NewElasticsearchCluster(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//}
-	//
-	//if _, err := p.extClient.Elasticsearches(es.Namespace).Create(es); err != nil {
-	//	return err
-	//}
+	_, err := p.extClient.Elasticsearches(es.Namespace).Create(&es)
 
 	return err
 }
@@ -174,8 +121,16 @@ func (p ElasticsearchProvider) Bind(
 		rootCert         string
 	)
 
-	// todo: connScheme should be set depending on es.spec.EnableSSL, once we implement parametes passing
-	connScheme = "https"
+	connScheme = "http"
+	if enableSSL, ok := params["enableSSL"]; ok && enableSSL.(bool) {
+		connScheme = "https"
+		cert, ok := data["root.pem"]
+		if !ok {
+			return nil, errors.Errorf("root certificate not found in secret keys")
+		}
+		rootCert = cert.(string)
+	}
+
 	if len(service.Spec.Ports) == 0 {
 		return nil, errors.Errorf("no ports found")
 	}
@@ -187,7 +142,6 @@ func (p ElasticsearchProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["esDatabase"]; ok {
@@ -210,12 +164,6 @@ func (p ElasticsearchProvider) Bind(
 		return nil, errors.Errorf("ADMIN_PASSWORD not found in secret keys")
 	}
 	password = adminPassword.(string)
-
-	cert, ok := data["root.pem"]
-	if !ok {
-		return nil, errors.Errorf("root certificate not found in secret keys")
-	}
-	rootCert = cert.(string)
 
 	creds := Credentials{
 		Protocol: connScheme,
@@ -241,9 +189,16 @@ func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*
 		return nil, err
 	}
 
+	var provisionInfo *ProvisionInfo
 	if len(elasticsearches.Items) > 0 {
-		return instanceFromObjectMeta(elasticsearches.Items[0].ObjectMeta)
+		if provisionInfo, err = provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta); err != nil {
+			return nil, err
+		}
+		if provisionInfo.ExtraParams == nil {
+			provisionInfo.ExtraParams = make(map[string]interface{})
+		}
+		provisionInfo.ExtraParams["enableSSL"] = elasticsearches.Items[0].Spec.EnableSSL
 	}
 
-	return nil, nil
+	return provisionInfo, nil
 }

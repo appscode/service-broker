@@ -29,6 +29,7 @@ func DemoPostgresSpec() api.PostgresSpec {
 	return api.PostgresSpec{
 		Version:           jsonTypes.StrYo("10.2-v1"),
 		Replicas:          types.Int32P(1),
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
@@ -43,13 +44,10 @@ func DemoHAPostgresSpec() api.PostgresSpec {
 func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating postgres obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var (
-		pg  api.Postgres
-		err error
-	)
+	var pg api.Postgres
 
 	// set metadata from provision info
-	if err = provisionInfo.applyToMetadata(&pg.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&pg.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
@@ -60,16 +58,14 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 	case "demo-ha-postgresql":
 		pg.Spec = DemoHAPostgresSpec()
 	case "postgresql":
-		if err = provisionInfo.applyToSpec(&pg.Spec); err != nil {
+		if err := provisionInfo.applyToSpec(&pg.Spec); err != nil {
 			return err
 		}
 	}
 
-	if _, err := p.extClient.Postgreses(pg.Namespace).Create(&pg); err != nil {
-		return err
-	}
+	_, err := p.extClient.Postgreses(pg.Namespace).Create(&pg)
 
-	return nil
+	return err
 }
 
 func (p PostgreSQLProvider) Delete(name, namespace string) error {
@@ -166,7 +162,7 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 	}
 
 	if len(postgreses.Items) > 0 {
-		return instanceFromObjectMeta(postgreses.Items[0].ObjectMeta)
+		return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 	}
 
 	return nil, nil

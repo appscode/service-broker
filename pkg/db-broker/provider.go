@@ -19,15 +19,16 @@ type Provider interface {
 }
 
 type ProvisionInfo struct {
-	InstanceID string
-	ServiceID  string
-	PlanID     string
-	Params     map[string]interface{}
+	InstanceID  string
+	ServiceID   string
+	PlanID      string
+	Params      map[string]interface{}
+	ExtraParams map[string]interface{}
 
 	InstanceName string
 }
 
-func instanceFromObjectMeta(meta metav1.ObjectMeta) (*ProvisionInfo, error) {
+func provisionInfoFromObjectMeta(meta metav1.ObjectMeta) (*ProvisionInfo, error) {
 	var provisionInfo ProvisionInfo
 	err := json.Unmarshal([]byte(meta.Annotations[ProvisionInfoKey]), &provisionInfo)
 	if err != nil {

@@ -27,6 +27,7 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 func DemoMySQLSpec() api.MySQLSpec {
 	return api.MySQLSpec{
 		Version:           jsonTypes.StrYo("8.0-v1"),
+		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
@@ -34,13 +35,10 @@ func DemoMySQLSpec() api.MySQLSpec {
 func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
 	glog.Infof("Creating mysql obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var (
-		my  api.MySQL
-		err error
-	)
+	var my api.MySQL
 
 	// set metadata from provision info
-	if err = provisionInfo.applyToMetadata(&my.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&my.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
@@ -49,32 +47,12 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 	case "demo-mysql":
 		my.Spec = DemoMySQLSpec()
 	case "mysql":
-		if err = provisionInfo.applyToSpec(&my.Spec); err != nil {
+		if err := provisionInfo.applyToSpec(&my.Spec); err != nil {
 			return err
 		}
 	}
 
-	_, err = p.extClient.MySQLs(my.Namespace).Create(&my)
-
-	//var (
-	//	provisionInfoJson []byte
-	//	err               error
-	//)
-	//
-	//if provisionInfoJson, err = json.Marshal(provisionInfo); err != nil {
-	//	return errors.Wrapf(err, "could not marshall provisioning info %v", provisionInfo)
-	//}
-	//annotations := map[string]string{
-	//	ProvisionInfoKey: string(provisionInfoJson),
-	//}
-	//labels := map[string]string{
-	//	InstanceKey: provisionInfo.InstanceID,
-	//}
-	//
-	//my := NewMySQL(provisionInfo.InstanceName, namespace, p.storageClassName, labels, annotations)
-	//if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
-	//	return err
-	//}
+	_, err := p.extClient.MySQLs(my.Namespace).Create(&my)
 
 	return err
 }
@@ -126,7 +104,6 @@ func (p MySQLProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mysqlDatabase"]; ok {
@@ -174,7 +151,7 @@ func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 	}
 
 	if len(mysqls.Items) > 0 {
-		return instanceFromObjectMeta(mysqls.Items[0].ObjectMeta)
+		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
 	}
 
 	return nil, nil
