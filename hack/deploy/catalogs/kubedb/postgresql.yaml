@@ -9,13 +9,13 @@ metadata:
 plans:
 - id: demo-postgresql
   name: demo-postgresql
-  description: Demo for Standalone PostgreSQL database
+  description: Demo Standalone PostgreSQL database
   free: true
 - id: demo-ha-postgresql
   name: demo-ha-postgresql
-  description: Demo for HA PostgreSQL database
+  description: Demo HA PostgreSQL database
   free: true
 - id: postgresql
   name: postgresql
-  description: Custom PostgreSQL database using user provided PostgresSpec
+  description: PostgreSQL database with custom specification
   free: true

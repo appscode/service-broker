@@ -9,13 +9,13 @@ metadata:
 plans:
 - id: demo-elasticsearch
   name: demo-elasticsearch
-  description: Demo for Standalone Elasticsearch database
+  description: Demo Standalone Elasticsearch database
   free: true
 - id: demo-elasticsearch-cluster
   name: demo-elasticsearch-cluster
-  description: Demo for Elasticsearch cluster
+  description: Demo Elasticsearch cluster
   free: true
 - id: elasticsearch
   name: elasticsearch
-  description: Custom Elasticsearch database using user provided ElasticsearchSpec
+  description: Elasticsearch cluster with custom specification
   free: true

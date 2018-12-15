@@ -9,13 +9,13 @@ metadata:
 plans:
 - id: demo-mongodb
   name: demo-mongodb
-  description: Demo for Standalone MongoDB database
+  description: Demo Standalone MongoDB database
   free: true
 - id: demo-mongodb-cluster
   name: demo-mongodb-cluster
-  description: Demo for MongoDB cluster
+  description: Demo MongoDB cluster
   free: true
 - id: mongodb
   name: mongodb
-  description: Custom MongoDB database using user provided MongoDBSpec
+  description: MongoDB database with custom specification
   free: true

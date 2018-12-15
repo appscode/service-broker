@@ -9,9 +9,9 @@ metadata:
 plans:
 - id: demo-memcached
   name: demo-memcached
-  description: Demo for Memcached database
+  description: Demo Memcached
   free: true
 - id: memcached
   name: memcached
-  description: Custom Memcached database using user provided MemcachedSpec
+  description: Memcached with custom specification
   free: true

@@ -9,9 +9,9 @@ metadata:
 plans:
 - id: demo-redis
   name: demo-redis
-  description: Demo for Redis database
+  description: Demo Redis
   free: true
 - id: redis
   name: redis
-  description: Custom Redis database using user provided RedisSpec
+  description: Redis with custom specification
   free: true

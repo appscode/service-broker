@@ -9,9 +9,9 @@ metadata:
 plans:
 - id: demo-mysql
   name: demo-mysql
-  description: Demo for MySQL database
+  description: Demo MySQL database
   free: true
 - id: mysql
   name: mysql
-  description: Custom MySQL database using user provided MySQLSpec
+  description: MySQL database with custom specification
   free: true

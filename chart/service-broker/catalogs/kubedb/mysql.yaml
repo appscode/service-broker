@@ -7,7 +7,11 @@ metadata:
   displayName: KubeDB managed MySQL
   imageUrl: https://cdn.appscode.com/images/logo/databases/mysql.png
 plans:
-- id: mysql-8-0
-  name: default
-  description: The default plan for the 'mysql' service
+- id: demo-mysql
+  name: demo-mysql
+  description: Demo MySQL database
+  free: true
+- id: mysql
+  name: mysql
+  description: MySQL database with custom specification
   free: true
