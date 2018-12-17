@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -149,7 +152,13 @@ func (p MemcachedProvider) GetProvisionInfo(instanceID, namespace string) (*Prov
 	}
 
 	if len(memcacheds.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, memcached := range memcacheds.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", memcached.Namespace, memcached.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Memcacheds with instance id %d found: %s",
+			len(memcacheds.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(memcacheds.Items) == 1 {
 		return provisionInfoFromObjectMeta(memcacheds.Items[0].ObjectMeta)
 	}

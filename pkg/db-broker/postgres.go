@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -162,7 +165,13 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 	}
 
 	if len(postgreses.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, postgres := range postgreses.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", postgres.Namespace, postgres.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Postgreses with instance id %d found: %s",
+			len(postgreses.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(postgreses.Items) == 1 {
 		return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 	}

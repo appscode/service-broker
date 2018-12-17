@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
@@ -151,7 +154,13 @@ func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 	}
 
 	if len(mysqls.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, mysql := range mysqls.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", mysql.Namespace, mysql.Namespace))
+		}
+
+		return nil, errors.Errorf("%d MySQLs with instance id %d found: %s",
+			len(mysqls.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(mysqls.Items) == 1 {
 		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
 	}

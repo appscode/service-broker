@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -164,7 +167,13 @@ func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*Provis
 	}
 
 	if len(mongodbs.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, mongodb := range mongodbs.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Namespace))
+		}
+
+		return nil, errors.Errorf("%d MongoDBs with instance id %d found: %s",
+			len(mongodbs.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(mongodbs.Items) == 1 {
 		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
 	}

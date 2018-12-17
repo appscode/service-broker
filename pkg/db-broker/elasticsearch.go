@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -191,7 +194,13 @@ func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*
 
 	var provisionInfo *ProvisionInfo
 	if len(elasticsearches.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, elasticsearch := range elasticsearches.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", elasticsearch.Namespace, elasticsearch.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Elasicsearches with instance id %d found: %s",
+			len(elasticsearches.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(elasticsearches.Items) == 1 {
 		if provisionInfo, err = provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta); err != nil {
 			return nil, err

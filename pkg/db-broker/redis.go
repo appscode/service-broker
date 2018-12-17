@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
@@ -134,7 +137,13 @@ func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 	}
 
 	if len(redises.Items) > 1 {
-		return nil, errors.New("number of instances with same instance id should not be more than one")
+		var instances []string
+		for _, redis := range redises.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", redis.Namespace, redis.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Redises with instance id %d found: %s",
+			len(redises.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(redises.Items) == 1 {
 		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
 	}
