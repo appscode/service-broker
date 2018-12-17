@@ -26,7 +26,7 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 
 func demoMySQLSpec() api.MySQLSpec {
 	return api.MySQLSpec{
-		Version:           jsonTypes.StrYo("8.0-v1"),
+		Version:           jsonTypes.StrYo(demoMySQLVersion),
 		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
@@ -44,9 +44,9 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case "demo-mysql":
+	case planMySQLDemo:
 		my.Spec = demoMySQLSpec()
-	case "mysql":
+	case planMySQL:
 		if err := provisionInfo.applyToSpec(&my.Spec); err != nil {
 			return err
 		}

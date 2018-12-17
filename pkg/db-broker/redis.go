@@ -26,7 +26,7 @@ func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 
 func demoRedisSpec() api.RedisSpec {
 	return api.RedisSpec{
-		Version:           jsonTypes.StrYo("4.0-v1"),
+		Version:           jsonTypes.StrYo(demoRedisVersion),
 		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
@@ -44,9 +44,9 @@ func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case "demo-redis":
+	case planRedisDemo:
 		rd.Spec = demoRedisSpec()
-	case "redis":
+	case planRedis:
 		if err := provisionInfo.applyToSpec(&rd.Spec); err != nil {
 			return err
 		}
