@@ -190,7 +190,9 @@ func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*
 	}
 
 	var provisionInfo *ProvisionInfo
-	if len(elasticsearches.Items) > 0 {
+	if len(elasticsearches.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(elasticsearches.Items) == 1 {
 		if provisionInfo, err = provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta); err != nil {
 			return nil, err
 		}

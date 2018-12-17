@@ -163,7 +163,9 @@ func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*Provis
 		return nil, err
 	}
 
-	if len(mongodbs.Items) > 0 {
+	if len(mongodbs.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(mongodbs.Items) == 1 {
 		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
 	}
 

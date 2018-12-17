@@ -148,7 +148,9 @@ func (p MemcachedProvider) GetProvisionInfo(instanceID, namespace string) (*Prov
 		return nil, err
 	}
 
-	if len(memcacheds.Items) > 0 {
+	if len(memcacheds.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(memcacheds.Items) == 1 {
 		return provisionInfoFromObjectMeta(memcacheds.Items[0].ObjectMeta)
 	}
 

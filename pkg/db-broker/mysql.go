@@ -150,7 +150,9 @@ func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 		return nil, err
 	}
 
-	if len(mysqls.Items) > 0 {
+	if len(mysqls.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(mysqls.Items) == 1 {
 		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
 	}
 

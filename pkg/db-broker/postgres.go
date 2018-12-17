@@ -161,7 +161,9 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 		return nil, err
 	}
 
-	if len(postgreses.Items) > 0 {
+	if len(postgreses.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(postgreses.Items) == 1 {
 		return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 	}
 

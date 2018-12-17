@@ -133,7 +133,9 @@ func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 		return nil, err
 	}
 
-	if len(redises.Items) > 0 {
+	if len(redises.Items) > 1 {
+		return nil, errors.New("number of instances with same instance id should not be more than one")
+	} else if len(redises.Items) == 1 {
 		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
 	}
 

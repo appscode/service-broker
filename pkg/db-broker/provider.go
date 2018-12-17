@@ -32,7 +32,7 @@ func provisionInfoFromObjectMeta(meta metav1.ObjectMeta) (*ProvisionInfo, error)
 	var provisionInfo ProvisionInfo
 	err := json.Unmarshal([]byte(meta.Annotations[ProvisionInfoKey]), &provisionInfo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshall provision info for instance %q", meta.Labels[InstanceKey])
+		return nil, errors.Wrapf(err, "could not unmarshal provision info for instance %q", meta.Labels[InstanceKey])
 	}
 	return &provisionInfo, nil
 }
@@ -62,7 +62,7 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 		meta.Annotations = make(map[string]string)
 	}
 	if provisionInfoJson, err := json.Marshal(p); err != nil {
-		return errors.Wrapf(err, "could not marshall provisioning info %v", p)
+		return errors.Wrapf(err, "could not marshal provisioning info %v", p)
 	} else {
 		meta.Annotations[ProvisionInfoKey] = string(provisionInfoJson)
 	}
