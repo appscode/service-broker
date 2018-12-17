@@ -1,5 +1,5 @@
-hash: 21b9624ee5cfd62f186b44290d8f327217a5576232fe9043d921bf939b14b43b
-updated: 2018-12-17T16:31:37.569411379+06:00
+hash: 7f377c785f40d741017eb67009950a7492cc5d3a339857f6f18f3cce8584e305
+updated: 2018-12-17T05:39:40.213139506-08:00
 imports:
 - name: cloud.google.com/go
   version: 0fd7230b2a7505833d5f69b75cbd6c9582401479
@@ -60,7 +60,7 @@ imports:
   subpackages:
   - log
 - name: github.com/evanphx/json-patch
-  version: 94e38aa1586e8a6c8a75770bddf5ff84c48a106b
+  version: 36442dbdb585210f8d5a1b45e67aa323c197d5c4
 - name: github.com/fatih/structs
   version: 878a968ab22548362a09bdb3322f98b00f470d46
 - name: github.com/ghodss/yaml
@@ -79,7 +79,7 @@ imports:
   - proto
   - sortkeys
 - name: github.com/golang/glog
-  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/protobuf
   version: 925541529c1fa6821df4e44ce2723319eb2be768
   subpackages:
@@ -93,7 +93,7 @@ imports:
 - name: github.com/google/btree
   version: 7d79101e329e5a3adf994758c578dab82b90c017
 - name: github.com/google/go-cmp
-  version: 2248b49eaa8e1c8c0963ee77b40841adbc19d4ca
+  version: 3af367b6b30c263d47e8895973edcca9a49cf029
   subpackages:
   - cmp
   - cmp/internal/diff
@@ -118,8 +118,10 @@ imports:
   - openstack/identity/v3/tokens
   - openstack/utils
   - pagination
+- name: github.com/gorilla/context
+  version: 51ce91d2eaddeca0ef29a71d766bb3634dadf729
 - name: github.com/gorilla/mux
-  version: d2b5d13b9260193b5a5649e9f47fda645bd2bd1d
+  version: e3702bed27f0d39777b0b37b664b6280e8ef8fbf
 - name: github.com/gorilla/websocket
   version: 66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d
 - name: github.com/gregjones/httpcache
@@ -244,7 +246,7 @@ imports:
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 13ba4ddd0caa9c28ca7b7bffe1dfa9ed8d5ef207
+  version: 3233b24a36715a2fe36d162260457857a56d672d
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
@@ -260,8 +262,7 @@ imports:
 - name: github.com/russross/blackfriday
   version: 05f3235734ad95d0016f6a23902f06461fcf567a
 - name: github.com/sergi/go-diff
-  version: 24e2351369ec4949b2ed0dc5c477afdd4c4034e8
-  repo: https://github.com/sergi/go-diff
+  version: 97b2266dfe4bd4ea1b81a463322f04f8b724801e
   subpackages:
   - diffmatchpatch
 - name: github.com/spf13/cobra
@@ -271,12 +272,11 @@ imports:
 - name: github.com/spf13/pflag
   version: 298182f68c66c05229eb03ac171abe6e309ee79a
 - name: github.com/yudai/gojsondiff
-  version: 0525c875b75ca60b9e67ddc44496aa16f21066b0
+  version: 7b1b7adf999dab73a6eb02669c3d82dbb27a3dd6
   subpackages:
   - formatter
 - name: github.com/yudai/golcs
   version: d1c525dea8ce39ea9a783d33cf08932305373f2c
-  repo: https://github.com/yudai/golcs
 - name: golang.org/x/crypto
   version: de0752318171da717af4ce24d0a2e8626afaeb11
   subpackages:
