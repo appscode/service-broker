@@ -1,17 +1,18 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
-	"github.com/appscode/go/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
-	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type MySQLProvider struct {
@@ -26,53 +27,52 @@ func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMySQL(name, namespace, storageClassName string) *api.MySQL {
-	return &api.MySQL{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: api.MySQLSpec{
-			Version: jsonTypes.StrYo("8.0-v1"),
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
-		},
+func demoMySQLSpec() api.MySQLSpec {
+	return api.MySQLSpec{
+		Version:           jsonTypes.StrYo(demoMySQLVersion),
+		StorageType:       api.StorageTypeEphemeral,
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func (p MySQLProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating mysql obj %q in namespace %q...", name, namespace)
-	my := NewMySQL(name, namespace, p.storageClassName)
+func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating mysql obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	if _, err := p.extClient.MySQLs(my.Namespace).Create(my); err != nil {
+	var my api.MySQL
+
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&my.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case planMySQLDemo:
+		my.Spec = demoMySQLSpec()
+	case planMySQL:
+		if err := provisionInfo.applyToSpec(&my.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.MySQLs(my.Namespace).Create(&my)
+
+	return err
 }
 
 func (p MySQLProvider) Delete(name, namespace string) error {
 	glog.Infof("Deleting mysql obj %q from namespace %q...", name, namespace)
 
-	mysql, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
+	my, err := p.extClient.MySQLs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if mysql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMySQL(p.extClient, mysql); err != nil {
+	if my.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
+		if err := patchMySQL(p.extClient, my, func(in *api.MySQL) *api.MySQL {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -107,7 +107,6 @@ func (p MySQLProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mysqlDatabase"]; ok {
@@ -118,16 +117,16 @@ func (p MySQLProvider) Bind(
 	if ok {
 		user = userVal.(string)
 	} else {
-		mysqlUser, ok := data["user"]
+		mysqlUser, ok := data["username"]
 		if !ok {
-			return nil, errors.Errorf("mysql-user not found in secret keys")
+			return nil, errors.Errorf("username not found in secret keys")
 		}
 		user = mysqlUser.(string)
 	}
 
 	mysqlPassword, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("mysql-password not found in secret keys")
+		return nil, errors.Errorf("password not found in secret keys")
 	}
 	password = mysqlPassword.(string)
 
@@ -142,4 +141,29 @@ func (p MySQLProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	mysqls, err := p.extClient.MySQLs(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(mysqls.Items) > 1 {
+		var instances []string
+		for _, mysql := range mysqls.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", mysql.Namespace, mysql.Namespace))
+		}
+
+		return nil, errors.Errorf("%d MySQLs with instance id %d found: %s",
+			len(mysqls.Items), instanceID, strings.Join(instances, ", "))
+	} else if len(mysqls.Items) == 1 {
+		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

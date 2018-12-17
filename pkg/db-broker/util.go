@@ -78,12 +78,9 @@ func waitForMySQLBeReady(extClient cs.KubedbV1alpha1Interface, name, namespace s
 	})
 }
 
-func patchRedis(extClient cs.KubedbV1alpha1Interface, rd *api.Redis) error {
+func patchRedis(extClient cs.KubedbV1alpha1Interface, rd *api.Redis, transform func(*api.Redis) *api.Redis) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchRedis(extClient, rd, func(in *api.Redis) *api.Redis {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchRedis(extClient, rd, transform); err != nil {
 			return false, nil
 		}
 
@@ -91,12 +88,9 @@ func patchRedis(extClient cs.KubedbV1alpha1Interface, rd *api.Redis) error {
 	})
 }
 
-func patchMemcached(extClient cs.KubedbV1alpha1Interface, mc *api.Memcached) error {
+func patchMemcached(extClient cs.KubedbV1alpha1Interface, mc *api.Memcached, transform func(*api.Memcached) *api.Memcached) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchMemcached(extClient, mc, func(in *api.Memcached) *api.Memcached {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchMemcached(extClient, mc, transform); err != nil {
 			return false, nil
 		}
 
@@ -104,12 +98,9 @@ func patchMemcached(extClient cs.KubedbV1alpha1Interface, mc *api.Memcached) err
 	})
 }
 
-func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB) error {
+func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB, transform func(*api.MongoDB) *api.MongoDB) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchMongoDB(extClient, mg, func(in *api.MongoDB) *api.MongoDB {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchMongoDB(extClient, mg, transform); err != nil {
 			return false, nil
 		}
 
@@ -117,12 +108,9 @@ func patchMongoDb(extClient cs.KubedbV1alpha1Interface, mg *api.MongoDB) error {
 	})
 }
 
-func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsearch) error {
+func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsearch, transform func(*api.Elasticsearch) *api.Elasticsearch) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchElasticsearch(extClient, es, func(in *api.Elasticsearch) *api.Elasticsearch {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchElasticsearch(extClient, es, transform); err != nil {
 			return false, nil
 		}
 
@@ -130,12 +118,9 @@ func patchElasticsearch(extClient cs.KubedbV1alpha1Interface, es *api.Elasticsea
 	})
 }
 
-func patchPostgreSQL(extClient cs.KubedbV1alpha1Interface, pgsql *api.Postgres) error {
+func patchPostgreSQL(extClient cs.KubedbV1alpha1Interface, pgsql *api.Postgres, transform func(*api.Postgres) *api.Postgres) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchPostgres(extClient, pgsql, func(in *api.Postgres) *api.Postgres {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchPostgres(extClient, pgsql, transform); err != nil {
 			return false, nil
 		}
 
@@ -143,12 +128,9 @@ func patchPostgreSQL(extClient cs.KubedbV1alpha1Interface, pgsql *api.Postgres) 
 	})
 }
 
-func patchMySQL(extClient cs.KubedbV1alpha1Interface, mysql *api.MySQL) error {
+func patchMySQL(extClient cs.KubedbV1alpha1Interface, mysql *api.MySQL, transform func(*api.MySQL) *api.MySQL) error {
 	return wait.PollImmediate(kutil.RetryInterval, kutil.ReadinessTimeout, func() (bool, error) {
-		if _, _, err := util.PatchMySQL(extClient, mysql, func(in *api.MySQL) *api.MySQL {
-			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
-			return in
-		}); err != nil {
+		if _, _, err := util.PatchMySQL(extClient, mysql, transform); err != nil {
 			return false, nil
 		}
 

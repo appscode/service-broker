@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"fmt"
+
 	kubedb_util "github.com/appscode/service-broker/pkg/db-broker"
 	"github.com/appscode/service-broker/test/e2e/framework"
 	"github.com/appscode/service-broker/test/util"
@@ -8,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("[service-catalog]", func() {
@@ -24,6 +27,7 @@ var _ = Describe("[service-catalog]", func() {
 		instanceName      string
 		bindingName       string
 		bindingsecretName string
+		dbSpec            string
 		waitForCRDBeReady func() error
 
 		test func()
@@ -137,6 +141,12 @@ var _ = Describe("[service-catalog]", func() {
 					PlanReference: v1beta1.PlanReference{
 						ClusterServiceClassExternalName: serviceclassName,
 						ClusterServicePlanExternalName:  serviceplanName,
+					},
+					Parameters: &runtime.RawExtension{
+						Raw: func() []byte {
+							meta := fmt.Sprintf(`"metadata":{"labels":{"db":"my-%s"}}`, serviceclassName)
+							return []byte(fmt.Sprintf(`{%s%s}`, meta, dbSpec))
+						}(),
 					},
 				},
 			}
@@ -288,9 +298,16 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "mysql-8-0"
+		It("Runs through the demo-mysql plan", func() {
+			serviceplanName = "demo-mysql"
+			serviceplanID = "demo-mysql"
+			test()
+		})
+
+		It("Runs through the custom mysql plan", func() {
+			serviceplanName = "mysql"
+			serviceplanID = "mysql"
+			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"8.0-v1"}`
 			test()
 		})
 	})
@@ -311,15 +328,22 @@ var _ = Describe("[service-catalog]", func() {
 
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "postgresql-10-2"
+		It("Runs through the demo-postgresql plan", func() {
+			serviceplanName = "demo-postgresql"
+			serviceplanID = "demo-postgresql"
 			test()
 		})
 
-		It("Runs through the ha-postgresql plan", func() {
-			serviceplanName = "ha-postgresql"
-			serviceplanID = "ha-postgresql-10-2"
+		It("Runs through the demo-ha-postgresql plan", func() {
+			serviceplanName = "demo-ha-postgresql"
+			serviceplanID = "demo-ha-postgresql"
+			test()
+		})
+
+		It("Runs through the custom postgresql plan", func() {
+			serviceplanName = "postgresql"
+			serviceplanID = "postgresql"
+			dbSpec = `,"pgsqlDatabase":"postgres","spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"version":"10.2-v1"}`
 			test()
 		})
 	})
@@ -340,15 +364,22 @@ var _ = Describe("[service-catalog]", func() {
 
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "elasticsearch-6-3"
+		It("Runs through the demo-elasticsearch plan", func() {
+			serviceplanName = "demo-elasticsearch"
+			serviceplanID = "demo-elasticsearch"
 			test()
 		})
 
-		It("Runs through the elasticsearch-cluster plan", func() {
-			serviceplanName = "elasticsearch-cluster"
-			serviceplanID = "elasticsearch-cluster-6-3"
+		It("Runs through the demo-elasticsearch-cluster plan", func() {
+			serviceplanName = "demo-elasticsearch-cluster"
+			serviceplanID = "demo-elasticsearch-cluster"
+			test()
+		})
+
+		It("Runs through the custom elasticsearch plan", func() {
+			serviceplanName = "elasticsearch"
+			serviceplanID = "elasticsearch"
+			dbSpec = `,"spec":{"enableSSL":true,"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"6.3-v1"}`
 			test()
 		})
 	})
@@ -368,15 +399,22 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "mongodb-3-6"
+		It("Runs through the demo-mongodb plan", func() {
+			serviceplanName = "demo-mongodb"
+			serviceplanID = "demo-mongodb"
 			test()
 		})
 
-		It("Runs through the mongodb-cluster plan", func() {
-			serviceplanName = "mongodb-cluster"
-			serviceplanID = "mongodb-cluster-3-6"
+		It("Runs through the demo-mongodb-cluster plan", func() {
+			serviceplanName = "demo-mongodb-cluster"
+			serviceplanID = "demo-mongodb-cluster"
+			test()
+		})
+
+		It("Runs through the custom mongodb plan", func() {
+			serviceplanName = "mongodb"
+			serviceplanID = "mongodb"
+			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"3.4-v1"}`
 			test()
 		})
 	})
@@ -396,9 +434,16 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "redis-4-0"
+		It("Runs through the demo-redis plan", func() {
+			serviceplanName = "demo-redis"
+			serviceplanID = "demo-redis"
+			test()
+		})
+
+		It("Runs through the custom redis plan", func() {
+			serviceplanName = "redis"
+			serviceplanID = "redis"
+			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"4.0-v1"}`
 			test()
 		})
 	})
@@ -418,9 +463,16 @@ var _ = Describe("[service-catalog]", func() {
 			}
 		})
 
-		It("Runs through the default plan", func() {
-			serviceplanName = "default"
-			serviceplanID = "memcached-1-5-4"
+		It("Runs through the demo-memcached plan", func() {
+			serviceplanName = "demo-memcached"
+			serviceplanID = "demo-memcached"
+			test()
+		})
+
+		It("Runs through the custom memcached plan", func() {
+			serviceplanName = "memcached"
+			serviceplanID = "memcached"
+			dbSpec = `,"spec":{"podTemplate":{"spec":{"resources":{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"250m","memory":"64Mi"}}}},"replicas":3,"terminationPolicy":"DoNotTerminate","version":"1.5.4-v1"}`
 			test()
 		})
 	})

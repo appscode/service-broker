@@ -7,7 +7,11 @@ metadata:
   displayName: KubeDB managed Redis
   imageUrl: https://cdn.appscode.com/images/logo/databases/redis.png
 plans:
-- id: redis-4-0
-  name: default
-  description: The default plan for the 'redis' service
+- id: demo-redis
+  name: demo-redis
+  description: Demo Redis
+  free: true
+- id: redis
+  name: redis
+  description: Redis with custom specification
   free: true

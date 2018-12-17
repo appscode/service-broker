@@ -1,17 +1,18 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
-	"github.com/appscode/go/types"
 	"github.com/golang/glog"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
-	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type RedisProvider struct {
@@ -26,41 +27,37 @@ func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewRedis(name, namespace, storageClassName string) *api.Redis {
-	return &api.Redis{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: api.RedisSpec{
-			Version: jsonTypes.StrYo("4.0-v1"),
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
-		},
+func demoRedisSpec() api.RedisSpec {
+	return api.RedisSpec{
+		Version:           jsonTypes.StrYo(demoRedisVersion),
+		StorageType:       api.StorageTypeEphemeral,
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func (p RedisProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating redis obj %q in namespace %q...", name, namespace)
-	rd := NewRedis(name, namespace, p.storageClassName)
+func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating redis obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	if _, err := p.extClient.Redises(rd.Namespace).Create(rd); err != nil {
+	var rd api.Redis
+
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&rd.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case planRedisDemo:
+		rd.Spec = demoRedisSpec()
+	case planRedis:
+		if err := provisionInfo.applyToSpec(&rd.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.Redises(rd.Namespace).Create(&rd)
+
+	return err
 }
 
 func (p RedisProvider) Delete(name, namespace string) error {
@@ -72,7 +69,10 @@ func (p RedisProvider) Delete(name, namespace string) error {
 	}
 
 	if rd.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchRedis(p.extClient, rd); err != nil {
+		if err := patchRedis(p.extClient, rd, func(in *api.Redis) *api.Redis {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -107,7 +107,6 @@ func (p RedisProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["rdDatabase"]; ok {
@@ -125,4 +124,29 @@ func (p RedisProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	redises, err := p.extClient.Redises(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(redises.Items) > 1 {
+		var instances []string
+		for _, redis := range redises.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", redis.Namespace, redis.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Redises with instance id %d found: %s",
+			len(redises.Items), instanceID, strings.Join(instances, ", "))
+	} else if len(redises.Items) == 1 {
+		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

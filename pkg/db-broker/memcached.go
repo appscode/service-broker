@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -10,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -24,48 +28,51 @@ func NewMemcachedProvider(config *rest.Config) Provider {
 	}
 }
 
-func NewMemcached(name, namespace string) *api.Memcached {
-	return &api.Memcached{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: api.MemcachedSpec{
-			Version:  jsonTypes.StrYo("1.5.4-v1"),
-			Replicas: types.Int32P(3),
-			PodTemplate: ofst.PodTemplateSpec{
-				Spec: ofst.PodSpec{
-					Resources: corev1.ResourceRequirements{
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("500m"),
-							corev1.ResourceMemory: resource.MustParse("128Mi"),
-						},
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    resource.MustParse("250m"),
-							corev1.ResourceMemory: resource.MustParse("64Mi"),
-						},
+func demoMemcachedSpec() api.MemcachedSpec {
+	return api.MemcachedSpec{
+		Version:  jsonTypes.StrYo(demoMemcachedVersion),
+		Replicas: types.Int32P(3),
+		PodTemplate: ofst.PodTemplateSpec{
+			Spec: ofst.PodSpec{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("500m"),
+						corev1.ResourceMemory: resource.MustParse("128Mi"),
+					},
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("250m"),
+						corev1.ResourceMemory: resource.MustParse("64Mi"),
 					},
 				},
 			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
 		},
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func (p MemcachedProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating memcached obj %q in namespace %q...", name, namespace)
-	mc := NewMemcached(name, namespace)
+func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating memcached obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	if _, err := p.extClient.Memcacheds(mc.Namespace).Create(mc); err != nil {
+	var mc api.Memcached
+
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&mc.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case planMemcachedDemo:
+		mc.Spec = demoMemcachedSpec()
+	case planMemcached:
+		if err := provisionInfo.applyToSpec(&mc.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.Memcacheds(mc.Namespace).Create(&mc)
+
+	return err
 }
 
 func (p MemcachedProvider) Delete(name, namespace string) error {
@@ -77,7 +84,10 @@ func (p MemcachedProvider) Delete(name, namespace string) error {
 	}
 
 	if mc.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMemcached(p.extClient, mc); err != nil {
+		if err := patchMemcached(p.extClient, mc, func(in *api.Memcached) *api.Memcached {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -112,7 +122,6 @@ func (p MemcachedProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mcDatabase"]; ok {
@@ -130,4 +139,29 @@ func (p MemcachedProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p MemcachedProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	memcacheds, err := p.extClient.Memcacheds(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(memcacheds.Items) > 1 {
+		var instances []string
+		for _, memcached := range memcacheds.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", memcached.Namespace, memcached.Namespace))
+		}
+
+		return nil, errors.Errorf("%d Memcacheds with instance id %d found: %s",
+			len(memcacheds.Items), instanceID, strings.Join(instances, ", "))
+	} else if len(memcacheds.Items) == 1 {
+		return provisionInfoFromObjectMeta(memcacheds.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }

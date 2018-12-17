@@ -18,10 +18,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	InstanceLabel = "dbbroker.instance"
-)
-
 type Client struct {
 	namespace  string
 	kubeClient kubernetes.Interface
@@ -35,13 +31,13 @@ func NewClient(kubeConfigPath, storageClassName string) *Client {
 		kubeClient: loadInClusterClient(config),
 		namespace:  loadNamespace(kubeConfigPath),
 		catalogProviders: map[string]map[string]Provider{
-			"kubedb": {
-				"mysql":         NewMySQLProvider(config, storageClassName),
-				"postgresql":    NewPostgreSQLProvider(config, storageClassName),
-				"elasticsearch": NewElasticsearchProvider(config, storageClassName),
-				"mongodb":       NewMongoDbProvider(config, storageClassName),
-				"redis":         NewRedisProvider(config, storageClassName),
-				"memcached":     NewMemcachedProvider(config),
+			CatelogKeyKubeDB: {
+				ProviderNameMySQL:         NewMySQLProvider(config, storageClassName),
+				ProviderNamePostgreSQL:    NewPostgreSQLProvider(config, storageClassName),
+				ProviderNameElasticsearch: NewElasticsearchProvider(config, storageClassName),
+				ProviderNameMongoDB:       NewMongoDbProvider(config, storageClassName),
+				ProviderNameRedis:         NewRedisProvider(config, storageClassName),
+				ProviderNameMemcached:     NewMemcachedProvider(config),
 			},
 		},
 	}
@@ -71,7 +67,7 @@ func loadNamespace(kubeConfigPath string) string {
 	if kubeConfigPath != "" {
 		return "default"
 	} else {
-		if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		if data, err := ioutil.ReadFile(NamespaceFilePath); err == nil {
 			if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
 				glog.Infof("namespace: %s", ns)
 				return ns
@@ -108,8 +104,31 @@ func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.S
 }
 
 func (c *Client) Provision(
-	catalogNames []string, serviceID, planID, dbObjName, namespace string, provisionParams map[string]interface{}) error {
-	glog.Infof("getting provider %q", serviceID)
+	catalogNames []string, provisionInfo ProvisionInfo) error {
+	glog.Infof("getting provider %q", provisionInfo.ServiceID)
+	var (
+		provider Provider
+		exists   bool
+	)
+	for _, catalog := range catalogNames {
+		if providers, ok := c.catalogProviders[catalog]; ok {
+			if provider, exists = providers[provisionInfo.ServiceID]; exists {
+				break
+			}
+		}
+	}
+	if !exists {
+		return errors.Errorf("No %q provider found", provisionInfo.ServiceID)
+	}
+
+	if err := provider.Create(provisionInfo, c.namespace); err != nil {
+		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s", provisionInfo.ServiceID, provisionInfo.InstanceName, c.namespace)
+	}
+
+	return nil
+}
+
+func (c *Client) GetProvisionInfo(catalogNames []string, instanceID, serviceID string) (*ProvisionInfo, error) {
 	var (
 		provider Provider
 		exists   bool
@@ -122,37 +141,36 @@ func (c *Client) Provision(
 		}
 	}
 	if !exists {
-		return errors.Errorf("No %q provider found", serviceID)
+		return nil, errors.Errorf("No %q provider found", serviceID)
 	}
 
-	if err := provider.Create(planID, dbObjName, c.namespace); err != nil {
-		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s", serviceID, dbObjName, namespace)
-	}
-
-	return nil
+	return provider.GetProvisionInfo(instanceID, c.namespace)
 }
 
 func (c *Client) Bind(
 	catalogNames []string,
-	dbObjName, serviceID, planID string,
-	bindParams, provisionParams map[string]interface{}) (map[string]interface{}, error) {
+	serviceID, planID string, bindParams map[string]interface{},
+	provisionInfo ProvisionInfo) (map[string]interface{}, error) {
 
-	params := make(map[string]interface{}, len(bindParams)+len(provisionParams))
-	for k, v := range provisionParams {
+	params := make(map[string]interface{}, len(bindParams)+len(provisionInfo.Params))
+	for k, v := range provisionInfo.Params {
+		params[k] = v
+	}
+	for k, v := range provisionInfo.ExtraParams {
 		params[k] = v
 	}
 	for k, v := range bindParams {
 		params[k] = v
 	}
 
-	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(dbObjName, metav1.GetOptions{})
+	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(provisionInfo.InstanceName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	secrets, err := c.kubeClient.CoreV1().Secrets(c.namespace).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
-			api.LabelDatabaseName: dbObjName,
+			api.LabelDatabaseName: provisionInfo.InstanceName,
 		}.String(),
 	})
 	data := make(map[string]interface{})
@@ -183,10 +201,10 @@ func (c *Client) Bind(
 		return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 	}
 
-	return creds.ToMap(), nil
+	return creds.ToMap()
 }
 
-func (c *Client) Deprovision(catalogNames []string, serviceID, dbObjName string) error {
+func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName string) error {
 	glog.Infof("getting provider for %q", serviceID)
 	var (
 		provider Provider
@@ -203,8 +221,8 @@ func (c *Client) Deprovision(catalogNames []string, serviceID, dbObjName string)
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	if err := provider.Delete(dbObjName, c.namespace); err != nil {
-		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, dbObjName, c.namespace)
+	if err := provider.Delete(instanceName, c.namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, instanceName, c.namespace)
 	}
 
 	return nil

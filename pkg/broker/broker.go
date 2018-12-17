@@ -1,9 +1,7 @@
 package broker
 
 import (
-	"fmt"
 	"net/http"
-	"reflect"
 	"sync"
 
 	"github.com/appscode/go/crypto/rand"
@@ -27,7 +25,6 @@ func NewBroker(s *ExtraOptions) (*Broker, error) {
 		async:        s.Async,
 		catalogPath:  s.CatalogPath,
 		catalogNames: s.CatalogNames,
-		instances:    make(map[string]*exampleInstance, 10),
 	}, nil
 }
 
@@ -45,9 +42,6 @@ type Broker struct {
 
 	// Synchronize go routines.
 	sync.RWMutex
-
-	// Add fields here! These fields are provided purely as an example
-	instances map[string]*exampleInstance
 }
 
 var _ broker.Interface = &Broker{}
@@ -74,18 +68,21 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	defer b.Unlock()
 
 	response := broker.ProvisionResponse{}
-	exampleInstance := &exampleInstance{
-		ID:        request.InstanceID,
-		ServiceID: request.ServiceID,
-		PlanID:    request.PlanID,
-		Params:    request.Parameters,
-		DbObjName: rand.WithUniqSuffix(request.PlanID),
+	curProvisionInfo := &db_broker.ProvisionInfo{
+		InstanceID:   request.InstanceID,
+		ServiceID:    request.ServiceID,
+		PlanID:       request.PlanID,
+		Params:       request.Parameters,
+		InstanceName: rand.WithUniqSuffix(request.PlanID),
 	}
 
 	// Check to see if this is the same instance
-	i := b.instances[request.InstanceID]
-	if i != nil {
-		if i.Match(exampleInstance) {
+	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	if err != nil {
+		return nil, err
+	}
+	if provisionInfo != nil {
+		if provisionInfo.Match(curProvisionInfo) {
 			response.Exists = true
 			glog.Infof("Instance %s is already exists", request.InstanceID)
 			return &response, nil
@@ -100,16 +97,13 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		}
 	}
 
-	glog.Infof("Provissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	namespace := request.Context["namespace"].(string)
-	err := b.Client.Provision(b.catalogNames, request.ServiceID, request.PlanID, exampleInstance.DbObjName, namespace, request.Parameters)
+	glog.Infof("Provisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
+	err = b.Client.Provision(b.catalogNames, *curProvisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
 	}
 	glog.Infoln("Provisioning complete")
-
-	b.instances[request.InstanceID] = exampleInstance
 
 	if request.AcceptsIncomplete {
 		response.Async = b.async
@@ -125,21 +119,19 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	b.Lock()
 	defer b.Unlock()
 
-	glog.Infof("Deprovissioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	instance, ok := b.instances[request.InstanceID]
-	if !ok {
-		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
-		glog.Infoln(msg)
-
-		return nil, errors.New(msg)
+	glog.Infof("Deprovisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
+	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	if err != nil {
+		return nil, err
+	} else if provisionInfo == nil {
+		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
-	err := b.Client.Deprovision(b.catalogNames, request.ServiceID, instance.DbObjName)
+	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
 	}
-	delete(b.instances, request.InstanceID)
 
 	response := broker.DeprovisionResponse{}
 	if request.AcceptsIncomplete {
@@ -164,15 +156,12 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	defer b.Unlock()
 
 	glog.Infof("Binding instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	instance, ok := b.instances[request.InstanceID]
-	if !ok {
-		msg := fmt.Sprintf("Instance %q not found", request.InstanceID)
-		glog.Errorln(msg)
-
-		return nil, errors.New(msg)
+	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Instance %q not found", request.InstanceID)
 	}
 
-	creds, err := b.Client.Bind(b.catalogNames, instance.DbObjName, request.ServiceID, request.PlanID, request.Parameters, instance.Params)
+	creds, err := b.Client.Bind(b.catalogNames, request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -217,19 +206,4 @@ func (b *Broker) Update(request *osb.UpdateInstanceRequest, c *broker.RequestCon
 
 func (b *Broker) ValidateBrokerAPIVersion(version string) error {
 	return nil
-}
-
-// example types
-
-// exampleInstance is intended as an example of a type that holds information about a service instance
-type exampleInstance struct {
-	ID        string
-	ServiceID string
-	PlanID    string
-	Params    map[string]interface{}
-	DbObjName string
-}
-
-func (i *exampleInstance) Match(other *exampleInstance) bool {
-	return reflect.DeepEqual(i, other)
 }

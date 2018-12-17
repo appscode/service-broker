@@ -1,6 +1,9 @@
 package db_broker
 
 import (
+	"fmt"
+	"strings"
+
 	jsonTypes "github.com/appscode/go/encoding/json/types"
 	"github.com/appscode/go/types"
 	"github.com/golang/glog"
@@ -8,10 +11,9 @@ import (
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
-	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 type MongoDbProvider struct {
@@ -26,60 +28,49 @@ func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
 	}
 }
 
-func NewMongoDB(name, namespace, storageClassName string) *api.MongoDB {
-	return &api.MongoDB{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: api.MongoDBSpec{
-			Version:     jsonTypes.StrYo("3.6-v1"),
-			StorageType: api.StorageTypeDurable,
-			Storage: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceStorage: resource.MustParse("50Mi"),
-					},
-				},
-				StorageClassName: types.StringP(storageClassName),
-			},
-			TerminationPolicy: api.TerminationPolicyWipeOut,
-			ServiceTemplate: ofst.ServiceTemplateSpec{
-				Spec: ofst.ServiceSpec{
-					Type: corev1.ServiceTypeLoadBalancer,
-				},
-			},
-		},
+func demoMongoDBSpec() api.MongoDBSpec {
+	return api.MongoDBSpec{
+		Version:           jsonTypes.StrYo(demoMongoDBVersion),
+		StorageType:       api.StorageTypeEphemeral,
+		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func NewMongoDBCluster(name, namespace, storageClassName string) *api.MongoDB {
-	mg := NewMongoDB(name, namespace, storageClassName)
-	mg.Spec.Replicas = types.Int32P(3)
-	mg.Spec.ReplicaSet = &api.MongoDBReplicaSet{
+func demoMongoDBClusterSpec() api.MongoDBSpec {
+	mgSpec := demoMongoDBSpec()
+	mgSpec.Replicas = types.Int32P(3)
+	mgSpec.ReplicaSet = &api.MongoDBReplicaSet{
 		Name: "rs0",
 	}
 
-	return mg
+	return mgSpec
 }
 
-func (p MongoDbProvider) Create(planID, name, namespace string) error {
-	glog.Infof("Creating mongodb obj %q in namespace %q...", name, namespace)
+func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
+	glog.Infof("Creating mongodb obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
 
-	var mg *api.MongoDB
+	var mg api.MongoDB
 
-	switch planID {
-	case "mongodb-3-6":
-		mg = NewMongoDB(name, namespace, p.storageClassName)
-	case "mongodb-cluster-3-6":
-		mg = NewMongoDBCluster(name, namespace, p.storageClassName)
-	}
-
-	if _, err := p.extClient.MongoDBs(mg.Namespace).Create(mg); err != nil {
+	// set metadata from provision info
+	if err := provisionInfo.applyToMetadata(&mg.ObjectMeta, namespace); err != nil {
 		return err
 	}
 
-	return nil
+	// set postgres spec
+	switch provisionInfo.PlanID {
+	case planMongoDBDemo:
+		mg.Spec = demoMongoDBSpec()
+	case planMongoDBClusterDemo:
+		mg.Spec = demoMongoDBClusterSpec()
+	case planMongoDB:
+		if err := provisionInfo.applyToSpec(&mg.Spec); err != nil {
+			return err
+		}
+	}
+
+	_, err := p.extClient.MongoDBs(mg.Namespace).Create(&mg)
+
+	return err
 }
 
 func (p MongoDbProvider) Delete(name, namespace string) error {
@@ -91,7 +82,10 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 	}
 
 	if mg.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMongoDb(p.extClient, mg); err != nil {
+		if err := patchMongoDb(p.extClient, mg, func(in *api.MongoDB) *api.MongoDB {
+			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
+			return in
+		}); err != nil {
 			return err
 		}
 	}
@@ -126,7 +120,6 @@ func (p MongoDbProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-	//host := service.Spec.ExternalIPs[0]
 
 	database := ""
 	if dbVal, ok := params["mgDatabase"]; ok {
@@ -137,9 +130,9 @@ func (p MongoDbProvider) Bind(
 	if ok {
 		user = userVal.(string)
 	} else {
-		mgUser, ok := data["user"]
+		mgUser, ok := data["username"]
 		if !ok {
-			return nil, errors.Errorf("user not found in secret keys")
+			return nil, errors.Errorf("username not found in secret keys")
 		}
 		user = mgUser.(string)
 	}
@@ -161,4 +154,29 @@ func (p MongoDbProvider) Bind(
 	creds.URI = buildURI(creds)
 
 	return &creds, nil
+}
+
+func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+	mongodbs, err := p.extClient.MongoDBs(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: labels.Set{
+			InstanceKey: instanceID,
+		}.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(mongodbs.Items) > 1 {
+		var instances []string
+		for _, mongodb := range mongodbs.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Namespace))
+		}
+
+		return nil, errors.Errorf("%d MongoDBs with instance id %d found: %s",
+			len(mongodbs.Items), instanceID, strings.Join(instances, ", "))
+	} else if len(mongodbs.Items) == 1 {
+		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
+	}
+
+	return nil, nil
 }
