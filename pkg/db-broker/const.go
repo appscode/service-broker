@@ -2,7 +2,7 @@ package db_broker
 
 const (
 	// Key to set instance id
-	InstanceKey      = "instance"
+	InstanceKey = "instance"
 
 	// Key to provision info
 	ProvisionInfoKey = "provision-info"
@@ -22,32 +22,32 @@ const (
 	ProviderNameMemcached     = "memcached"
 
 	// Versions used in demo plans of different databases
-	demoMySQLVersion = "8.0-v1"
-	demoPostgresVersion = "10.2-v1"
+	demoMySQLVersion         = "8.0-v1"
+	demoPostgresVersion      = "10.2-v1"
 	demoElasticSearchVersion = "6.3-v1"
-	demoMongoDBVersion = "3.6-v1"
-	demoRedisVersion = "4.0-v1"
-	demoMemcachedVersion = "1.5.4-v1"
+	demoMongoDBVersion       = "3.6-v1"
+	demoRedisVersion         = "4.0-v1"
+	demoMemcachedVersion     = "1.5.4-v1"
 
 	// Name of the plans of under different services
 	planMySQLDemo = "demo-mysql"
-	planMySQL = "mysql"
+	planMySQL     = "mysql"
 
-	planPostgresDemo = "demo-postgresql"
+	planPostgresDemo   = "demo-postgresql"
 	planPostgresHADemo = "demo-ha-postgresql"
-	planPostgres = "postgresql"
+	planPostgres       = "postgresql"
 
-	planElasticSearchDemo = "demo-elasticsearch"
+	planElasticSearchDemo        = "demo-elasticsearch"
 	planElasticSearchClusterDemo = "demo-elasticsearch-cluster"
-	planElasticSearch = "elasticsearch"
+	planElasticSearch            = "elasticsearch"
 
-	planMongoDBDemo = "demo-mongodb"
+	planMongoDBDemo        = "demo-mongodb"
 	planMongoDBClusterDemo = "demo-mongodb-cluster"
-	planMongoDB = "mongodb"
+	planMongoDB            = "mongodb"
 
 	planRedisDemo = "demo-redis"
-	planRedis = "redis"
+	planRedis     = "redis"
 
 	planMemcachedDemo = "demo-memcached"
-	planMemcached = "memcached"
+	planMemcached     = "memcached"
 )
