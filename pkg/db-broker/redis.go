@@ -142,7 +142,7 @@ func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 			instances = append(instances, fmt.Sprintf("%s/%s", redis.Namespace, redis.Namespace))
 		}
 
-		return nil, errors.Errorf("%d Redises with instance id %d found: %s",
+		return nil, errors.Errorf("%d Redises with instance id %s found: %s",
 			len(redises.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(redises.Items) == 1 {
 		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)

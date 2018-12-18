@@ -159,7 +159,7 @@ func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*Provisio
 			instances = append(instances, fmt.Sprintf("%s/%s", mysql.Namespace, mysql.Namespace))
 		}
 
-		return nil, errors.Errorf("%d MySQLs with instance id %d found: %s",
+		return nil, errors.Errorf("%d MySQLs with instance id %s found: %s",
 			len(mysqls.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(mysqls.Items) == 1 {
 		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)

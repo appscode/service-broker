@@ -172,7 +172,7 @@ func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*Provis
 			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Namespace))
 		}
 
-		return nil, errors.Errorf("%d MongoDBs with instance id %d found: %s",
+		return nil, errors.Errorf("%d MongoDBs with instance id %s found: %s",
 			len(mongodbs.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(mongodbs.Items) == 1 {
 		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)

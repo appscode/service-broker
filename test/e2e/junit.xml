@@ -1,52 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite name="e2e Suite" tests="1" failures="0" errors="0" time="20.4">
-      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="20.359492268"></testcase>
-      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
-          <skipped></skipped>
+  <testsuite name="e2e Suite" tests="4" failures="3" errors="0" time="260.582">
+      <testcase name="[service-catalog] Test MySQL broker service Runs through the demo-mysql plan" classname="e2e Suite" time="87.36152425">
+          <failure type="Failure">/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:36&#xA;Expected error:&#xA;    &lt;*errors.errorString | 0xc0003ee7c0&gt;: {&#xA;        s: &#34;timed out waiting for the condition&#34;,&#xA;    }&#xA;    timed out waiting for the condition&#xA;not to have occurred&#xA;/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:82</failure>
+          <system-out>�[1mSTEP�[0m: Creating a service account for service broker&#xA;�[1mSTEP�[0m: Creating a cluster-admin custerrolebinding for service broker&#xA;�[1mSTEP�[0m: Creating configmap for catalogs&#xA;�[1mSTEP�[0m: Creating a service broker deployment&#xA;�[1mSTEP�[0m: Waiting for pod to be running&#xA;�[1mSTEP�[0m: Creating a service broker service&#xA;�[1mSTEP�[0m: Waiting for service endpoint&#xA;�[1mSTEP�[0m: Deleting the service account&#xA;�[1mSTEP�[0m: Deleting the custerrolebinding&#xA;�[1mSTEP�[0m: Deleting the configmap for catalog&#xA;�[1mSTEP�[0m: Deleting the service broker deployment&#xA;�[1mSTEP�[0m: Deleting the user broker service&#xA;</system-out>
       </testcase>
-      <testcase name="[service-catalog] Test MySQL broker service Runs through the demo-mysql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
+      <testcase name="[service-catalog] Test MySQL broker service Runs through the custom mysql plan" classname="e2e Suite" time="60.741293311">
+          <failure type="Failure">/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:36&#xA;Expected error:&#xA;    &lt;*errors.errorString | 0xc0003ee7c0&gt;: {&#xA;        s: &#34;timed out waiting for the condition&#34;,&#xA;    }&#xA;    timed out waiting for the condition&#xA;not to have occurred&#xA;/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:82</failure>
+          <system-out>�[1mSTEP�[0m: Creating a service account for service broker&#xA;�[1mSTEP�[0m: Creating a cluster-admin custerrolebinding for service broker&#xA;�[1mSTEP�[0m: Creating configmap for catalogs&#xA;�[1mSTEP�[0m: Creating a service broker deployment&#xA;�[1mSTEP�[0m: Waiting for pod to be running&#xA;�[1mSTEP�[0m: Creating a service broker service&#xA;�[1mSTEP�[0m: Waiting for service endpoint&#xA;�[1mSTEP�[0m: Deleting the service account&#xA;�[1mSTEP�[0m: Deleting the custerrolebinding&#xA;�[1mSTEP�[0m: Deleting the configmap for catalog&#xA;�[1mSTEP�[0m: Deleting the service broker deployment&#xA;�[1mSTEP�[0m: Deleting the user broker service&#xA;</system-out>
       </testcase>
-      <testcase name="[service-catalog] Test MySQL broker service Runs through the custom mysql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the demo-postgresql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the demo-ha-postgresql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the custom postgresql plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the demo-elasticsearch plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the demo-elasticsearch-cluster plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Elasticsearch broker service Runs through the custom elasticsearch plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test MongoDb broker service Runs through the demo-mongodb plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test MongoDb broker service Runs through the demo-mongodb-cluster plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test MongoDb broker service Runs through the custom mongodb plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Redis broker service Runs through the demo-redis plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Redis broker service Runs through the custom redis plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Memcached broker service Runs through the demo-memcached plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
-      </testcase>
-      <testcase name="[service-catalog] Test Memcached broker service Runs through the custom memcached plan" classname="e2e Suite" time="0">
-          <skipped></skipped>
+      <testcase name="[service-catalog] Test PostgreSQL broker service Runs through the demo-postgresql plan" classname="e2e Suite" time="60.659802562">
+          <failure type="Failure">/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:36&#xA;Expected error:&#xA;    &lt;*errors.errorString | 0xc0003ee7c0&gt;: {&#xA;        s: &#34;timed out waiting for the condition&#34;,&#xA;    }&#xA;    timed out waiting for the condition&#xA;not to have occurred&#xA;/home/tamal/go/src/github.com/appscode/service-broker/test/e2e/db_test.go:82</failure>
+          <system-out>�[1mSTEP�[0m: Creating a service account for service broker&#xA;�[1mSTEP�[0m: Creating a cluster-admin custerrolebinding for service broker&#xA;�[1mSTEP�[0m: Creating configmap for catalogs&#xA;�[1mSTEP�[0m: Creating a service broker deployment&#xA;�[1mSTEP�[0m: Waiting for pod to be running&#xA;�[1mSTEP�[0m: Creating a service broker service&#xA;�[1mSTEP�[0m: Waiting for service endpoint&#xA;�[1mSTEP�[0m: Deleting the service account&#xA;�[1mSTEP�[0m: Deleting the custerrolebinding&#xA;�[1mSTEP�[0m: Deleting the configmap for catalog&#xA;�[1mSTEP�[0m: Deleting the service broker deployment&#xA;�[1mSTEP�[0m: Deleting the user broker service&#xA;</system-out>
       </testcase>
   </testsuite>
