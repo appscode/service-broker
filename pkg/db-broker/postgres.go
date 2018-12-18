@@ -170,7 +170,7 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 			instances = append(instances, fmt.Sprintf("%s/%s", postgres.Namespace, postgres.Namespace))
 		}
 
-		return nil, errors.Errorf("%d Postgreses with instance id %d found: %s",
+		return nil, errors.Errorf("%d Postgreses with instance id %s found: %s",
 			len(postgreses.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(postgreses.Items) == 1 {
 		return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)

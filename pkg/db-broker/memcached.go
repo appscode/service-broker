@@ -157,7 +157,7 @@ func (p MemcachedProvider) GetProvisionInfo(instanceID, namespace string) (*Prov
 			instances = append(instances, fmt.Sprintf("%s/%s", memcached.Namespace, memcached.Namespace))
 		}
 
-		return nil, errors.Errorf("%d Memcacheds with instance id %d found: %s",
+		return nil, errors.Errorf("%d Memcacheds with instance id %s found: %s",
 			len(memcacheds.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(memcacheds.Items) == 1 {
 		return provisionInfoFromObjectMeta(memcacheds.Items[0].ObjectMeta)

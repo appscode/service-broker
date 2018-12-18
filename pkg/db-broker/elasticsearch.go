@@ -199,7 +199,7 @@ func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*
 			instances = append(instances, fmt.Sprintf("%s/%s", elasticsearch.Namespace, elasticsearch.Namespace))
 		}
 
-		return nil, errors.Errorf("%d Elasicsearches with instance id %d found: %s",
+		return nil, errors.Errorf("%d Elasticsearch clusters with instance id %s found: %s",
 			len(elasticsearches.Items), instanceID, strings.Join(instances, ", "))
 	} else if len(elasticsearches.Items) == 1 {
 		if provisionInfo, err = provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta); err != nil {
