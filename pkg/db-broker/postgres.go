@@ -44,13 +44,11 @@ func demoHAPostgresSpec() api.PostgresSpec {
 	return pgSpec
 }
 
-func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating postgres obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo) error {
 	var pg api.Postgres
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&pg.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&pg.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -66,6 +64,7 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo, namespace string
 		}
 	}
 
+	glog.Infof("Creating postgres obj %q in namespace %q...", pg.Name, pg.Namespace)
 	_, err := p.extClient.Postgreses(pg.Namespace).Create(&pg)
 
 	return err
@@ -119,21 +118,11 @@ func (p PostgreSQLProvider) Bind(
 
 	host = buildHostFromService(service)
 
-	database := "postgres"
-	if dbVal, ok := params["pgsqlDatabase"]; ok {
-		database = dbVal.(string)
+	pgUser, ok := data["POSTGRES_USER"]
+	if !ok {
+		return nil, errors.Errorf("POSTGRES_USER not found in secret keys")
 	}
-
-	userVal, ok := params["pgsqlUser"]
-	if ok {
-		user = userVal.(string)
-	} else {
-		pgUser, ok := data["POSTGRES_USER"]
-		if !ok {
-			return nil, errors.Errorf("POSTGRES_USER not found in secret keys")
-		}
-		user = pgUser.(string)
-	}
+	user = pgUser.(string)
 
 	pgPassword, ok := data["POSTGRES_PASSWORD"]
 	if !ok {
@@ -147,7 +136,6 @@ func (p PostgreSQLProvider) Bind(
 		Host:     host,
 		Username: user,
 		Password: password,
-		Database: database,
 	}
 	creds.URI = buildURI(creds)
 

@@ -50,13 +50,11 @@ func demoMemcachedSpec() api.MemcachedSpec {
 	}
 }
 
-func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating memcached obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p MemcachedProvider) Create(provisionInfo ProvisionInfo) error {
 	var mc api.Memcached
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&mc.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&mc.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -70,6 +68,7 @@ func (p MemcachedProvider) Create(provisionInfo ProvisionInfo, namespace string)
 		}
 	}
 
+	glog.Infof("Creating memcached obj %q in namespace %q...", mc.Name, mc.Namespace)
 	_, err := p.extClient.Memcacheds(mc.Namespace).Create(&mc)
 
 	return err
@@ -105,7 +104,6 @@ func (p MemcachedProvider) Bind(
 	data map[string]interface{}) (*Credentials, error) {
 
 	var (
-		user, password   string
 		connScheme, host string
 		port             int32
 	)
@@ -123,18 +121,10 @@ func (p MemcachedProvider) Bind(
 
 	host = buildHostFromService(service)
 
-	database := ""
-	if dbVal, ok := params["mcDatabase"]; ok {
-		database = dbVal.(string)
-	}
-
 	creds := Credentials{
 		Protocol: connScheme,
 		Port:     port,
 		Host:     host,
-		Username: user,
-		Password: password,
-		Database: database,
 	}
 	creds.URI = buildURI(creds)
 

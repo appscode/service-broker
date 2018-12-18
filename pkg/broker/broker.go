@@ -67,13 +67,16 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	b.Lock()
 	defer b.Unlock()
 
+	namespace := request.Context["namespace"].(string)
 	response := broker.ProvisionResponse{}
 	curProvisionInfo := &db_broker.ProvisionInfo{
-		InstanceID:   request.InstanceID,
-		ServiceID:    request.ServiceID,
-		PlanID:       request.PlanID,
-		Params:       request.Parameters,
+		InstanceID: request.InstanceID,
+		ServiceID:  request.ServiceID,
+		PlanID:     request.PlanID,
+		Params:     request.Parameters,
+
 		InstanceName: rand.WithUniqSuffix(request.PlanID),
+		Namespace:    namespace,
 	}
 
 	// Check to see if this is the same instance
@@ -127,7 +130,7 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
-	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName)
+	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err

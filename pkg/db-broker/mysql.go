@@ -35,13 +35,11 @@ func demoMySQLSpec() api.MySQLSpec {
 	}
 }
 
-func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating mysql obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p MySQLProvider) Create(provisionInfo ProvisionInfo) error {
 	var my api.MySQL
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&my.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&my.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -55,6 +53,7 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 		}
 	}
 
+	glog.Infof("Creating mysql obj %q in namespace %q...", my.Name, my.Namespace)
 	_, err := p.extClient.MySQLs(my.Namespace).Create(&my)
 
 	return err
@@ -108,21 +107,11 @@ func (p MySQLProvider) Bind(
 
 	host = buildHostFromService(service)
 
-	database := ""
-	if dbVal, ok := params["mysqlDatabase"]; ok {
-		database = dbVal.(string)
+	mysqlUser, ok := data["username"]
+	if !ok {
+		return nil, errors.Errorf("username not found in secret keys")
 	}
-
-	userVal, ok := params["mysqlUser"]
-	if ok {
-		user = userVal.(string)
-	} else {
-		mysqlUser, ok := data["username"]
-		if !ok {
-			return nil, errors.Errorf("username not found in secret keys")
-		}
-		user = mysqlUser.(string)
-	}
+	user = mysqlUser.(string)
 
 	mysqlPassword, ok := data["password"]
 	if !ok {
@@ -136,7 +125,6 @@ func (p MySQLProvider) Bind(
 		Host:     host,
 		Username: user,
 		Password: password,
-		Database: database,
 	}
 	creds.URI = buildURI(creds)
 

@@ -61,13 +61,11 @@ func demoElasticsearchClusterSpec() api.ElasticsearchSpec {
 	}
 }
 
-func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating elasticsearch obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo) error {
 	var es api.Elasticsearch
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&es.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&es.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -83,6 +81,7 @@ func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo, namespace str
 		}
 	}
 
+	glog.Infof("Creating elasticsearch obj %q in namespace %q...", es.Name, es.Namespace)
 	_, err := p.extClient.Elasticsearches(es.Namespace).Create(&es)
 
 	return err
@@ -145,22 +144,11 @@ func (p ElasticsearchProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-
-	database := ""
-	if dbVal, ok := params["esDatabase"]; ok {
-		database = dbVal.(string)
+	adminUser, ok := data["ADMIN_USERNAME"]
+	if !ok {
+		return nil, errors.Errorf("ADMIN_USERNAME not found in secret keys")
 	}
-	userVal, ok := params["esUser"]
-
-	if ok {
-		user = userVal.(string)
-	} else {
-		adminUser, ok := data["ADMIN_USERNAME"]
-		if !ok {
-			return nil, errors.Errorf("ADMIN_USERNAME not found in secret keys")
-		}
-		user = adminUser.(string)
-	}
+	user = adminUser.(string)
 
 	adminPassword, ok := data["ADMIN_PASSWORD"]
 	if !ok {
@@ -174,7 +162,6 @@ func (p ElasticsearchProvider) Bind(
 		Host:     host,
 		Username: user,
 		Password: password,
-		Database: database,
 		RootCert: rootCert,
 	}
 	creds.URI = buildURI(creds)

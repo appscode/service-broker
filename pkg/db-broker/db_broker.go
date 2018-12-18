@@ -121,7 +121,7 @@ func (c *Client) Provision(
 		return errors.Errorf("No %q provider found", provisionInfo.ServiceID)
 	}
 
-	if err := provider.Create(provisionInfo, c.namespace); err != nil {
+	if err := provider.Create(provisionInfo); err != nil {
 		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s", provisionInfo.ServiceID, provisionInfo.InstanceName, c.namespace)
 	}
 
@@ -163,12 +163,12 @@ func (c *Client) Bind(
 		params[k] = v
 	}
 
-	service, err := c.kubeClient.CoreV1().Services(c.namespace).Get(provisionInfo.InstanceName, metav1.GetOptions{})
+	service, err := c.kubeClient.CoreV1().Services(provisionInfo.Namespace).Get(provisionInfo.InstanceName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	secrets, err := c.kubeClient.CoreV1().Secrets(c.namespace).List(metav1.ListOptions{
+	secrets, err := c.kubeClient.CoreV1().Secrets(provisionInfo.Namespace).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
 			api.LabelDatabaseName: provisionInfo.InstanceName,
 		}.String(),
@@ -204,7 +204,7 @@ func (c *Client) Bind(
 	return creds.ToMap()
 }
 
-func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName string) error {
+func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName, namespace string) error {
 	glog.Infof("getting provider for %q", serviceID)
 	var (
 		provider Provider
@@ -221,8 +221,8 @@ func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName stri
 		return errors.Errorf("No %q provider found", serviceID)
 	}
 
-	if err := provider.Delete(instanceName, c.namespace); err != nil {
-		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, instanceName, c.namespace)
+	if err := provider.Delete(instanceName, namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s obj %q from namespace %q", serviceID, instanceName, namespace)
 	}
 
 	return nil

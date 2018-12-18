@@ -2,10 +2,10 @@ package db_broker
 
 const (
 	// Key to set instance id
-	InstanceKey = "instance"
+	InstanceKey = "servicecatalog.k8s.io/instance-id"
 
 	// Key to provision info
-	ProvisionInfoKey = "provision-info"
+	ProvisionInfoKey = "servicecatalog.k8s.io/provision-info"
 
 	// The file path for checking the namespace in which the broker server is running
 	NamespaceFilePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"

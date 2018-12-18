@@ -13,7 +13,7 @@ import (
 
 type Provider interface {
 	Bind(service corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
-	Create(provisionInfo ProvisionInfo, namespace string) error
+	Create(provisionInfo ProvisionInfo) error
 	Delete(name, namespace string) error
 	GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error)
 }
@@ -26,6 +26,7 @@ type ProvisionInfo struct {
 	ExtraParams map[string]interface{}
 
 	InstanceName string
+	Namespace    string
 }
 
 func provisionInfoFromObjectMeta(meta metav1.ObjectMeta) (*ProvisionInfo, error) {
@@ -44,12 +45,19 @@ func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
 		reflect.DeepEqual(p.Params, q.Params)
 }
 
-func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string) error {
+func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta) error {
 	if _, found := p.Params["metadata"]; found {
 		if err := meta_util.Decode(p.Params["metadata"], meta); err != nil {
 			return err
 		}
 	}
+
+	if meta.Name != "" {
+		p.InstanceName = meta.Name
+	} else {
+		meta.Name = p.InstanceName
+	}
+	meta.Namespace = p.Namespace
 
 	// set instance id at labels
 	if meta.Labels == nil {
@@ -66,9 +74,6 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta, namespace string
 	} else {
 		meta.Annotations[ProvisionInfoKey] = string(provisionInfoJson)
 	}
-
-	meta.Name = p.InstanceName
-	meta.Namespace = namespace
 
 	return nil
 }

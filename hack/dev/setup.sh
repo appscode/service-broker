@@ -65,11 +65,11 @@ uninstall() {
 }
 
 install_kubedb() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.9.0-rc.2/hack/deploy/kubedb.sh| bash
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.9.0/hack/deploy/kubedb.sh| bash
 }
 
 uninstall_kubedb() {
-    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.9.0-rc.2/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
+    curl -fsSL https://raw.githubusercontent.com/kubedb/cli/0.9.0/hack/deploy/kubedb.sh| bash -s -- --uninstall --purge
 }
 
 install_catalog() {
