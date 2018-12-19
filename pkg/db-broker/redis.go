@@ -35,13 +35,11 @@ func demoRedisSpec() api.RedisSpec {
 	}
 }
 
-func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating redis obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p RedisProvider) Create(provisionInfo ProvisionInfo) error {
 	var rd api.Redis
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&rd.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&rd.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -55,6 +53,7 @@ func (p RedisProvider) Create(provisionInfo ProvisionInfo, namespace string) err
 		}
 	}
 
+	glog.Infof("Creating redis obj %q in namespace %q...", rd.Name, rd.Namespace)
 	_, err := p.extClient.Redises(rd.Namespace).Create(&rd)
 
 	return err
@@ -90,7 +89,6 @@ func (p RedisProvider) Bind(
 	data map[string]interface{}) (*Credentials, error) {
 
 	var (
-		user, password   string
 		connScheme, host string
 		port             int32
 	)
@@ -108,18 +106,10 @@ func (p RedisProvider) Bind(
 
 	host = buildHostFromService(service)
 
-	database := ""
-	if dbVal, ok := params["rdDatabase"]; ok {
-		database = dbVal.(string)
-	}
-
 	creds := Credentials{
 		Protocol: connScheme,
 		Port:     port,
 		Host:     host,
-		Username: user,
-		Password: password,
-		Database: database,
 	}
 	creds.URI = buildURI(creds)
 

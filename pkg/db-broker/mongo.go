@@ -46,13 +46,11 @@ func demoMongoDBClusterSpec() api.MongoDBSpec {
 	return mgSpec
 }
 
-func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) error {
-	glog.Infof("Creating mongodb obj %q in namespace %q...", provisionInfo.InstanceName, namespace)
-
+func (p MongoDbProvider) Create(provisionInfo ProvisionInfo) error {
 	var mg api.MongoDB
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&mg.ObjectMeta, namespace); err != nil {
+	if err := provisionInfo.applyToMetadata(&mg.ObjectMeta); err != nil {
 		return err
 	}
 
@@ -68,6 +66,7 @@ func (p MongoDbProvider) Create(provisionInfo ProvisionInfo, namespace string) e
 		}
 	}
 
+	glog.Infof("Creating mongodb obj %q in namespace %q...", mg.Name, mg.Namespace)
 	_, err := p.extClient.MongoDBs(mg.Namespace).Create(&mg)
 
 	return err
@@ -120,22 +119,11 @@ func (p MongoDbProvider) Bind(
 	}
 
 	host = buildHostFromService(service)
-
-	database := ""
-	if dbVal, ok := params["mgDatabase"]; ok {
-		database = dbVal.(string)
+	mgUser, ok := data["username"]
+	if !ok {
+		return nil, errors.Errorf("username not found in secret keys")
 	}
-
-	userVal, ok := params["mgUser"]
-	if ok {
-		user = userVal.(string)
-	} else {
-		mgUser, ok := data["username"]
-		if !ok {
-			return nil, errors.Errorf("username not found in secret keys")
-		}
-		user = mgUser.(string)
-	}
+	user = mgUser.(string)
 
 	mgPassword, ok := data["password"]
 	if !ok {
@@ -149,7 +137,6 @@ func (p MongoDbProvider) Bind(
 		Host:     host,
 		Username: user,
 		Password: password,
-		Database: database,
 	}
 	creds.URI = buildURI(creds)
 
