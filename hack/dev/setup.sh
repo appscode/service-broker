@@ -16,7 +16,7 @@ show_help() {
     echo "install_kubedb                install KubeDB"
     echo "uninstall_kubedb              uninstall KubeDB"
     echo "install_catalog               install Service Catalog"
-    echo "uninstall_catalg              uninstall Service Catalog"
+    echo "uninstall_catalog              uninstall Service Catalog"
 }
 
 export ARG=
@@ -26,7 +26,7 @@ while test $# -gt 0; do
             show_help
             exit 0
             ;;
-        run|install|uninstall|install_kubedb|uninstall_kubedb|install_catalog|uninstall_catalg)
+        run|install|uninstall|install_kubedb|uninstall_kubedb|install_catalog|uninstall_catalog)
             if [[ ${ARG} == "" ]]; then
                 export ARG=$1
             else
@@ -51,7 +51,8 @@ run() {
         --catalog-names="kubedb" \
         --logtostderr \
         -v 5 \
-        --catalog-path=hack/deploy/catalogs
+        --catalog-path=hack/deploy/catalogs \
+        --port=8081
 }
 
 install() {
@@ -92,8 +93,7 @@ install_catalog() {
 }
 
 uninstall_catalog() {
-    kubectl get clusterrolebinding tiller-cluster-admin || kubectl delete clusterrolebinding tiller-cluster-admin
-    helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+    kubectl get clusterrolebinding tiller-cluster-admin && kubectl delete clusterrolebinding tiller-cluster-admin
 
     helm del catalog --purge
 }
