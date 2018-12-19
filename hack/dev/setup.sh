@@ -16,7 +16,7 @@ show_help() {
     echo "install_kubedb                install KubeDB"
     echo "uninstall_kubedb              uninstall KubeDB"
     echo "install_catalog               install Service Catalog"
-    echo "uninstall_catalog              uninstall Service Catalog"
+    echo "uninstall_catalog             uninstall Service Catalog"
 }
 
 export ARG=
