@@ -1,4 +1,4 @@
-id: mysql
+id: 938a70c5-f2bc-4658-82dd-566bed7797e9
 name: mysql
 description: KubeDB managed MySQL
 bindable: true
@@ -7,11 +7,11 @@ metadata:
   displayName: KubeDB managed MySQL
   imageUrl: https://cdn.appscode.com/images/logo/databases/mysql.png
 plans:
-- id: demo-mysql
+- id: 1fd1abf1-e8e1-44a2-8214-bf0fd1ce9417
   name: demo-mysql
   description: Demo MySQL database
   free: true
-- id: mysql
+- id: 6ed1ab9e-a640-4f26-9328-423b2e3816d7
   name: mysql
   description: MySQL database with custom specification
   free: true

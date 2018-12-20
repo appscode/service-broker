@@ -80,7 +80,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	}
 
 	// Check to see if this is the same instance
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	}
 
 	glog.Infof("Provisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	err = b.Client.Provision(b.catalogNames, *curProvisionInfo)
+	err = b.Client.Provision(*curProvisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -123,14 +123,14 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	defer b.Unlock()
 
 	glog.Infof("Deprovisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	} else if provisionInfo == nil {
 		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
-	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
+	err = b.Client.Deprovision(request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -159,12 +159,12 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	defer b.Unlock()
 
 	glog.Infof("Binding instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Instance %q not found", request.InstanceID)
 	}
 
-	creds, err := b.Client.Bind(b.catalogNames, request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
+	creds, err := b.Client.Bind(request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err

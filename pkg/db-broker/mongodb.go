@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type MongoDbProvider struct {
@@ -44,6 +45,10 @@ func demoMongoDBClusterSpec() api.MongoDBSpec {
 	}
 
 	return mgSpec
+}
+
+func (p MongoDbProvider) Metadata() (string, string) {
+	return "kubedb", "mongodb"
 }
 
 func (p MongoDbProvider) Create(provisionInfo ProvisionInfo) error {
@@ -97,53 +102,46 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 }
 
 func (p MongoDbProvider) Bind(
-	service corev1.Service,
+	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
-	var (
-		user, password   string
-		connScheme, host string
-		port             int32
-	)
-
-	connScheme = "mongodb"
-	if len(service.Spec.Ports) == 0 {
-		return nil, errors.Errorf("no ports found")
-	}
-	for _, p := range service.Spec.Ports {
-		if p.Name == "db" {
-			port = p.Port
-			break
-		}
+	host, err := app.Hostname()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "host" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	host = buildHostFromService(service)
-	mgUser, ok := data["username"]
+	port, err := app.Port()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	uri, err := app.URL()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	username, ok := data["username"]
 	if !ok {
-		return nil, errors.Errorf("username not found in secret keys")
+		return nil, errors.Errorf(`"username" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	user = mgUser.(string)
 
-	mgPassword, ok := data["password"]
+	password, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("password not found in secret keys")
+		return nil, errors.Errorf(`"password" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	password = mgPassword.(string)
 
-	creds := Credentials{
-		Protocol: connScheme,
-		Port:     port,
+	return &Credentials{
+		Protocol: app.Spec.ClientConfig.Service.Scheme,
 		Host:     host,
-		Username: user,
+		Port:     port,
+		URI:      uri,
+		Username: username,
 		Password: password,
-	}
-	creds.URI = buildURI(creds)
-
-	return &creds, nil
+	}, nil
 }
 
-func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+func (p MongoDbProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
 	mongodbs, err := p.extClient.MongoDBs(corev1.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
 			InstanceKey: instanceID,
@@ -156,14 +154,11 @@ func (p MongoDbProvider) GetProvisionInfo(instanceID, namespace string) (*Provis
 	if len(mongodbs.Items) > 1 {
 		var instances []string
 		for _, mongodb := range mongodbs.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Namespace))
+			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Name))
 		}
 
 		return nil, errors.Errorf("%d MongoDBs with instance id %s found: %s",
 			len(mongodbs.Items), instanceID, strings.Join(instances, ", "))
-	} else if len(mongodbs.Items) == 1 {
-		return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
 	}
-
-	return nil, nil
+	return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
 }

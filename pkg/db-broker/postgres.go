@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type PostgreSQLProvider struct {
@@ -42,6 +43,10 @@ func demoHAPostgresSpec() api.PostgresSpec {
 	pgSpec.Replicas = types.Int32P(3)
 
 	return pgSpec
+}
+
+func (p PostgreSQLProvider) Metadata() (string, string) {
+	return "kubedb", "postgresql"
 }
 
 func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo) error {
@@ -95,54 +100,46 @@ func (p PostgreSQLProvider) Delete(name, namespace string) error {
 }
 
 func (p PostgreSQLProvider) Bind(
-	service corev1.Service,
+	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
-	var (
-		user, password   string
-		connScheme, host string
-		port             int32
-	)
-
-	connScheme = "postgresql"
-	if len(service.Spec.Ports) == 0 {
-		return nil, errors.Errorf("no ports found")
-	}
-	for _, p := range service.Spec.Ports {
-		if p.Name == "api" {
-			port = p.Port
-			break
-		}
+	host, err := app.Hostname()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "host" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	host = buildHostFromService(service)
+	port, err := app.Port()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
 
-	pgUser, ok := data["POSTGRES_USER"]
+	uri, err := app.URL()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	username, ok := data["username"]
 	if !ok {
-		return nil, errors.Errorf("POSTGRES_USER not found in secret keys")
+		return nil, errors.Errorf(`"username" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	user = pgUser.(string)
 
-	pgPassword, ok := data["POSTGRES_PASSWORD"]
+	password, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("POSTGRES_PASSWORD not found in secret keys")
+		return nil, errors.Errorf(`"password" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	password = pgPassword.(string)
 
-	creds := Credentials{
-		Protocol: connScheme,
-		Port:     port,
+	return &Credentials{
+		Protocol: app.Spec.ClientConfig.Service.Scheme,
 		Host:     host,
-		Username: user,
+		Port:     port,
+		URI:      uri,
+		Username: username,
 		Password: password,
-	}
-	creds.URI = buildURI(creds)
-
-	return &creds, nil
+	}, nil
 }
 
-func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+func (p PostgreSQLProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
 	postgreses, err := p.extClient.Postgreses(corev1.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: k8sLabels.Set{
 			InstanceKey: instanceID,
@@ -155,14 +152,11 @@ func (p PostgreSQLProvider) GetProvisionInfo(instanceID, namespace string) (*Pro
 	if len(postgreses.Items) > 1 {
 		var instances []string
 		for _, postgres := range postgreses.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", postgres.Namespace, postgres.Namespace))
+			instances = append(instances, fmt.Sprintf("%s/%s", postgres.Namespace, postgres.Name))
 		}
 
 		return nil, errors.Errorf("%d Postgreses with instance id %s found: %s",
 			len(postgreses.Items), instanceID, strings.Join(instances, ", "))
-	} else if len(postgreses.Items) == 1 {
-		return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 	}
-
-	return nil, nil
+	return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 }

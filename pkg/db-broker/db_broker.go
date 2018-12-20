@@ -7,42 +7,43 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	appcat_cs "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1"
+	appcat_util "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1/util"
 )
 
 type Client struct {
-	namespace  string
 	kubeClient kubernetes.Interface
+	appClient  appcat_cs.AppcatalogV1alpha1Interface
 
-	catalogProviders map[string]map[string]Provider
+	serviceProviders map[string]Provider
 }
 
 func NewClient(kubeConfigPath, storageClassName string) *Client {
 	config := getConfig(kubeConfigPath)
 	return &Client{
-		kubeClient: loadInClusterClient(config),
-		namespace:  loadNamespace(kubeConfigPath),
-		catalogProviders: map[string]map[string]Provider{
-			CatelogKeyKubeDB: {
-				ProviderNameMySQL:         NewMySQLProvider(config, storageClassName),
-				ProviderNamePostgreSQL:    NewPostgreSQLProvider(config, storageClassName),
-				ProviderNameElasticsearch: NewElasticsearchProvider(config, storageClassName),
-				ProviderNameMongoDB:       NewMongoDbProvider(config, storageClassName),
-				ProviderNameRedis:         NewRedisProvider(config, storageClassName),
-				ProviderNameMemcached:     NewMemcachedProvider(config),
-			},
+		kubeClient: kubernetes.NewForConfigOrDie(config),
+		appClient:  appcat_cs.NewForConfigOrDie(config),
+		serviceProviders: map[string]Provider{
+			KubeDBServiceMySQL:         NewMySQLProvider(config, storageClassName),
+			KubeDBServicePostgreSQL:    NewPostgreSQLProvider(config, storageClassName),
+			KubeDBServiceElasticsearch: NewElasticsearchProvider(config, storageClassName),
+			KubeDBServiceMongoDB:       NewMongoDbProvider(config, storageClassName),
+			KubeDBServiceRedis:         NewRedisProvider(config, storageClassName),
+			KubeDBServiceMemcached:     NewMemcachedProvider(config),
 		},
 	}
 }
 
+// TODO: create once
 func getConfig(kubeConfigPath string) *rest.Config {
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
@@ -54,48 +55,25 @@ func getConfig(kubeConfigPath string) *rest.Config {
 	return config
 }
 
-func loadInClusterClient(config *rest.Config) kubernetes.Interface {
-	kubeClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-
-	return kubeClient
-}
-
-func loadNamespace(kubeConfigPath string) string {
-	if kubeConfigPath != "" {
-		return "default"
-	} else {
-		if data, err := ioutil.ReadFile(NamespaceFilePath); err == nil {
-			if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
-				glog.Infof("namespace: %s", ns)
-				return ns
-			}
-		}
-	}
-
-	panic("could not detect current namespace")
-}
-
 func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.Service, error) {
 	glog.Infoln("Listing services for catalog...")
 
-	services := []osb.Service{}
-	for _, catalog := range catalogNames {
-		if providers, ok := c.catalogProviders[catalog]; ok {
-			for providerName := range providers {
-				out, err := ioutil.ReadFile(filepath.Join(catalogPath, catalog, fmt.Sprintf("%s.yaml", providerName)))
-				if err != nil {
-					return nil, err
-				}
+	catalogs := sets.NewString(catalogNames...)
 
-				service := osb.Service{}
-				if err = yaml.Unmarshal(out, &service); err != nil {
-					return nil, err
-				}
-				services = append(services, service)
+	var services []osb.Service
+	for _, provider := range c.serviceProviders {
+		catalog, serviceName := provider.Metadata()
+		if catalogs.Has(catalog) {
+			out, err := ioutil.ReadFile(filepath.Join(catalogPath, catalog, fmt.Sprintf("%s.yaml", serviceName)))
+			if err != nil {
+				return nil, err
 			}
+
+			service := osb.Service{}
+			if err = yaml.Unmarshal(out, &service); err != nil {
+				return nil, err
+			}
+			services = append(services, service)
 		}
 	}
 
@@ -103,52 +81,32 @@ func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.S
 	return services, nil
 }
 
-func (c *Client) Provision(
-	catalogNames []string, provisionInfo ProvisionInfo) error {
+func (c *Client) Provision(provisionInfo ProvisionInfo) error {
 	glog.Infof("getting provider %q", provisionInfo.ServiceID)
-	var (
-		provider Provider
-		exists   bool
-	)
-	for _, catalog := range catalogNames {
-		if providers, ok := c.catalogProviders[catalog]; ok {
-			if provider, exists = providers[provisionInfo.ServiceID]; exists {
-				break
-			}
-		}
-	}
+
+	provider, exists := c.serviceProviders[provisionInfo.ServiceID]
 	if !exists {
 		return errors.Errorf("No %q provider found", provisionInfo.ServiceID)
 	}
 
 	if err := provider.Create(provisionInfo); err != nil {
-		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s", provisionInfo.ServiceID, provisionInfo.InstanceName, c.namespace)
+		return errors.Wrapf(err, "failed to create %s obj %q in namespace %s",
+			provisionInfo.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
 	}
 
 	return nil
 }
 
-func (c *Client) GetProvisionInfo(catalogNames []string, instanceID, serviceID string) (*ProvisionInfo, error) {
-	var (
-		provider Provider
-		exists   bool
-	)
-	for _, catalog := range catalogNames {
-		if providers, ok := c.catalogProviders[catalog]; ok {
-			if provider, exists = providers[serviceID]; exists {
-				break
-			}
-		}
-	}
+func (c *Client) GetProvisionInfo(instanceID, serviceID string) (*ProvisionInfo, error) {
+	provider, exists := c.serviceProviders[serviceID]
 	if !exists {
 		return nil, errors.Errorf("No %q provider found", serviceID)
 	}
 
-	return provider.GetProvisionInfo(instanceID, c.namespace)
+	return provider.GetProvisionInfo(instanceID)
 }
 
 func (c *Client) Bind(
-	catalogNames []string,
 	serviceID, planID string, bindParams map[string]interface{},
 	provisionInfo ProvisionInfo) (map[string]interface{}, error) {
 
@@ -163,40 +121,45 @@ func (c *Client) Bind(
 		params[k] = v
 	}
 
-	service, err := c.kubeClient.CoreV1().Services(provisionInfo.Namespace).Get(provisionInfo.InstanceName, metav1.GetOptions{})
+	app, err := c.appClient.AppBindings(provisionInfo.Namespace).Get(provisionInfo.InstanceName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	secrets, err := c.kubeClient.CoreV1().Secrets(provisionInfo.Namespace).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
-			api.LabelDatabaseName: provisionInfo.InstanceName,
+			InstanceKey: provisionInfo.InstanceID,
 		}.String(),
 	})
-	data := make(map[string]interface{})
-	for _, secret := range secrets.Items {
-		for key, value := range secret.Data {
-			data[key] = string(value)
+	if err != nil {
+		return nil, err
+	}
+	if len(secrets.Items) > 1 {
+		var names []string
+		for _, s := range secrets.Items {
+			names = append(names, fmt.Sprintf("%s/%s", s.Namespace, s.Namespace))
 		}
+		return nil, errors.Errorf("%d secrets with instance id %s found: %s",
+			len(names), provisionInfo.InstanceID, strings.Join(names, ", "))
+	}
+
+	secret := secrets.Items[0]
+	data := make(map[string]interface{}, len(secret.Data))
+	for key, value := range secret.Data {
+		data[key] = value
+	}
+	err = appcat_util.TransformCredentials(c.kubeClient, app.Spec.SecretTransforms, data)
+	if err != nil {
+		return nil, err
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
-	var (
-		provider Provider
-		exists   bool
-	)
-	for _, catalog := range catalogNames {
-		if providers, ok := c.catalogProviders[catalog]; ok {
-			if provider, exists = providers[serviceID]; exists {
-				break
-			}
-		}
-	}
+	provider, exists := c.serviceProviders[serviceID]
 	if !exists {
 		return nil, errors.Errorf("No %q provider found", serviceID)
 	}
 
-	creds, err := provider.Bind(*service, params, data)
+	creds, err := provider.Bind(app, params, data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to bind instance for %q/%q", serviceID, planID)
 	}
@@ -204,19 +167,10 @@ func (c *Client) Bind(
 	return creds.ToMap()
 }
 
-func (c *Client) Deprovision(catalogNames []string, serviceID, instanceName, namespace string) error {
+func (c *Client) Deprovision(serviceID, instanceName, namespace string) error {
 	glog.Infof("getting provider for %q", serviceID)
-	var (
-		provider Provider
-		exists   bool
-	)
-	for _, catalog := range catalogNames {
-		if providers, ok := c.catalogProviders[catalog]; ok {
-			if provider, exists = providers[serviceID]; exists {
-				break
-			}
-		}
-	}
+
+	provider, exists := c.serviceProviders[serviceID]
 	if !exists {
 		return errors.Errorf("No %q provider found", serviceID)
 	}
