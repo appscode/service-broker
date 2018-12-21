@@ -5,6 +5,7 @@ To keep things isolated, this tutorial uses a separate namespace called `service
 ```console
 $ kubectl create ns service-broker
 namespace/service-broker created
+```
 
 If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
 
