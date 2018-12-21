@@ -18,12 +18,6 @@ var (
 	options = &E2EOptions{
 		KubeConfig: filepath.Join(homedir.HomeDir(), ".kube", "config"),
 	}
-	//brokerImageFlag = "shudipta/db-broker:try"
-	//brokerImageFlag = "shudipta/db-broker:try-for-pgsql"
-	//brokerImageFlag = "shudipta/db-broker:try-for-elasticsearch"
-	//brokerImageFlag = "shudipta/db-broker:try-for-mongodb"
-	//brokerImageFlag = "shudipta/db-broker:try-for-redis"
-	// brokerImageFlag = "shudipta/db-broker:try-for-memcached"
 	brokerImageFlag = "shudipta/service-broker:latest"
 	storageClass    = "standard"
 )
