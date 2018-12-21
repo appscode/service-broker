@@ -1,10 +1,11 @@
 hash: ac4ed4294c4b4a83cf5f70ee8e59b141e56a78e096d612fce90ea12e83b4e985
-updated: 2018-12-20T08:19:22.14911074-08:00
+updated: 2018-12-21T00:21:19.626922128-08:00
 imports:
 - name: cloud.google.com/go
-  version: 0fd7230b2a7505833d5f69b75cbd6c9582401479
+  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
   subpackages:
   - compute/metadata
+  - internal
 - name: github.com/appscode/go
   version: 584aaa73af837f112c0a471be398ea837341c330
   subpackages:
@@ -60,11 +61,11 @@ imports:
   subpackages:
   - log
 - name: github.com/evanphx/json-patch
-  version: 72bf35d0ff611848c1dc9df0f976c81192392fa5
+  version: 94e38aa1586e8a6c8a75770bddf5ff84c48a106b
 - name: github.com/fatih/structs
   version: 878a968ab22548362a09bdb3322f98b00f470d46
 - name: github.com/ghodss/yaml
-  version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -513,7 +514,7 @@ imports:
   - pkg/common
   - pkg/util/proto
 - name: kmodules.xyz/custom-resources
-  version: 419e56e0e11ff4bb55a0bfe546dff27f807b5a52
+  version: b4ef1fe08b7a09681a676c1b697cf66fd74b7ed4
   repo: https://github.com/kmodules/custom-resources.git
   vcs: git
   subpackages:

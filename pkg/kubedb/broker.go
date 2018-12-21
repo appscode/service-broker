@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	appcat_cs "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1"
 	appcat_util "kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1/util"
 )
@@ -25,8 +24,7 @@ type Client struct {
 	serviceProviders map[string]Provider
 }
 
-func NewClient(kubeConfigPath, storageClassName string) *Client {
-	config := getConfig(kubeConfigPath)
+func NewClient(config *rest.Config, storageClassName string) *Client {
 	return &Client{
 		kubeClient: kubernetes.NewForConfigOrDie(config),
 		appClient:  appcat_cs.NewForConfigOrDie(config),
@@ -39,18 +37,6 @@ func NewClient(kubeConfigPath, storageClassName string) *Client {
 			KubeDBServiceMemcached:     NewMemcachedProvider(config),
 		},
 	}
-}
-
-// TODO: create once
-func getConfig(kubeConfigPath string) *rest.Config {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		panic(err)
-	}
-	config.Burst = 100
-	config.QPS = 100
-
-	return config
 }
 
 func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.Service, error) {

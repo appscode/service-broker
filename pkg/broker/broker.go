@@ -4,24 +4,39 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/appscode/go/crypto/rand"
 	dbsvc "github.com/appscode/service-broker/pkg/kubedb"
 	"github.com/golang/glog"
+	svcat_cs "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset/typed/servicecatalog/v1beta1"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // NewBroker is a hook that is called with the Options the program is run
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(s *ExtraOptions) (*Broker, error) {
-	brClient := dbsvc.NewClient(s.KubeConfig, s.StorageClass)
+	config, err := clientcmd.BuildConfigFromFlags("", s.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	config.Burst = 100
+	config.QPS = 100
+
+	svccatClient, err := svcat_cs.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	dbClient := dbsvc.NewClient(config, s.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
 	return &Broker{
-		Client:       brClient,
+		Client:       dbClient,
+		svccatClient: svccatClient,
 		async:        s.Async,
 		catalogPath:  s.CatalogPath,
 		catalogNames: s.CatalogNames,
@@ -32,7 +47,9 @@ func NewBroker(s *ExtraOptions) (*Broker, error) {
 type Broker struct {
 	Client *dbsvc.Client
 
-	// Indiciates if the broker should handle the requests asynchronously.
+	svccatClient svcat_cs.ServicecatalogV1beta1Interface
+
+	// Indicates if the broker should handle the requests asynchronously.
 	async bool
 
 	// The path for catalogs
@@ -61,9 +78,6 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 }
 
 func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestContext) (*broker.ProvisionResponse, error) {
-	// Your provision logic goes here
-
-	// example implementation:
 	b.Lock()
 	defer b.Unlock()
 
@@ -74,9 +88,22 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		ServiceID:  request.ServiceID,
 		PlanID:     request.PlanID,
 		Params:     request.Parameters,
+		Namespace:  namespace,
+	}
 
-		InstanceName: rand.WithUniqSuffix(request.PlanID),
-		Namespace:    namespace,
+	// use name of ServiceInstance as instance crd name
+	// ref: https://github.com/kubernetes-incubator/service-catalog/issues/2532
+	svcinstances, err := b.svccatClient.ServiceInstances(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, svcinstance := range svcinstances.Items {
+		if svcinstance.Spec.ExternalID == request.InstanceID {
+			curProvisionInfo.InstanceName = svcinstance.Name
+		}
+	}
+	if curProvisionInfo.InstanceName == "" {
+		return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
 	}
 
 	// Check to see if this is the same instance
