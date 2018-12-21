@@ -32,7 +32,7 @@ build_binary() {
 
 build_docker() {
   pushd $REPO_ROOT/hack/docker
-  cp $DIST/service-broker/service-broker-linux-amd64 service-broker
+  cp $DIST/service-broker/service-broker-alpine-amd64 service-broker
   chmod 755 service-broker
 
   cat >Dockerfile <<EOL

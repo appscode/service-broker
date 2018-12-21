@@ -43,9 +43,7 @@ libbuild.BIN_MATRIX = {
         'go_version': True,
         'use_cgo': False,
         'distro': {
-            'alpine': ['amd64'],
-            'darwin': ['amd64'],
-            'linux': ['amd64']
+            'alpine': ['amd64']
         }
     }
 }
@@ -103,7 +101,7 @@ def gen():
 def build_cmd(name):
     cfg = libbuild.BIN_MATRIX[name]
     entrypoint = 'cmd/{}/*.go'.format(name)
-    compress = libbuild.ENV in ['prod']
+    compress = False
     upx= False
     if cfg['type'] == 'go':
         if 'distro' in cfg:
