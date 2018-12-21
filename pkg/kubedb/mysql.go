@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type MySQLProvider struct {
@@ -33,6 +34,10 @@ func demoMySQLSpec() api.MySQLSpec {
 		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
+}
+
+func (p MySQLProvider) Metadata() (string, string) {
+	return "kubedb", "mysql"
 }
 
 func (p MySQLProvider) Create(provisionInfo ProvisionInfo) error {
@@ -84,74 +89,63 @@ func (p MySQLProvider) Delete(name, namespace string) error {
 }
 
 func (p MySQLProvider) Bind(
-	service corev1.Service,
+	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
-	var (
-		user, password   string
-		connScheme, host string
-		port             int32
-	)
-
-	connScheme = "mysql"
-	if len(service.Spec.Ports) == 0 {
-		return nil, errors.Errorf("no ports found")
-	}
-	for _, p := range service.Spec.Ports {
-		if p.Name == "db" {
-			port = p.Port
-			break
-		}
+	host, err := app.Hostname()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "host" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	host = buildHostFromService(service)
+	port, err := app.Port()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
 
-	mysqlUser, ok := data["username"]
+	uri, err := app.URL()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	username, ok := data["username"]
 	if !ok {
-		return nil, errors.Errorf("username not found in secret keys")
+		return nil, errors.Errorf(`"username" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	user = mysqlUser.(string)
 
-	mysqlPassword, ok := data["password"]
+	password, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("password not found in secret keys")
+		return nil, errors.Errorf(`"password" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	password = mysqlPassword.(string)
 
-	creds := Credentials{
-		Protocol: connScheme,
-		Port:     port,
+	return &Credentials{
+		Protocol: app.Spec.ClientConfig.Service.Scheme,
 		Host:     host,
-		Username: user,
+		Port:     port,
+		URI:      uri,
+		Username: username,
 		Password: password,
-	}
-	creds.URI = buildURI(creds)
-
-	return &creds, nil
+	}, nil
 }
 
-func (p MySQLProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+func (p MySQLProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
 	mysqls, err := p.extClient.MySQLs(corev1.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(mysqls.Items) == 0 {
 		return nil, err
 	}
 
 	if len(mysqls.Items) > 1 {
 		var instances []string
 		for _, mysql := range mysqls.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", mysql.Namespace, mysql.Namespace))
+			instances = append(instances, fmt.Sprintf("%s/%s", mysql.Namespace, mysql.Name))
 		}
 
 		return nil, errors.Errorf("%d MySQLs with instance id %s found: %s",
 			len(mysqls.Items), instanceID, strings.Join(instances, ", "))
-	} else if len(mysqls.Items) == 1 {
-		return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
 	}
-
-	return nil, nil
+	return provisionInfoFromObjectMeta(mysqls.Items[0].ObjectMeta)
 }

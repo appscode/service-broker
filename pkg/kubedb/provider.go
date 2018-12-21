@@ -1,21 +1,21 @@
-package db_broker
+package kubedb
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	meta_util "github.com/appscode/kutil/meta"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type Provider interface {
-	Bind(service corev1.Service, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
+	Metadata() (catalog string, serviceName string)
+	Bind(app *appcat.AppBinding, params map[string]interface{}, chartSecrets map[string]interface{}) (*Credentials, error)
 	Create(provisionInfo ProvisionInfo) error
 	Delete(name, namespace string) error
-	GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error)
+	GetProvisionInfo(instanceID string) (*ProvisionInfo, error)
 }
 
 type ProvisionInfo struct {
@@ -85,15 +85,15 @@ func (p ProvisionInfo) applyToSpec(spec interface{}) error {
 	return meta_util.Decode(p.Params["spec"], spec)
 }
 
+// ref: https://github.com/osbkit/minibroker/blob/d212fcb0013fe73eae914543525e36a1b1fc91cd/pkg/minibroker/provider.go#L14:6
 type Credentials struct {
 	Protocol string
-	URI      string `json:"uri,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Host     string `json:"host,omitempty"`
-	Port     int32  `json:"port,omitempty"`
-	Database string `json:"database,omitempty"`
-	RootCert string `json:"rootCert,omitempty"`
+	Host     string      `json:"host,omitempty"`
+	Port     int32       `json:"port,omitempty"`
+	URI      string      `json:"uri,omitempty"`
+	Username interface{} `json:"username,omitempty"`
+	Password interface{} `json:"password,omitempty"`
+	RootCert interface{} `json:"rootCert,omitempty"`
 }
 
 // ToMap converts the credentials into the OSB API credentials response
@@ -112,20 +112,4 @@ func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
 	err := meta_util.Decode(&c, &result)
 	return result, err
-}
-
-func buildURI(c Credentials) string {
-	var uri = fmt.Sprintf("%s://", c.Protocol)
-	if c.Username != "" {
-		uri = fmt.Sprintf("%s%s:%s@", uri, c.Username, c.Password)
-	}
-	uri = fmt.Sprintf("%s%s:%d", uri, c.Host, c.Port)
-	if c.Database != "" {
-		uri = fmt.Sprintf("%s/%s", uri, c.Database)
-	}
-	return uri
-}
-
-func buildHostFromService(service corev1.Service) string {
-	return fmt.Sprintf("%s.%s.svc.cluster.local", service.Name, service.Namespace)
 }

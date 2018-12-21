@@ -1,4 +1,4 @@
-id: memcached
+id: d88856cb-fe3f-4473-ba8b-641480da810f
 name: memcached
 description: KubeDB managed Memcache
 bindable: true
@@ -7,11 +7,11 @@ metadata:
   displayName: KubeDB managed Memcache
   imageUrl: https://cdn.appscode.com/images/logo/databases/memcached.png
 plans:
-- id: demo-memcached
+- id: af1ce2dc-5734-4e41-aaa2-8aa6a58d688f
   name: demo-memcached
   description: Demo Memcached
   free: true
-- id: memcached
+- id: d40e49b2-f8fb-4d47-96d3-35089bd0942d
   name: memcached
   description: Memcached with custom specification
   free: true

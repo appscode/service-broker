@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type RedisProvider struct {
@@ -33,6 +34,10 @@ func demoRedisSpec() api.RedisSpec {
 		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
+}
+
+func (p RedisProvider) Metadata() (string, string) {
+	return "kubedb", "redis"
 }
 
 func (p RedisProvider) Create(provisionInfo ProvisionInfo) error {
@@ -84,59 +89,51 @@ func (p RedisProvider) Delete(name, namespace string) error {
 }
 
 func (p RedisProvider) Bind(
-	service corev1.Service,
+	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
-	var (
-		connScheme, host string
-		port             int32
-	)
-
-	connScheme = "redis"
-	if len(service.Spec.Ports) == 0 {
-		return nil, errors.Errorf("no ports found")
-	}
-	for _, p := range service.Spec.Ports {
-		if p.Name == "db" {
-			port = p.Port
-			break
-		}
+	host, err := app.Hostname()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "host" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	host = buildHostFromService(service)
+	port, err := app.Port()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
 
-	creds := Credentials{
-		Protocol: connScheme,
-		Port:     port,
+	uri, err := app.URL()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	return &Credentials{
+		Protocol: app.Spec.ClientConfig.Service.Scheme,
 		Host:     host,
-	}
-	creds.URI = buildURI(creds)
-
-	return &creds, nil
+		Port:     port,
+		URI:      uri,
+	}, nil
 }
 
-func (p RedisProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+func (p RedisProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
 	redises, err := p.extClient.Redises(corev1.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(redises.Items) == 0 {
 		return nil, err
 	}
 
 	if len(redises.Items) > 1 {
 		var instances []string
 		for _, redis := range redises.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", redis.Namespace, redis.Namespace))
+			instances = append(instances, fmt.Sprintf("%s/%s", redis.Namespace, redis.Name))
 		}
 
 		return nil, errors.Errorf("%d Redises with instance id %s found: %s",
 			len(redises.Items), instanceID, strings.Join(instances, ", "))
-	} else if len(redises.Items) == 1 {
-		return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
 	}
-
-	return nil, nil
+	return provisionInfoFromObjectMeta(redises.Items[0].ObjectMeta)
 }

@@ -3,7 +3,7 @@ package e2e
 import (
 	"fmt"
 
-	kubedb_util "github.com/appscode/service-broker/pkg/db-broker"
+	dbsvc "github.com/appscode/service-broker/pkg/kubedb"
 	"github.com/appscode/service-broker/test/e2e/framework"
 	"github.com/appscode/service-broker/test/util"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
@@ -294,7 +294,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				my, err := f.KubedbClient.MySQLs(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForMySQLBeReady(f.KubedbClient, my.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForMySQLBeReady(f.KubedbClient, my.Items[0].Name, brokerNamespace)
 			}
 		})
 
@@ -323,7 +323,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				pg, err := f.KubedbClient.Postgreses(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForPostgreSQLBeReady(f.KubedbClient, pg.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForPostgreSQLBeReady(f.KubedbClient, pg.Items[0].Name, brokerNamespace)
 			}
 
 		})
@@ -359,7 +359,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				es, err := f.KubedbClient.Elasticsearches(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForElasticsearchBeReady(f.KubedbClient, es.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForElasticsearchBeReady(f.KubedbClient, es.Items[0].Name, brokerNamespace)
 			}
 
 		})
@@ -395,7 +395,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				mg, err := f.KubedbClient.MongoDBs(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForMongoDbBeReady(f.KubedbClient, mg.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForMongoDbBeReady(f.KubedbClient, mg.Items[0].Name, brokerNamespace)
 			}
 		})
 
@@ -430,7 +430,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				rd, err := f.KubedbClient.Redises(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForRedisBeReady(f.KubedbClient, rd.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForRedisBeReady(f.KubedbClient, rd.Items[0].Name, brokerNamespace)
 			}
 		})
 
@@ -459,7 +459,7 @@ var _ = Describe("[service-catalog]", func() {
 			waitForCRDBeReady = func() error {
 				mc, err := f.KubedbClient.Memcacheds(brokerNamespace).List(metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred())
-				return kubedb_util.WaitForMemcachedBeReady(f.KubedbClient, mc.Items[0].Name, brokerNamespace)
+				return dbsvc.WaitForMemcachedBeReady(f.KubedbClient, mc.Items[0].Name, brokerNamespace)
 			}
 		})
 

@@ -1,4 +1,4 @@
-id: redis
+id: ccfd1c81-e59f-4875-a39f-75ba55320ce0
 name: redis
 description: KubeDB managed Redis
 bindable: true
@@ -7,11 +7,11 @@ metadata:
   displayName: KubeDB managed Redis
   imageUrl: https://cdn.appscode.com/images/logo/databases/redis.png
 plans:
-- id: demo-redis
+- id: 4b6ad8a7-272e-4cfd-bb38-5b9d4bd3962f
   name: demo-redis
   description: Demo Redis
   free: true
-- id: redis
+- id: 45716530-cadb-4247-b06a-24a34200d734
   name: redis
   description: Redis with custom specification
   free: true

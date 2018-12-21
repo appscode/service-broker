@@ -20,10 +20,15 @@ metadata:
     release: {{ .Release.Name }}
 rules:
 - apiGroups:
-  - ""
+  - appcatalog.appscode.com
   resources:
-  - services
+  - appbindings
   verbs: ["get"]
+- apiGroups:
+  - servicecatalog
+  resources:
+  - serviceinstances
+  verbs: ["list"]
 - apiGroups:
   - ""
   resources:
@@ -33,7 +38,7 @@ rules:
   - ""
   resources:
   - secrets
-  verbs: ["get", "list"]
+  verbs: ["get"]
 - apiGroups:
   - kubedb.com
   resources:

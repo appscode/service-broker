@@ -4,24 +4,39 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/appscode/go/crypto/rand"
-	db_broker "github.com/appscode/service-broker/pkg/db-broker"
+	dbsvc "github.com/appscode/service-broker/pkg/kubedb"
 	"github.com/golang/glog"
+	svcat_cs "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset/typed/servicecatalog/v1beta1"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // NewBroker is a hook that is called with the Options the program is run
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(s *ExtraOptions) (*Broker, error) {
-	brClient := db_broker.NewClient(s.KubeConfig, s.StorageClass)
+	config, err := clientcmd.BuildConfigFromFlags("", s.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	config.Burst = 100
+	config.QPS = 100
+
+	svccatClient, err := svcat_cs.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	dbClient := dbsvc.NewClient(config, s.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
 	return &Broker{
-		Client:       brClient,
+		Client:       dbClient,
+		svccatClient: svccatClient,
 		async:        s.Async,
 		catalogPath:  s.CatalogPath,
 		catalogNames: s.CatalogNames,
@@ -30,9 +45,11 @@ func NewBroker(s *ExtraOptions) (*Broker, error) {
 
 // Broker provides an implementation of broker.Interface
 type Broker struct {
-	Client *db_broker.Client
+	Client *dbsvc.Client
 
-	// Indiciates if the broker should handle the requests asynchronously.
+	svccatClient svcat_cs.ServicecatalogV1beta1Interface
+
+	// Indicates if the broker should handle the requests asynchronously.
 	async bool
 
 	// The path for catalogs
@@ -61,26 +78,36 @@ func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, 
 }
 
 func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestContext) (*broker.ProvisionResponse, error) {
-	// Your provision logic goes here
-
-	// example implementation:
 	b.Lock()
 	defer b.Unlock()
 
 	namespace := request.Context["namespace"].(string)
 	response := broker.ProvisionResponse{}
-	curProvisionInfo := &db_broker.ProvisionInfo{
+	curProvisionInfo := &dbsvc.ProvisionInfo{
 		InstanceID: request.InstanceID,
 		ServiceID:  request.ServiceID,
 		PlanID:     request.PlanID,
 		Params:     request.Parameters,
+		Namespace:  namespace,
+	}
 
-		InstanceName: rand.WithUniqSuffix(request.PlanID),
-		Namespace:    namespace,
+	// use name of ServiceInstance as instance crd name
+	// ref: https://github.com/kubernetes-incubator/service-catalog/issues/2532
+	svcinstances, err := b.svccatClient.ServiceInstances(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, svcinstance := range svcinstances.Items {
+		if svcinstance.Spec.ExternalID == request.InstanceID {
+			curProvisionInfo.InstanceName = svcinstance.Name
+		}
+	}
+	if curProvisionInfo.InstanceName == "" {
+		return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
 	}
 
 	// Check to see if this is the same instance
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +128,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	}
 
 	glog.Infof("Provisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	err = b.Client.Provision(b.catalogNames, *curProvisionInfo)
+	err = b.Client.Provision(*curProvisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -123,14 +150,14 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	defer b.Unlock()
 
 	glog.Infof("Deprovisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	} else if provisionInfo == nil {
 		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
-	err = b.Client.Deprovision(b.catalogNames, request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
+	err = b.Client.Deprovision(request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -159,12 +186,12 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	defer b.Unlock()
 
 	glog.Infof("Binding instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(b.catalogNames, request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Instance %q not found", request.InstanceID)
 	}
 
-	creds, err := b.Client.Bind(b.catalogNames, request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
+	creds, err := b.Client.Bind(request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err

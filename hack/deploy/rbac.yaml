@@ -14,10 +14,15 @@ metadata:
     app: appscode-service-broker
 rules:
 - apiGroups:
-  - ""
+  - appcatalog.appscode.com
   resources:
-  - services
+  - appbindings
   verbs: ["get"]
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - serviceinstances
+  verbs: ["list"]
 - apiGroups:
   - ""
   resources:
@@ -27,7 +32,7 @@ rules:
   - ""
   resources:
   - secrets
-  verbs: ["get", "list"]
+  verbs: ["get"]
 - apiGroups:
   - kubedb.com
   resources:

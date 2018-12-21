@@ -1,4 +1,4 @@
-id: elasticsearch
+id: 315fc21c-829e-4aa1-8c16-f7921c33550d
 name: elasticsearch
 description: KubeDB managed ElasticSearch
 bindable: true
@@ -7,15 +7,15 @@ metadata:
   displayName: KubeDB managed ElasticSearch
   imageUrl: https://cdn.appscode.com/images/logo/databases/elasticsearch.png
 plans:
-- id: demo-elasticsearch
+- id: c4e99557-3a81-452e-b9cf-660f01c155c0
   name: demo-elasticsearch
   description: Demo Standalone Elasticsearch database
   free: true
-- id: demo-elasticsearch-cluster
+- id: 2f05622b-724d-458f-abc8-f223b1afa0b9
   name: demo-elasticsearch-cluster
   description: Demo Elasticsearch cluster
   free: true
-- id: elasticsearch
+- id: 6fa212e2-e043-4ae9-91c2-8e5c4403d894
   name: elasticsearch
   description: Elasticsearch cluster with custom specification
   free: true

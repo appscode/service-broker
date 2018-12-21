@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
+	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
 type ElasticsearchProvider struct {
@@ -59,6 +60,10 @@ func demoElasticsearchClusterSpec() api.ElasticsearchSpec {
 			},
 		},
 	}
+}
+
+func (p ElasticsearchProvider) Metadata() (string, string) {
+	return "kubedb", "elasticsearch"
 }
 
 func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo) error {
@@ -112,91 +117,70 @@ func (p ElasticsearchProvider) Delete(name, namespace string) error {
 }
 
 func (p ElasticsearchProvider) Bind(
-	service corev1.Service,
+	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
 
-	var (
-		user, password   string
-		connScheme, host string
-		port             int32
-		rootCert         string
-	)
-
-	connScheme = "http"
-	if enableSSL, ok := params["enableSSL"]; ok && enableSSL.(bool) {
-		connScheme = "https"
-		cert, ok := data["root.pem"]
-		if !ok {
-			return nil, errors.Errorf("root certificate not found in secret keys")
-		}
-		rootCert = cert.(string)
+	host, err := app.Hostname()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "host" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	if len(service.Spec.Ports) == 0 {
-		return nil, errors.Errorf("no ports found")
-	}
-	for _, p := range service.Spec.Ports {
-		if p.Name == api.ElasticsearchRestPortName {
-			port = p.Port
-			break
-		}
+	port, err := app.Port()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	host = buildHostFromService(service)
-	adminUser, ok := data["ADMIN_USERNAME"]
+	uri, err := app.URL()
+	if err != nil {
+		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	username, ok := data["username"]
 	if !ok {
-		return nil, errors.Errorf("ADMIN_USERNAME not found in secret keys")
+		return nil, errors.Errorf(`"username" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	user = adminUser.(string)
 
-	adminPassword, ok := data["ADMIN_PASSWORD"]
+	password, ok := data["password"]
 	if !ok {
-		return nil, errors.Errorf("ADMIN_PASSWORD not found in secret keys")
+		return nil, errors.Errorf(`"password" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
-	password = adminPassword.(string)
 
-	creds := Credentials{
-		Protocol: connScheme,
-		Port:     port,
+	rootCert, ok := data["root.pem"]
+	if !ok {
+		return nil, errors.Errorf(`root certificate not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
+	}
+
+	return &Credentials{
+		Protocol: app.Spec.ClientConfig.Service.Scheme,
 		Host:     host,
-		Username: user,
+		Port:     port,
+		URI:      uri,
+		Username: username,
 		Password: password,
 		RootCert: rootCert,
-	}
-	creds.URI = buildURI(creds)
-
-	return &creds, nil
+	}, nil
 }
 
-func (p ElasticsearchProvider) GetProvisionInfo(instanceID, namespace string) (*ProvisionInfo, error) {
+func (p ElasticsearchProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
 	elasticsearches, err := p.extClient.Elasticsearches(corev1.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: labels.Set{
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(elasticsearches.Items) == 0 {
 		return nil, err
 	}
 
-	var provisionInfo *ProvisionInfo
 	if len(elasticsearches.Items) > 1 {
 		var instances []string
 		for _, elasticsearch := range elasticsearches.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", elasticsearch.Namespace, elasticsearch.Namespace))
+			instances = append(instances, fmt.Sprintf("%s/%s", elasticsearch.Namespace, elasticsearch.Name))
 		}
 
 		return nil, errors.Errorf("%d Elasticsearch clusters with instance id %s found: %s",
 			len(elasticsearches.Items), instanceID, strings.Join(instances, ", "))
-	} else if len(elasticsearches.Items) == 1 {
-		if provisionInfo, err = provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta); err != nil {
-			return nil, err
-		}
-		if provisionInfo.ExtraParams == nil {
-			provisionInfo.ExtraParams = make(map[string]interface{})
-		}
-		provisionInfo.ExtraParams["enableSSL"] = elasticsearches.Items[0].Spec.EnableSSL
 	}
 
-	return provisionInfo, nil
+	return provisionInfoFromObjectMeta(elasticsearches.Items[0].ObjectMeta)
 }

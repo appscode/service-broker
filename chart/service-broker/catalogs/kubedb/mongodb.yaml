@@ -1,4 +1,4 @@
-id: mongodb
+id: d690058d-666c-45d8-ba98-fcb9fb47742e
 name: mongodb
 description: KubeDB managed MongoDB
 bindable: true
@@ -7,15 +7,15 @@ metadata:
   displayName: KubeDB managed MongoDB
   imageUrl: https://cdn.appscode.com/images/logo/databases/mongodb.png
 plans:
-- id: demo-mongodb
+- id: 498c12a6-7a68-4983-807b-75737f99062a
   name: demo-mongodb
   description: Demo Standalone MongoDB database
   free: true
-- id: demo-mongodb-cluster
+- id: 6af19c54-7757-42e5-bb74-b8350037c4a2
   name: demo-mongodb-cluster
   description: Demo MongoDB cluster
   free: true
-- id: mongodb
+- id: e8f87ba6-0711-42db-a663-a3c75b78a541
   name: mongodb
   description: MongoDB database with custom specification
   free: true
