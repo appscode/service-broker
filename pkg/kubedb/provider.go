@@ -85,6 +85,7 @@ func (p ProvisionInfo) applyToSpec(spec interface{}) error {
 	return meta_util.Decode(p.Params["spec"], spec)
 }
 
+// ref: https://github.com/osbkit/minibroker/blob/d212fcb0013fe73eae914543525e36a1b1fc91cd/pkg/minibroker/provider.go#L14:6
 type Credentials struct {
 	Protocol string
 	Host     string      `json:"host,omitempty"`

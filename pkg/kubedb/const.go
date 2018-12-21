@@ -10,6 +10,9 @@ const (
 	// The file path for checking the namespace in which the broker server is running
 	NamespaceFilePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
+	// Service broker api recommends to use GUIDs for Service ids and Plan ids.
+	// ref: https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#service-offering-object
+
 	// Name of the providers
 	KubeDBServiceElasticsearch = "315fc21c-829e-4aa1-8c16-f7921c33550d"
 	KubeDBServiceMemcached     = "d88856cb-fe3f-4473-ba8b-641480da810f"
