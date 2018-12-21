@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -168,7 +168,7 @@ func (p ElasticsearchProvider) GetProvisionInfo(instanceID string) (*ProvisionIn
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(elasticsearches.Items) == 0 {
 		return nil, err
 	}
 

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/appscode/go/crypto/rand"
-	db_broker "github.com/appscode/service-broker/pkg/db-broker"
+	dbsvc "github.com/appscode/service-broker/pkg/kubedb"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -16,7 +16,7 @@ import (
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(s *ExtraOptions) (*Broker, error) {
-	brClient := db_broker.NewClient(s.KubeConfig, s.StorageClass)
+	brClient := dbsvc.NewClient(s.KubeConfig, s.StorageClass)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.
@@ -30,7 +30,7 @@ func NewBroker(s *ExtraOptions) (*Broker, error) {
 
 // Broker provides an implementation of broker.Interface
 type Broker struct {
-	Client *db_broker.Client
+	Client *dbsvc.Client
 
 	// Indiciates if the broker should handle the requests asynchronously.
 	async bool
@@ -69,7 +69,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 
 	namespace := request.Context["namespace"].(string)
 	response := broker.ProvisionResponse{}
-	curProvisionInfo := &db_broker.ProvisionInfo{
+	curProvisionInfo := &dbsvc.ProvisionInfo{
 		InstanceID: request.InstanceID,
 		ServiceID:  request.ServiceID,
 		PlanID:     request.PlanID,

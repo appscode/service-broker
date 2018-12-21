@@ -20,9 +20,9 @@ metadata:
     release: {{ .Release.Name }}
 rules:
 - apiGroups:
-  - ""
+  - appcatalog
   resources:
-  - services
+  - appbindings
   verbs: ["get"]
 - apiGroups:
   - ""

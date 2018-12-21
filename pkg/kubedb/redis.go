@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -122,7 +122,7 @@ func (p RedisProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, erro
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(redises.Items) == 0 {
 		return nil, err
 	}
 

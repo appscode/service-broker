@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 const (
 	// Key to set instance id

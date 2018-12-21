@@ -14,9 +14,9 @@ metadata:
     app: appscode-service-broker
 rules:
 - apiGroups:
-  - ""
+  - appcatalog
   resources:
-  - services
+  - appbindings
   verbs: ["get"]
 - apiGroups:
   - ""

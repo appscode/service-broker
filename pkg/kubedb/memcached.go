@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -137,7 +137,7 @@ func (p MemcachedProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, 
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(memcacheds.Items) == 0 {
 		return nil, err
 	}
 

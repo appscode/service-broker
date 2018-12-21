@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -12,81 +12,79 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	k8sLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
-type MongoDbProvider struct {
+type PostgreSQLProvider struct {
 	extClient        cs.KubedbV1alpha1Interface
 	storageClassName string
 }
 
-func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
-	return &MongoDbProvider{
+func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provider {
+	return &PostgreSQLProvider{
 		extClient:        cs.NewForConfigOrDie(config),
 		storageClassName: storageClassName,
 	}
 }
 
-func demoMongoDBSpec() api.MongoDBSpec {
-	return api.MongoDBSpec{
-		Version:           jsonTypes.StrYo(demoMongoDBVersion),
+func demoPostgresSpec() api.PostgresSpec {
+	return api.PostgresSpec{
+		Version:           jsonTypes.StrYo(demoPostgresVersion),
+		Replicas:          types.Int32P(1),
 		StorageType:       api.StorageTypeEphemeral,
 		TerminationPolicy: api.TerminationPolicyWipeOut,
 	}
 }
 
-func demoMongoDBClusterSpec() api.MongoDBSpec {
-	mgSpec := demoMongoDBSpec()
-	mgSpec.Replicas = types.Int32P(3)
-	mgSpec.ReplicaSet = &api.MongoDBReplicaSet{
-		Name: "rs0",
-	}
+func demoHAPostgresSpec() api.PostgresSpec {
+	pgSpec := demoPostgresSpec()
+	pgSpec.Replicas = types.Int32P(3)
 
-	return mgSpec
+	return pgSpec
 }
 
-func (p MongoDbProvider) Metadata() (string, string) {
-	return "kubedb", "mongodb"
+func (p PostgreSQLProvider) Metadata() (string, string) {
+	return "kubedb", "postgresql"
 }
 
-func (p MongoDbProvider) Create(provisionInfo ProvisionInfo) error {
-	var mg api.MongoDB
+func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo) error {
+	var pg api.Postgres
 
 	// set metadata from provision info
-	if err := provisionInfo.applyToMetadata(&mg.ObjectMeta); err != nil {
+	if err := provisionInfo.applyToMetadata(&pg.ObjectMeta); err != nil {
 		return err
 	}
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planMongoDBDemo:
-		mg.Spec = demoMongoDBSpec()
-	case planMongoDBClusterDemo:
-		mg.Spec = demoMongoDBClusterSpec()
-	case planMongoDB:
-		if err := provisionInfo.applyToSpec(&mg.Spec); err != nil {
+	case planPostgresDemo:
+		pg.Spec = demoPostgresSpec()
+	case planPostgresHADemo:
+		pg.Spec = demoHAPostgresSpec()
+	case planPostgres:
+		if err := provisionInfo.applyToSpec(&pg.Spec); err != nil {
 			return err
 		}
 	}
 
-	glog.Infof("Creating mongodb obj %q in namespace %q...", mg.Name, mg.Namespace)
-	_, err := p.extClient.MongoDBs(mg.Namespace).Create(&mg)
+	glog.Infof("Creating postgres obj %q in namespace %q...", pg.Name, pg.Namespace)
+	_, err := p.extClient.Postgreses(pg.Namespace).Create(&pg)
 
 	return err
 }
 
-func (p MongoDbProvider) Delete(name, namespace string) error {
-	glog.Infof("Deleting mongodb obj %q from namespace %q...", name, namespace)
+func (p PostgreSQLProvider) Delete(name, namespace string) error {
+	glog.Infof("Deleting postgres obj %q from namespace %q...", name, namespace)
 
-	mg, err := p.extClient.MongoDBs(namespace).Get(name, metav1.GetOptions{})
+	pgsql, err := p.extClient.Postgreses(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if mg.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
-		if err := patchMongoDb(p.extClient, mg, func(in *api.MongoDB) *api.MongoDB {
+	if pgsql.Spec.TerminationPolicy != api.TerminationPolicyWipeOut {
+		if err := patchPostgreSQL(p.extClient, pgsql, func(in *api.Postgres) *api.Postgres {
 			in.Spec.TerminationPolicy = api.TerminationPolicyWipeOut
 			return in
 		}); err != nil {
@@ -94,14 +92,14 @@ func (p MongoDbProvider) Delete(name, namespace string) error {
 		}
 	}
 
-	if err := p.extClient.MongoDBs(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
+	if err := p.extClient.Postgreses(namespace).Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (p MongoDbProvider) Bind(
+func (p PostgreSQLProvider) Bind(
 	app *appcat.AppBinding,
 	params map[string]interface{},
 	data map[string]interface{}) (*Credentials, error) {
@@ -141,24 +139,24 @@ func (p MongoDbProvider) Bind(
 	}, nil
 }
 
-func (p MongoDbProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
-	mongodbs, err := p.extClient.MongoDBs(corev1.NamespaceAll).List(metav1.ListOptions{
-		LabelSelector: labels.Set{
+func (p PostgreSQLProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {
+	postgreses, err := p.extClient.Postgreses(corev1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: k8sLabels.Set{
 			InstanceKey: instanceID,
 		}.String(),
 	})
-	if err != nil {
+	if err != nil || len(postgreses.Items) == 0 {
 		return nil, err
 	}
 
-	if len(mongodbs.Items) > 1 {
+	if len(postgreses.Items) > 1 {
 		var instances []string
-		for _, mongodb := range mongodbs.Items {
-			instances = append(instances, fmt.Sprintf("%s/%s", mongodb.Namespace, mongodb.Name))
+		for _, postgres := range postgreses.Items {
+			instances = append(instances, fmt.Sprintf("%s/%s", postgres.Namespace, postgres.Name))
 		}
 
-		return nil, errors.Errorf("%d MongoDBs with instance id %s found: %s",
-			len(mongodbs.Items), instanceID, strings.Join(instances, ", "))
+		return nil, errors.Errorf("%d Postgreses with instance id %s found: %s",
+			len(postgreses.Items), instanceID, strings.Join(instances, ", "))
 	}
-	return provisionInfoFromObjectMeta(mongodbs.Items[0].ObjectMeta)
+	return provisionInfoFromObjectMeta(postgreses.Items[0].ObjectMeta)
 }

@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"github.com/appscode/kutil"

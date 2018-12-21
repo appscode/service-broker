@@ -1,4 +1,4 @@
-package db_broker
+package kubedb
 
 import (
 	"fmt"
@@ -137,7 +137,7 @@ func (c *Client) Bind(
 	if len(secrets.Items) > 1 {
 		var names []string
 		for _, s := range secrets.Items {
-			names = append(names, fmt.Sprintf("%s/%s", s.Namespace, s.Namespace))
+			names = append(names, fmt.Sprintf("%s/%s", s.Namespace, s.Name))
 		}
 		return nil, errors.Errorf("%d secrets with instance id %s found: %s",
 			len(names), provisionInfo.InstanceID, strings.Join(names, ", "))
