@@ -27,7 +27,7 @@ rules:
   - ""
   resources:
   - secrets
-  verbs: ["get", "list"]
+  verbs: ["get"]
 - apiGroups:
   - kubedb.com
   resources:

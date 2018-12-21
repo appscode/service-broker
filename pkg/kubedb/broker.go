@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -126,31 +124,22 @@ func (c *Client) Bind(
 		return nil, err
 	}
 
-	secrets, err := c.kubeClient.CoreV1().Secrets(provisionInfo.Namespace).List(metav1.ListOptions{
-		LabelSelector: labels.Set{
-			InstanceKey: provisionInfo.InstanceID,
-		}.String(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(secrets.Items) > 1 {
-		var names []string
-		for _, s := range secrets.Items {
-			names = append(names, fmt.Sprintf("%s/%s", s.Namespace, s.Name))
+	data := make(map[string]interface{})
+	if app.Spec.Secret != nil {
+		secret, err := c.kubeClient.CoreV1().Secrets(provisionInfo.Namespace).Get(app.Spec.Secret.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
 		}
-		return nil, errors.Errorf("%d secrets with instance id %s found: %s",
-			len(names), provisionInfo.InstanceID, strings.Join(names, ", "))
+		for key, value := range secret.Data {
+			data[key] = string(value)
+		}
+		err = appcat_util.TransformCredentials(c.kubeClient, app.Spec.SecretTransforms, data)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	secret := secrets.Items[0]
-	data := make(map[string]interface{}, len(secret.Data))
-	for key, value := range secret.Data {
-		data[key] = value
-	}
-	err = appcat_util.TransformCredentials(c.kubeClient, app.Spec.SecretTransforms, data)
-	if err != nil {
-		return nil, err
+	if len(app.Spec.ClientConfig.CABundle) > 0 {
+		data["root.pem"] = app.Spec.ClientConfig.CABundle
 	}
 
 	// Apply additional provisioning logic for Service Catalog Enabled services
