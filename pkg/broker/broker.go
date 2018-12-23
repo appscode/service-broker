@@ -18,19 +18,19 @@ import (
 // with. NewBroker is the place where you will initialize your
 // Broker Logic the parameters passed in.
 func NewBroker(s *ExtraOptions) (*Broker, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", s.KubeConfig)
+	config, err := clientcmd.BuildConfigFromFlags(s.MasterURL, s.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
-	config.Burst = 100
-	config.QPS = 100
+	config.Burst = s.Burst
+	config.QPS = float32(s.QPS)
 
 	svccatClient, err := svcat_cs.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	dbClient := dbsvc.NewClient(config, s.StorageClass)
+	dbClient := dbsvc.NewClient(config)
 	// For example, if your Broker Logic requires a parameter from the command
 	// line, you would unpack it from the Options and set it on the
 	// Broker Logic here.

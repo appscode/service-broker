@@ -25,13 +25,15 @@ service-broker run [flags]
 
 ```
       --async                   Indicates whether the broker is handling the requests asynchronously.
+      --burst int               The maximum burst for throttle (default 100)
       --catalog-names strings   List of catalogs those can be run by this service-broker, comma separated.
       --catalog-path string     The path to the catalog. (default "/etc/config/catalogs")
   -h, --help                    help for run
       --insecure                use --insecure to use HTTP vs HTTPS.
-      --kube-config string      specify the kube config path to be used.
+      --kubeconfig string       Path to kubeconfig file with authorization information (the master location is set by the master flag).
+      --master string           The address of the Kubernetes API server (overrides any value in kubeconfig)
       --port int                use '--port' option to specify the port for broker to listen on. (default 8080)
-      --storage-class string    name of the storage-class for database storage. (default "standard")
+      --qps float               The maximum QPS to the master from this client (default 100)
       --tlsCert string          base-64 encoded PEM block to use as the certificate for TLS. If '--tlsCert' is used, then '--tlsKey' must also be used. If '--tlsCert' is not used, then TLS will not be used.
       --tlsKey string           base-64 encoded PEM block to use as the private key matching the TLS certificate. If '--tlsKey' is used, then '--tlsCert' must also be used.
 ```

@@ -17,14 +17,12 @@ import (
 )
 
 type MySQLProvider struct {
-	extClient        cs.KubedbV1alpha1Interface
-	storageClassName string
+	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewMySQLProvider(config *rest.Config, storageClassName string) Provider {
+func NewMySQLProvider(config *rest.Config) Provider {
 	return &MySQLProvider{
-		extClient:        cs.NewForConfigOrDie(config),
-		storageClassName: storageClassName,
+		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 

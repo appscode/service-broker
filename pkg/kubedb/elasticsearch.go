@@ -18,14 +18,12 @@ import (
 )
 
 type ElasticsearchProvider struct {
-	extClient        cs.KubedbV1alpha1Interface
-	storageClassName string
+	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewElasticsearchProvider(config *rest.Config, storageClassName string) Provider {
+func NewElasticsearchProvider(config *rest.Config) Provider {
 	return &ElasticsearchProvider{
-		extClient:        cs.NewForConfigOrDie(config),
-		storageClassName: storageClassName,
+		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 

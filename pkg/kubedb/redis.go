@@ -17,14 +17,12 @@ import (
 )
 
 type RedisProvider struct {
-	extClient        cs.KubedbV1alpha1Interface
-	storageClassName string
+	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewRedisProvider(config *rest.Config, storageClassName string) Provider {
+func NewRedisProvider(config *rest.Config) Provider {
 	return &RedisProvider{
-		extClient:        cs.NewForConfigOrDie(config),
-		storageClassName: storageClassName,
+		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 

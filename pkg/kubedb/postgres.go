@@ -22,10 +22,9 @@ type PostgreSQLProvider struct {
 	storageClassName string
 }
 
-func NewPostgreSQLProvider(config *rest.Config, storageClassName string) Provider {
+func NewPostgreSQLProvider(config *rest.Config) Provider {
 	return &PostgreSQLProvider{
-		extClient:        cs.NewForConfigOrDie(config),
-		storageClassName: storageClassName,
+		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 

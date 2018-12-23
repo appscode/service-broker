@@ -18,14 +18,12 @@ import (
 )
 
 type MongoDbProvider struct {
-	extClient        cs.KubedbV1alpha1Interface
-	storageClassName string
+	extClient cs.KubedbV1alpha1Interface
 }
 
-func NewMongoDbProvider(config *rest.Config, storageClassName string) Provider {
+func NewMongoDbProvider(config *rest.Config) Provider {
 	return &MongoDbProvider{
-		extClient:        cs.NewForConfigOrDie(config),
-		storageClassName: storageClassName,
+		extClient: cs.NewForConfigOrDie(config),
 	}
 }
 

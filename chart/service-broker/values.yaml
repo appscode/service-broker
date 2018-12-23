@@ -26,7 +26,7 @@ imagePullSecrets: []
 containerPort: 8080
 
 ## Log level for operator
-logLabel: 5
+logLabel: 3
 
 service:
   ## Specify the type of service
@@ -57,6 +57,3 @@ catalogs:
 
   # The path where catalogs for different database service plans are stored
   path: /etc/config/catalogs
-
-# storageClassName for storage
-storageClass: standard
