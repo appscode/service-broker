@@ -52,11 +52,7 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta) error {
 		}
 	}
 
-	if meta.Name != "" {
-		p.InstanceName = meta.Name
-	} else {
-		meta.Name = p.InstanceName
-	}
+	meta.Name = p.InstanceName
 	meta.Namespace = p.Namespace
 
 	// set instance id at labels

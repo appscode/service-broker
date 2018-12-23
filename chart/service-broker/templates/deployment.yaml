@@ -39,8 +39,6 @@ spec:
             - -v
             - "{{ .Values.logLabel }}"
             - --logtostderr
-            - --storage-class
-            - "{{ .Values.storageClass }}"
           ports:
             - name: http
               containerPort: {{ .Values.containerPort }}

@@ -24,16 +24,16 @@ type Client struct {
 	serviceProviders map[string]Provider
 }
 
-func NewClient(config *rest.Config, storageClassName string) *Client {
+func NewClient(config *rest.Config) *Client {
 	return &Client{
 		kubeClient: kubernetes.NewForConfigOrDie(config),
 		appClient:  appcat_cs.NewForConfigOrDie(config),
 		serviceProviders: map[string]Provider{
-			KubeDBServiceMySQL:         NewMySQLProvider(config, storageClassName),
-			KubeDBServicePostgreSQL:    NewPostgreSQLProvider(config, storageClassName),
-			KubeDBServiceElasticsearch: NewElasticsearchProvider(config, storageClassName),
-			KubeDBServiceMongoDB:       NewMongoDbProvider(config, storageClassName),
-			KubeDBServiceRedis:         NewRedisProvider(config, storageClassName),
+			KubeDBServiceMySQL:         NewMySQLProvider(config),
+			KubeDBServicePostgreSQL:    NewPostgreSQLProvider(config),
+			KubeDBServiceElasticsearch: NewElasticsearchProvider(config),
+			KubeDBServiceMongoDB:       NewMongoDbProvider(config),
+			KubeDBServiceRedis:         NewRedisProvider(config),
 			KubeDBServiceMemcached:     NewMemcachedProvider(config),
 		},
 	}

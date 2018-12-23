@@ -32,10 +32,8 @@ spec:
         - --catalog-names
         - "${SERVICE_BROKER_CATALOG_NAMES}"
         - -v
-        - "5"
+        - "3"
         - --logtostderr
-        - --storage-class
-        - ${SERVICE_BROKER_STORAGE_CLASS}
         ports:
         - containerPort: 8080
         readinessProbe:

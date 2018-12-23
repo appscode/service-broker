@@ -112,7 +112,6 @@ export SERVICE_BROKER_IMAGE_PULL_POLICY=IfNotPresent
 export SERVICE_BROKER_PORT=8080
 export SERVICE_BROKER_CATALOG_PATH="/etc/config/catalogs"
 export SERVICE_BROKER_CATALOG_NAMES="kubedb"
-export SERVICE_BROKER_STORAGE_CLASS=standard
 export SERVICE_BROKER_UNINSTALL=0
 
 export APPSCODE_ENV=${APPSCODE_ENV:-prod}
@@ -138,7 +137,6 @@ show_help() {
     echo "    --port                    port number at which the broker will expose"
     echo "    --catalogPath             the path of catalogs for different service plans"
     echo "    --catalogNames            comma separated names of the catalogs for different service plans"
-    echo "    --storage-class           name of the storage-class for database storage"
     echo "    --uninstall               uninstall service-broker"
 }
 
@@ -181,10 +179,6 @@ while test $# -gt 0; do
             ;;
         --catalogNames*)
             export SERVICE_BROKER_CATALOG_NAMES=`echo $1 | sed -e 's/^[^=]*=//g'`
-            shift
-            ;;
-        --storage-class*)
-            export SERVICE_BROKER_STORAGE_CLASS=`echo $1 | sed -e 's/^[^=]*=//g'`
             shift
             ;;
         --uninstall)
