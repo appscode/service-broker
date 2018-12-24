@@ -2,7 +2,7 @@
 
 Kubeapps is a web-based UI for deploying and managing applications in Kubernetes clusters. Using Kubeapps you can browse and provision external services from the [Service Catalog](https://github.com/kubernetes-incubator/service-catalog) and available Service Brokers. Please see [Kubeapps](https://github.com/kubeapps/kubeapps) for more information about Kubeapps.
 
-Say you have AppsCode Service Broker and Service Catalog installed in our cluster. Then you can provision, bind, unbind, deprovision instances for the services offered by AppsCode Service Broker.
+Here we have shown how you can browse and manage services provided by Kubedb in cluster through the Kubeapps Dashboard.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Now you are ready to go forward. After being ready the prerequisites in your clu
 
 ![ref](/docs/images/kubeapps-dashboard.png)
 
-If you select `All Namespaces` from the drop-down menu of namespaces, you will see `kubeapps`, `appscode-service-broker`, `catalog` in the list.
+If you select `All Namespaces` from the drop-down menu of namespaces, you will see `kubeapps`, `catalog`, `kubedb-operator`, `appscode-service-broker` in the list.
 
 ![ref](/docs/images/apps-in-all-ns.png)
 
@@ -99,15 +99,14 @@ In this section we are going to bind the instance created in the above provision
 
 - Click "Continue"
 - Another pop-up will ask you to provide the parameters in `json` for binding the instance. Currently AppsCode Service Broker does not require any parameter for binding. So just keep it empty.
-
-  ![ref](/docs/images/enter-binding-parametes.png)
-
 - Click "Submit"
 - After sometime refresh the page and you will find the status of the binding named `postgresqldb` as **`InjectedBindResult`** and
 
   ![ref](/docs/images/binding-successful.png)
 
 - Click on the link labeled as "show" and the secret data will be appeared in a pop-up.
+
+  ![ref](/docs/images/show-binding-secret-data.png)
 
 #### Unbinding
 
@@ -119,7 +118,7 @@ To deprovision the previously created instance named `postgresqldb` for plan **`
 
 ### Manage `postgresql` Plan
 
-Using this plan user can provide a custom specificatation for [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec).
+Using this plan you can provide a custom specificatation for [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec).
 
 #### Provision
 
@@ -136,7 +135,6 @@ This guide will show you how to provision `postgresql` plan for PostgreSQL datab
   ```json
   {
     "metadata": {
-      "name": "postgresqldb",
       "labels": {
         "app": "my-postgres"
       }
@@ -164,7 +162,7 @@ This guide will show you how to provision `postgresql` plan for PostgreSQL datab
 - Click "Submit"
 - After some time refresh the page. You will see **`ProvisionedSuccessfully`** as the reason in that page like following:
 
-  ![ref](/docs/images/instance-for-demo-postgresql.png)
+  ![ref](/docs/images/instance-for-custom-postgresql.png)
 
 - Go to the "Service Instances" page by clicking the "Service Instances (alpha)" menu from the menubar and select the `All Namespaces` or `default` from the drop-dwon for namespaces and a list of current service instances in the selected namespace will be shown.
 
@@ -190,6 +188,8 @@ In this section we are going to bind the instance created in the above provision
   ![ref](/docs/images/binding-successful.png)
 
 - Click on the link labeled as "show" and the secret data will be appeared in a pop-up.
+
+  ![ref](/docs/images/show-binding-secret-data-custom.png)
 
 #### Unbinding
 
