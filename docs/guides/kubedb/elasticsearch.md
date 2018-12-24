@@ -1,15 +1,15 @@
 # Walkthrough Elasticsearch
 
-To keep things isolated, this tutorial uses a separate namespace called `service-broker` throughout this tutorial.
+To keep things isolated, this tutorial uses a separate namespace called `demo` throughout this tutorial.
 
 ```console
-$ kubectl create ns service-broker
-namespace/service-broker created
+$ kubectl create ns demo
+namespace/demo created
 ```
 
-If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
+If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then follow the [installation instructions](/docs/setup/install.md).
 
-This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
+This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md) to install Service Catalog. Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
 
 > All commands in this document assume that you're operating out of the root of this repository.
 
