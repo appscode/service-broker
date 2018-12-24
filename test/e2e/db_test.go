@@ -286,7 +286,7 @@ var _ = Describe("[service-catalog]", func() {
 	Context("Test MySQL broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mysql"
-			serviceclassID = "mysql"
+			serviceclassID = "938a70c5-f2bc-4658-82dd-566bed7797e9"
 
 			instanceName = "test-mysqldb"
 			bindingName = "test-mysql-binding"
@@ -300,22 +300,22 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-mysql plan", func() {
 			serviceplanName = "demo-mysql"
-			serviceplanID = "demo-mysql"
+			serviceplanID = "1fd1abf1-e8e1-44a2-8214-bf0fd1ce9417"
 			test()
 		})
 
 		It("Runs through the custom mysql plan", func() {
 			serviceplanName = "mysql"
-			serviceplanID = "mysql"
+			serviceplanID = "6ed1ab9e-a640-4f26-9328-423b2e3816d7"
 			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"8.0-v1"}`
 			test()
 		})
 	})
 
-	Context("Test PostgreSQL broker service", func() {
+	FContext("Test PostgreSQL broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "postgresql"
-			serviceclassID = "postgresql"
+			serviceclassID = "2010d83f-d908-4d9f-879c-ce8f5f527f2a"
 
 			instanceName = "test-postgresqldb"
 			bindingName = "test-postgresql-binding"
@@ -330,19 +330,19 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-postgresql plan", func() {
 			serviceplanName = "demo-postgresql"
-			serviceplanID = "demo-postgresql"
+			serviceplanID = "c4bcf392-7ebb-4623-a79d-13d00d761d56"
 			test()
 		})
 
 		It("Runs through the demo-ha-postgresql plan", func() {
 			serviceplanName = "demo-ha-postgresql"
-			serviceplanID = "demo-ha-postgresql"
+			serviceplanID = "41818203-0e2d-4d30-809f-a60c8c73dae8"
 			test()
 		})
 
 		It("Runs through the custom postgresql plan", func() {
 			serviceplanName = "postgresql"
-			serviceplanID = "postgresql"
+			serviceplanID = "13373a9b-d5f5-4d9a-88df-d696bbc19071"
 			dbSpec = `,"pgsqlDatabase":"postgres","spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"version":"10.2-v1"}`
 			test()
 		})
@@ -351,7 +351,7 @@ var _ = Describe("[service-catalog]", func() {
 	Context("Test Elasticsearch broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "elasticsearch"
-			serviceclassID = "elasticsearch"
+			serviceclassID = "315fc21c-829e-4aa1-8c16-f7921c33550d"
 
 			instanceName = "test-elasticsearchdb"
 			bindingName = "test-elasticsearch-binding"
@@ -366,19 +366,19 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-elasticsearch plan", func() {
 			serviceplanName = "demo-elasticsearch"
-			serviceplanID = "demo-elasticsearch"
+			serviceplanID = "c4e99557-3a81-452e-b9cf-660f01c155c0"
 			test()
 		})
 
 		It("Runs through the demo-elasticsearch-cluster plan", func() {
 			serviceplanName = "demo-elasticsearch-cluster"
-			serviceplanID = "demo-elasticsearch-cluster"
+			serviceplanID = "2f05622b-724d-458f-abc8-f223b1afa0b9"
 			test()
 		})
 
 		It("Runs through the custom elasticsearch plan", func() {
 			serviceplanName = "elasticsearch"
-			serviceplanID = "elasticsearch"
+			serviceplanID = "6fa212e2-e043-4ae9-91c2-8e5c4403d894"
 			dbSpec = `,"spec":{"enableSSL":true,"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"6.3-v1"}`
 			test()
 		})
@@ -387,7 +387,7 @@ var _ = Describe("[service-catalog]", func() {
 	Context("Test MongoDb broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "mongodb"
-			serviceclassID = "mongodb"
+			serviceclassID = "d690058d-666c-45d8-ba98-fcb9fb47742e"
 
 			instanceName = "test-mongodb"
 			bindingName = "test-mongodb-binding"
@@ -401,19 +401,19 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-mongodb plan", func() {
 			serviceplanName = "demo-mongodb"
-			serviceplanID = "demo-mongodb"
+			serviceplanID = "498c12a6-7a68-4983-807b-75737f99062a"
 			test()
 		})
 
 		It("Runs through the demo-mongodb-cluster plan", func() {
 			serviceplanName = "demo-mongodb-cluster"
-			serviceplanID = "demo-mongodb-cluster"
+			serviceplanID = "6af19c54-7757-42e5-bb74-b8350037c4a2"
 			test()
 		})
 
 		It("Runs through the custom mongodb plan", func() {
 			serviceplanName = "mongodb"
-			serviceplanID = "mongodb"
+			serviceplanID = "e8f87ba6-0711-42db-a663-a3c75b78a541"
 			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"1Gi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"3.4-v1"}`
 			test()
 		})
@@ -422,7 +422,7 @@ var _ = Describe("[service-catalog]", func() {
 	Context("Test Redis broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "redis"
-			serviceclassID = "redis"
+			serviceclassID = "ccfd1c81-e59f-4875-a39f-75ba55320ce0"
 
 			instanceName = "test-redisdb"
 			bindingName = "test-redis-binding"
@@ -436,13 +436,13 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-redis plan", func() {
 			serviceplanName = "demo-redis"
-			serviceplanID = "demo-redis"
+			serviceplanID = "4b6ad8a7-272e-4cfd-bb38-5b9d4bd3962f"
 			test()
 		})
 
 		It("Runs through the custom redis plan", func() {
 			serviceplanName = "redis"
-			serviceplanID = "redis"
+			serviceplanID = "45716530-cadb-4247-b06a-24a34200d734"
 			dbSpec = `,"spec":{"storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Mi"}},"storageClassName":"standard"},"storageType":"Durable","terminationPolicy":"DoNotTerminate","version":"4.0-v1"}`
 			test()
 		})
@@ -451,7 +451,7 @@ var _ = Describe("[service-catalog]", func() {
 	Context("Test Memcached broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "memcached"
-			serviceclassID = "memcached"
+			serviceclassID = "d88856cb-fe3f-4473-ba8b-641480da810f"
 
 			instanceName = "test-memcachedb"
 			bindingName = "test-memcached-binding"
@@ -465,13 +465,13 @@ var _ = Describe("[service-catalog]", func() {
 
 		It("Runs through the demo-memcached plan", func() {
 			serviceplanName = "demo-memcached"
-			serviceplanID = "demo-memcached"
+			serviceplanID = "af1ce2dc-5734-4e41-aaa2-8aa6a58d688f"
 			test()
 		})
 
 		It("Runs through the custom memcached plan", func() {
 			serviceplanName = "memcached"
-			serviceplanID = "memcached"
+			serviceplanID = "d40e49b2-f8fb-4d47-96d3-35089bd0942d"
 			dbSpec = `,"spec":{"podTemplate":{"spec":{"resources":{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"250m","memory":"64Mi"}}}},"replicas":3,"terminationPolicy":"DoNotTerminate","version":"1.5.4-v1"}`
 			test()
 		})
