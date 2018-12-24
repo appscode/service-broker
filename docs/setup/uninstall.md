@@ -27,4 +27,4 @@ $ helm del <release_name> --purge
 
 To uninstall the software services of AppsCode, follow the link below:
 
- - [Uninstall Kubedb](https://kubedb.com/docs/0.9.0-rc.2/setup/uninstall/)
+ - [Uninstall Kubedb](https://kubedb.com/docs/0.9.0/setup/uninstall/)
