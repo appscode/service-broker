@@ -47,10 +47,10 @@ pushd $GOPATH/src/github.com/appscode/service-broker
 run() {
     hack/make.py;
     service-broker run \
-        --kube-config=/home/shudipta/.kube/config \
+        --kubeconfig=${HOME}/.kube/config \
         --catalog-names="kubedb" \
         --logtostderr \
-        -v 5 \
+        -v 3 \
         --catalog-path=hack/deploy/catalogs \
         --port=8081
 }

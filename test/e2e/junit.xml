@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuite name="e2e Suite" tests="2" failures="0" errors="0" time="124.365">
+  <testsuite name="e2e Suite" tests="2" failures="0" errors="0" time="61.776">
       <testcase name="[service-catalog] Test MySQL broker service Runs through the demo-mysql plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
@@ -39,12 +39,12 @@
       <testcase name="[service-catalog] Test Redis broker service Runs through the custom redis plan" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] Test Memcached broker service Runs through the demo-memcached plan" classname="e2e Suite" time="70.538377481"></testcase>
-      <testcase name="[service-catalog] Test Memcached broker service Runs through the custom memcached plan" classname="e2e Suite" time="53.78433722"></testcase>
-      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] Test Memcached broker service Runs through the demo-memcached plan" classname="e2e Suite" time="23.898262875"></testcase>
+      <testcase name="[service-catalog] Test Memcached broker service Runs through the custom memcached plan" classname="e2e Suite" time="37.814368889"></testcase>
+      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
-      <testcase name="[service-catalog] ServiceInstance should verify an Instance can be deleted if referenced service class does not exist." classname="e2e Suite" time="0">
+      <testcase name="[service-catalog] ClusterServiceBroker should become ready" classname="e2e Suite" time="0">
           <skipped></skipped>
       </testcase>
   </testsuite>

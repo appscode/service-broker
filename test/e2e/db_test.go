@@ -312,7 +312,7 @@ var _ = Describe("[service-catalog]", func() {
 		})
 	})
 
-	FContext("Test PostgreSQL broker service", func() {
+	Context("Test PostgreSQL broker service", func() {
 		JustBeforeEach(func() {
 			serviceclassName = "postgresql"
 			serviceclassID = "2010d83f-d908-4d9f-879c-ce8f5f527f2a"
