@@ -50,7 +50,7 @@ After completing this section you will be able to manage different services from
 
 ### Manage `demo-postgresql` Plan
 
-Now you can provision any plan from the list of plans for service named `postgresql`.
+Using this plan you can provision a demo PostgreSQL database in the cluster.
 
 #### Provision
 
