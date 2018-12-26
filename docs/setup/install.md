@@ -216,7 +216,7 @@ $ svcat get classes
   mysql                       KubeDB managed MySQL
   redis                       KubeDB managed Redis
   mongodb                     KubeDB managed MongoDB
-  memcached                   KubeDB managed Memcache
+  memcached                   KubeDB managed Memcached
 ```
 
 Here is the details for service `mysql` from KubeDB by `AppsCode`.

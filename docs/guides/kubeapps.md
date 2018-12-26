@@ -62,7 +62,7 @@ This guide will show you how to provision `demo-postgresql` plan for demo standa
   ![ref](/docs/images/enter-provision-name.png)
 
 - Click "Continue"
-- Another pop-up will be appeared to input the parameters for provisioning. AppsCode Service Broker accept only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectfully. The metadata is optional for all of the plans available. But the spec is required for the clustom plan and it must be valid. Here we have used the following `json` formated metadata:
+- Another pop-up will be appeared to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formated metadata:
 
   ```json
   {
@@ -130,7 +130,7 @@ This guide will show you how to provision `postgresql` plan for PostgreSQL datab
   ![ref](/docs/images/enter-provision-name.png)
 
 - Click "Continue"
-- Another pop-up will be appeared to input the parameters for provisioning. AppsCode Service Broker accept only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectfully. The metadata is optional for all of the plans available. But the spec is required for the clustom plan and it must be valid. Here we have used the following `json` formated parametes for this custom `postgresql` plan:
+- Another pop-up will be appeared to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formated parametes for this custom `postgresql` plan:
 
   ```json
   {

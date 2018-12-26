@@ -1,15 +1,17 @@
-# Walkthrough Postgres
+# PostgreSQL Walk-through
 
-To keep things isolated, this tutorial uses a separate namespace called `demo` throughout this tutorial.
+This tutorial will show you how to use AppsCode Service Broker to provision and deprovision an PostgreSQL cluster and bind to the PostgreSQL service.
+
+Before we start, you need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster. If you do not already have a cluster, you can create one by using [Minikube](https://github.com/kubernetes/minikube). Then install Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.38/docs/install.md) for Service Catalog. Optionally you may install the Service Catalog CLI, `svcat`. Examples for both `svcat` and `kubectl` are provided so that you may follow this walk-through using `svcat` or using only `kubectl`.
+
+If you've AppsCode Service Broker installed, then we are ready for the next step. If not, follow the [instructions](/docs/setup/install.md) to install KubeDB and AppsCode Service Broker.
+
+To keep things isolated, we are going to use a separate namespace called `demo` throughout this tutorial.
 
 ```console
 $ kubectl create ns demo
 namespace/demo created
 ```
-
-If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then follow the [installation instructions](/docs/setup/install.md).
-
-This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md) to install Service Catalog. Optionally you may install the Service Catalog CLI, `svcat`. Examples for both `svcat` and `kubectl` are provided so that you may follow this walkthrough using `svcat` or using only `kubectl`.
 
 > All commands in this document assume that you're operating out of the root of this repository.
 
@@ -35,7 +37,7 @@ $ svcat get classes
   mysql                       KubeDB managed MySQL
   redis                       KubeDB managed Redis
   mongodb                     KubeDB managed MongoDB
-  memcached                   KubeDB managed Memcache
+  memcached                   KubeDB managed Memcached
 ```
 
 Now, describe the `postgresql` class from the `Service Broker`.
@@ -79,13 +81,13 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports three plans for `postgresql` class as we can see above. Using `demo-postgresql` plan we can provision a demo Postgres database in cluster. Using `demo-ha-postgresql` plan we can provision a demo HA Postgres database in cluster. And using `postgresql` plan we can provision a custom Postgres database with custom [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres).
+AppsCode Service Broker currently supports three plans for `postgresql` class as we can see above. Using `demo-postgresql` plan we can provision a demo PostgreSQL database. Using `demo-ha-postgresql` plan we can provision a demo HA PostgreSQL database. And using `postgresql` plan we can provision a custom PostgreSQL database with the full functionality of a [Postgres CRD](https://kubedb.com/docs/0.9.0/concepts/databases/postgres).
 
-AppsCode Service Broker accept only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) as parameters for the plans of `postgresql` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectfully. The metadata is optional for all of the plans available. But the spec is required for the clustom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [Postgres Spec](https://kubedb.com/docs/0.9.0/concepts/databases/postgres/#postgres-spec) as parameters for the plans of `postgresql` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid.
 
-Since a `ClusterServiceClass` named `postgresql` exists in the cluster with a `ClusterServicePlan` named `postgresql`, we can create a `ServiceInstance` ponting to them with custom specification as parameter.
+Since a `ClusterServiceClass` named `postgresql` exists in the cluster with a `ClusterServicePlan` named `postgresql`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 
-> Unlike `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources, `ServiceInstance` resources must be namespaced. The latest version of service catelog supports `ServiceBroker`, `ServiceClass` and `ServicePlan` resources that are namespace scoped and alternative to `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources.
+> Unlike `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources, `ServiceInstance` resources must be namespaced. The latest version of .service catalog supports `ServiceBroker`, `ServiceClass` and `ServicePlan` resources that are namespace scoped and alternative to `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources.
 
 Create the `ServiceInstance`:
 
@@ -94,7 +96,7 @@ $ kubectl create -f docs/examples/postgresql-instance.yaml
 serviceinstance.servicecatalog.k8s.io/postgresqldb created
 ```
 
-After it is created, the service catalog controller will communicate with the service broker server to initaiate provisioning. Now, see the details:
+After it is created, the service catalog controller will communicate with the service broker server to initiate provisioning. Now, see the details:
 
 ```console
 $ svcat describe instance postgresqldb --namespace demo
@@ -216,14 +218,14 @@ status:
 
 ## Binding: Creating a ServiceBinding for this ServiceInstance
 
-We've now a `ServiceInstance` ready. To use this we've to bind it. AppsCode Service Broker currently supports no parameter for binding. So we didn't use any parameter for it. Now create a `ServiceBinding` resource:
+We have a ready `ServiceInstance`. To use this service, we can bind to it. AppsCode Service Broker currently supports no parameter for binding. Now, create a `ServiceBinding` resource:
 
 ```console
 $ kubectl create -f docs/examples/postgresql-binding.yaml
 servicebinding.servicecatalog.k8s.io/postgresqldb created
 ```
 
-Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the service broker server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
+Once the `ServiceBinding` resource is created, the service catalog controller initiates binding process by communicating with the service broker server. In general, the broker server returns the necessary credentials in this step. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
 
 ```console
 $ kubectl get servicebindings postgresqldb --namespace demo
@@ -309,7 +311,7 @@ status:
   unbindStatus: Required
 ```
 
-Here, the status has `Ready` condition which means the binding is now ready for use. This binding operation create a `Secret` named `postgresqldb` in namespace `demo`.
+Here, the status has `Ready` condition which means the binding is now ready for use. This binding operation creates a `Secret` named `postgresqldb` in namespace `demo`.
 
 ```console
 $ kubectl get secrets --namespace demo
@@ -344,7 +346,7 @@ postgresqldb-token-vll77   kubernetes.io/service-account-token   3      8m49s
 
 ## Deprovisioning: Deleting the ServiceInstance
 
-After unbinding the `ServiceInstance`, our next step is deleting the `ServiceInstance` resource we created before at the step of provisioning. It is called `Deprovisioning`.
+After unbinding the `ServiceInstance`, our next step is deleting the `ServiceInstance` resource we provisioned before. It is called `Deprovisioning`.
 
 ```console
 $ kubectl delete serviceinstance postgresqldb --namespace demo
@@ -356,7 +358,7 @@ deleted postgresqldb
 
 ## Cleanup
 
-Now, we've to clean the cluster. For this, just [uninstall](/docs/setup/uninstall.md) the broker. It'll delete the `ClusterServiceBroker` resource. Then service catalog controller automatically delete all `ClusterServiceClass` and `ClusterServicePlan` resources that came from that broker.
+To cleanup the cluster, just [uninstall](/docs/setup/uninstall.md) the broker. It'll delete the `ClusterServiceBroker` resource. Then service catalog controller automatically deletes all `ClusterServiceClass` and `ClusterServicePlan` resources that came from that broker.
 
 ```console
 $ kubectl get clusterserviceclasses
