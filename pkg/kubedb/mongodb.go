@@ -59,11 +59,11 @@ func (p MongoDbProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planMongoDBDemo:
+	case PlanMongoDBDemo:
 		mg.Spec = demoMongoDBSpec()
-	case planMongoDBClusterDemo:
+	case PlanMongoDBClusterDemo:
 		mg.Spec = demoMongoDBClusterSpec()
-	case planMongoDB:
+	case PlanMongoDB:
 		if err := provisionInfo.applyToSpec(&mg.Spec); err != nil {
 			return err
 		}

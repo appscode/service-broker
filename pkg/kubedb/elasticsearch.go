@@ -74,11 +74,11 @@ func (p ElasticsearchProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planElasticSearchDemo:
+	case PlanElasticSearchDemo:
 		es.Spec = demoElasticsearchSpec()
-	case planElasticSearchClusterDemo:
+	case PlanElasticSearchClusterDemo:
 		es.Spec = demoElasticsearchClusterSpec()
-	case planElasticSearch:
+	case PlanElasticSearch:
 		if err := provisionInfo.applyToSpec(&es.Spec); err != nil {
 			return err
 		}
