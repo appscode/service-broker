@@ -1,10 +1,24 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  name: my-broker-postgresql-instance
-  namespace: service-broker
+  name: postgresqldb
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   clusterServiceClassExternalName: postgresql
-  clusterServicePlanExternalName: default
+  clusterServicePlanExternalName: postgresql
+  parameters:
+    metadata:
+      labels:
+        app: my-postgres
+    spec:
+      version: "10.2-v1"
+      storage:
+        storageClassName: "standard"
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Mi
+      terminationPolicy: WipeOut

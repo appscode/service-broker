@@ -1,10 +1,25 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  name: my-broker-mongodb-instance
-  namespace: service-broker
+  name: mongodb
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   clusterServiceClassExternalName: mongodb
-  clusterServicePlanExternalName: default
+  clusterServicePlanExternalName: mongodb
+  parameters:
+    metadata:
+      labels:
+        app: my-mongodb
+    spec:
+      version: "3.4-v1"
+      storageType: Durable
+      storage:
+        storageClassName: "standard"
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Mi
+      terminationPolicy: WipeOut

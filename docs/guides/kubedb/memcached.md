@@ -1,15 +1,15 @@
 # Walkthrough Memcached
 
-To keep things isolated, this tutorial uses a separate namespace called `service-broker` throughout this tutorial.
+To keep things isolated, this tutorial uses a separate namespace called `demo` throughout this tutorial.
 
 ```console
-$ kubectl create ns service-broker
-namespace/service-broker created
+$ kubectl create ns demo
+namespace/demo created
 ```
 
-If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then the [installation instructions](/docs/setup/install.md) are ready.
+If we've AppsCode Service Broker installed, then we are ready for going forward. If not, then follow the [installation instructions](/docs/setup/install.md).
 
-This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md). Optionally you may install the Service Catalog CLI, svcat. Examples for both svcat and kubectl are provided so that you may follow this walkthrough using svcat or using only kubectl.
+This document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://github.com/kubernetes-incubator/service-catalog/blob/v0.1.27/docs/install.md) to install Service Catalog. Optionally you may install the Service Catalog CLI, `svcat`. Examples for both `svcat` and `kubectl` are provided so that you may follow this walkthrough using `svcat` or using only `kubectl`.
 
 > All commands in this document assume that you're operating out of the root of this repository.
 
@@ -18,29 +18,25 @@ This document assumes that you've installed Service Catalog onto your cluster. I
 First, list the available `ClusterServiceClass` resources:
 
 ```console
-$ kubectl get clusterserviceclasses -o=custom-columns=NAME:.metadata.name,EXTERNAL\ NAME:.spec.externalName
-NAME            EXTERNAL NAME
-elasticsearch   elasticsearch
-memcached       memcached
-mongodb         mongodb
-mysql           mysql
-postgresql      postgresql
-redis           redis
+$ kubectl get clusterserviceclasses
+NAME                                   EXTERNAL-NAME   BROKER                    AGE
+2010d83f-d908-4d9f-879c-ce8f5f527f2a   postgresql      appscode-service-broker   5m
+315fc21c-829e-4aa1-8c16-f7921c33550d   elasticsearch   appscode-service-broker   5m
+938a70c5-f2bc-4658-82dd-566bed7797e9   mysql           appscode-service-broker   5m
+ccfd1c81-e59f-4875-a39f-75ba55320ce0   redis           appscode-service-broker   5m
+d690058d-666c-45d8-ba98-fcb9fb47742e   mongodb         appscode-service-broker   5m
+d88856cb-fe3f-4473-ba8b-641480da810f   memcached       appscode-service-broker   5m
 
 $ svcat get classes
-      NAME        NAMESPACE                     DESCRIPTION
-+---------------+-----------+-------------------------------------------------+
-  elasticsearch               The example service from the ElasticSearch
-                              database!
-  memcached                   The example service from the Memcache database!
-  mongodb                     The example service from the MongoDB database!
-  mysql                       The example service from the MySQL database!
-  postgresql                  The example service from the PostgreSQL
-                              database!
-  redis                       The example service from the Redis database!
+      NAME        NAMESPACE           DESCRIPTION
++---------------+-----------+------------------------------+
+  postgresql                  KubeDB managed PostgreSQL
+  elasticsearch               KubeDB managed ElasticSearch
+  mysql                       KubeDB managed MySQL
+  redis                       KubeDB managed Redis
+  mongodb                     KubeDB managed MongoDB
+  memcached                   KubeDB managed Memcache
 ```
-
-> **NOTE:** The above kubectl command uses a custom set of columns. The **`NAME`** field is the Kubernetes name of the `ClusterServiceClass` and the **`EXTERNAL NAME`** field is the human-readable name for the service that the broker returns.
 
 Now, describe `memcached` class from the `Service Broker`.
 
@@ -48,44 +44,27 @@ Now, describe `memcached` class from the `Service Broker`.
 $ svcat describe class memcached
   Name:              memcached
   Scope:             cluster
-  Description:       The example service from the Memcache database!
-  Kubernetes Name:   memcached
+  Description:       KubeDB managed Memcache
+  Kubernetes Name:   d88856cb-fe3f-4473-ba8b-641480da810f
   Status:            Active
   Tags:
-  Broker:            service-broker
+  Broker:            appscode-service-broker
 
 Plans:
-   NAME              DESCRIPTION
-+---------+--------------------------------+
-  default   The default plan for the
-            'memcached' service
+       NAME                 DESCRIPTION
++----------------+--------------------------------+
+  demo-memcached   Demo Memcached
+  memcached        Memcached with custom
+                   specification
 ```
 
-To view the details of the `default` plan of `memcached` class:
+To view the details of any plan in this class use command `$ svcat describe plan <class_name>/<plan_name>`. For example:
 
 ```console
-$ kubectl get clusterserviceplans -o=custom-columns=NAME:.metadata.name,EXTERNAL\ NAME:.spec.externalName
-NAME                        EXTERNAL NAME
-elasticsearch-6-3           default
-elasticsearch-cluster-6-3   elasticsearch-cluster
-ha-postgresql-10-2          ha-postgresql
-memcached-1-5-4             default
-mongodb-3-6                 default
-mongodb-cluster-3-6         mongodb-cluster
-mysql-8-0                   default
-postgresql-10-2             default
-redis-4-0                   default
-
-$ svcat get plan memcached/default --scope cluster
-   NAME     NAMESPACE     CLASS                    DESCRIPTION
-+---------+-----------+-----------+-------------------------------------------+
-  default               memcached   The default plan for the 'memcached'
-                                    service
-
-$ svcat describe plan memcached/default --scope cluster
-  Name:              default
-  Description:       The default plan for the 'memcached' service
-  Kubernetes Name:   memcached-1-5-4
+$ svcat describe plan memcached/memcached --scope cluster
+  Name:              memcached
+  Description:       Memcached with custom specification
+  Kubernetes Name:   d40e49b2-f8fb-4d47-96d3-35089bd0942d
   Status:            Active
   Free:              true
   Class:             memcached
@@ -98,7 +77,11 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-Since a `ClusterServiceClass` named `memcached` exists in the cluster with a `ClusterServicePlan` named `default`, we can create a `ServiceInstance` ponting to them.
+AppsCode Service Broker currently supports two plans for `memcached` class as we can see above. Using `demo-memcached` plan we can provision a demo Memcached database in cluster. And using `memcached` plan we can provision a custom Memcached database with custom [Memcached Spec](https://kubedb.com/docs/0.9.0/concepts/databases/memcached/#memcached-spec) of [Memcached CRD](https://kubedb.com/docs/0.9.0/concepts/databases/memcached).
+
+AppsCode Service Broker accept only metadata and [Memcached Spec](https://kubedb.com/docs/0.9.0/concepts/databases/memcached/#memcached-spec) as parameters for the plans of `memcached` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectfully. The metadata is optional for both of the plans available. But the spec is required for the clustom plan and it must be valid.
+
+Since a `ClusterServiceClass` named `memcached` exists in the cluster with a `ClusterServicePlan` named `memcached`, we can create a `ServiceInstance` ponting to them with custom specification as parameter.
 
 > Unlike `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources, `ServiceInstance` resources must be namespaced. The latest version of service catelog supports `ServiceBroker`, `ServiceClass` and `ServicePlan` resources that are namespace scoped and alternative to `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan` resources.
 
@@ -106,21 +89,36 @@ Create the `ServiceInstance`:
 
 ```console
 $ kubectl create -f docs/examples/memcached-instance.yaml
-serviceinstance.servicecatalog.k8s.io "my-broker-memcached-instance" created
+serviceinstance.servicecatalog.k8s.io/memcached created
 ```
 
 After it is created, the service catalog controller will communicate with the service broker server to initaiate provisioning. Now, see the details:
 
 ```console
-$ svcat describe instance my-broker-memcached-instance --namespace service-broker
-  Name:        my-broker-memcached-instance
-  Namespace:   service-broker
-  Status:      Ready - The instance was provisioned successfully @ 2018-12-03 11:41:31 +0000 UTC
+$ svcat describe instance memcached --namespace demo
+  Name:        memcached
+  Namespace:   demo
+  Status:      Ready - The instance was provisioned successfully @ 2018-12-26 05:38:02 +0000 UTC
   Class:       memcached
-  Plan:        default
+  Plan:        memcached
 
 Parameters:
-  No parameters defined
+  metadata:
+    labels:
+      app: my-memcached
+  spec:
+    podTemplate:
+      spec:
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 250m
+            memory: 64Mi
+    replicas: 3
+    terminationPolicy: WipeOut
+    version: 1.5.4-v1
 
 Bindings:
 No bindings defined
@@ -129,7 +127,7 @@ No bindings defined
 The yaml configuration of this `ServiceInstance`:
 
 ```console
-kubectl get serviceinstance my-broker-memcached-instance --namespace service-broker -o yaml
+kubectl get serviceinstance memcached --namespace demo -o yaml
 ```
 
 Output:
@@ -138,25 +136,42 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  creationTimestamp: 2018-12-03T11:41:30Z
+  creationTimestamp: "2018-12-26T05:38:01Z"
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
   labels:
-    app: service-broker
-  name: my-broker-memcached-instance
-  namespace: service-broker
-  resourceVersion: "1140"
-  selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/serviceinstances/my-broker-memcached-instance
-  uid: 608b6f56-f6f0-11e8-89f4-0242ac110003
+    app: appscode-service-broker
+  name: memcached
+  namespace: demo
+  resourceVersion: "101"
+  selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/demo/serviceinstances/memcached
+  uid: 6878eb72-08d0-11e9-9fa4-0242ac110006
 spec:
   clusterServiceClassExternalName: memcached
   clusterServiceClassRef:
-    name: memcached
-  clusterServicePlanExternalName: default
+    name: d88856cb-fe3f-4473-ba8b-641480da810f
+  clusterServicePlanExternalName: memcached
   clusterServicePlanRef:
-    name: memcached-1-5-4
-  externalID: 608b6f0d-f6f0-11e8-89f4-0242ac110003
+    name: d40e49b2-f8fb-4d47-96d3-35089bd0942d
+  externalID: 6878eb3d-08d0-11e9-9fa4-0242ac110006
+  parameters:
+    metadata:
+      labels:
+        app: my-memcached
+    spec:
+      podTemplate:
+        spec:
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 250m
+              memory: 64Mi
+      replicas: 3
+      terminationPolicy: WipeOut
+      version: 1.5.4-v1
   updateRequests: 0
   userInfo:
     groups:
@@ -167,15 +182,33 @@ spec:
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-12-03T11:41:31Z
+  - lastTransitionTime: "2018-12-26T05:38:02Z"
     message: The instance was provisioned successfully
     reason: ProvisionedSuccessfully
     status: "True"
     type: Ready
   deprovisionStatus: Required
   externalProperties:
-    clusterServicePlanExternalID: memcached-1-5-4
-    clusterServicePlanExternalName: default
+    clusterServicePlanExternalID: d40e49b2-f8fb-4d47-96d3-35089bd0942d
+    clusterServicePlanExternalName: memcached
+    parameterChecksum: 9627fe20432ac96997f9ff1983cb3cb6e3b1a2d14184f2e44761a0eb13c31993
+    parameters:
+      metadata:
+        labels:
+          app: my-memcached
+      spec:
+        podTemplate:
+          spec:
+            resources:
+              limits:
+                cpu: 500m
+                memory: 128Mi
+              requests:
+                cpu: 250m
+                memory: 64Mi
+        replicas: 3
+        terminationPolicy: WipeOut
+        version: 1.5.4-v1
     userInfo:
       groups:
       - system:masters
@@ -190,46 +223,49 @@ status:
 
 ## Binding: Creating a ServiceBinding for this ServiceInstance
 
-We've now a `ServiceInstance` ready. To use this we've to bind it. So, create a `ServiceBinding` resource:
+We've now a `ServiceInstance` ready. To use this we've to bind it. AppsCode Service Broker currently supports no parameter for binding. So we didn't use any parameter for it. Now create a `ServiceBinding` resource:
 
 ```console
 $ kubectl create -f docs/examples/memcached-binding.yaml
-servicebinding.servicecatalog.k8s.io "my-broker-memcached-binding" created
+servicebinding.servicecatalog.k8s.io/memcached created
 ```
 
 Once the `ServiceBinding` resource is created, the service catalog controller initiate binding process by communicating with the service broker server. In general, this step makes the broker server to provide the necessary credentials. Then the service catalog controller will insert them into a Kubernetes `Secret` object.
 
 ```console
-$ kubectl get servicebindings my-broker-memcached-binding --namespace service-broker -o=custom-columns=NAME:.metadata.name,INSTANCE\ REF:.spec.instanceRef.name,SECRET\ NAME:.spec.secretName
-NAME                          INSTANCE REF                   SECRET NAME
-my-broker-memcached-binding   my-broker-memcached-instance   my-broker-memcached-secret
+$ kubectl get servicebindings memcached --namespace demo
+NAME        SERVICE-INSTANCE   SECRET-NAME   STATUS   AGE
+memcached   memcached          memcached     Ready    1m
 
-$ svcat get bindings --namespace service-broker
-             NAME                 NAMESPACE                INSTANCE             STATUS
-+-----------------------------+----------------+------------------------------+--------+
-  my-broker-memcached-binding   service-broker   my-broker-memcached-instance   Ready
+$ svcat get bindings memcached --namespace demo
+    NAME      NAMESPACE   INSTANCE    STATUS
++-----------+-----------+-----------+--------+
+  memcached   demo        memcached   Ready
 
-$ svcat describe bindings my-broker-memcached-binding --namespace service-broker
-  Name:        my-broker-memcached-binding
-  Namespace:   service-broker
-  Status:      Ready - Injected bind result @ 2018-12-03 11:45:54 +0000 UTC
-  Secret:      my-broker-memcached-secret
-  Instance:    my-broker-memcached-instance
+$ svcat describe bindings memcached --namespace demo
+  Name:        memcached
+  Namespace:   demo
+  Status:      Ready - Injected bind result @ 2018-12-26 07:58:54 +0000 UTC
+  Secret:      memcached
+  Instance:    memcached
 
 Parameters:
   No parameters defined
 
 Secret Data:
-  Protocol   8 bytes
-  host       55 bytes
-  port       5 bytes
-  uri        72 bytes
+  Host       18 bytes
+  Password   4 bytes
+  Port       5 bytes
+  Protocol   0 bytes
+  RootCert   4 bytes
+  URI        26 bytes
+  Username   4 bytes
 ```
 
 You can see the secret data by passing `--show-secrets` flag to the above command. The yaml configuration of this `ServiceBinding` resource is as follows:
 
 ```console
-kubectl get servicebindings my-broker-memcached-binding --namespace service-broker -o yaml
+kubectl get servicebindings memcached --namespace demo -o yaml
 ```
 
 Output:
@@ -238,22 +274,22 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  creationTimestamp: 2018-12-03T11:45:53Z
+  creationTimestamp: "2018-12-26T07:58:53Z"
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
   labels:
-    app: service-broker
-  name: my-broker-memcached-binding
-  namespace: service-broker
-  resourceVersion: "1144"
-  selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/service-broker/servicebindings/my-broker-memcached-binding
-  uid: fd731b8c-f6f0-11e8-89f4-0242ac110003
+    app: appscode-service-broker
+  name: memcached
+  namespace: demo
+  resourceVersion: "132"
+  selfLink: /apis/servicecatalog.k8s.io/v1beta1/namespaces/demo/servicebindings/memcached
+  uid: 16bb8d67-08e4-11e9-9fa4-0242ac110006
 spec:
-  externalID: fd731b12-f6f0-11e8-89f4-0242ac110003
+  externalID: 16bb8d1a-08e4-11e9-9fa4-0242ac110006
   instanceRef:
-    name: my-broker-memcached-instance
-  secretName: my-broker-memcached-secret
+    name: memcached
+  secretName: memcached
   userInfo:
     groups:
     - system:masters
@@ -263,7 +299,7 @@ spec:
 status:
   asyncOpInProgress: false
   conditions:
-  - lastTransitionTime: 2018-12-03T11:45:54Z
+  - lastTransitionTime: "2018-12-26T07:58:54Z"
     message: Injected bind result
     reason: InjectedBindResult
     status: "True"
@@ -280,14 +316,13 @@ status:
   unbindStatus: Required
 ```
 
-Here, the status has `Ready` condition which means the binding is now ready for use. This binding operation create a `Secret` named `my-broker-memcached-secret` in namespace `service-broker`.
+Here, the status has `Ready` condition which means the binding is now ready for use. This binding operation create a `Secret` named `memcached` in namespace `demo`.
 
 ```console
-$ kubectl get secrets --namespace service-broker
-NAME                         TYPE                                  DATA   AGE
-default-token-ghn5f          kubernetes.io/service-account-token   3      149m
-my-broker-memcached-secret   Opaque                                4      4m46s
-service-broker-token-wgp82   kubernetes.io/service-account-token   3      149m
+$ kubectl get secrets --namespace demo
+NAME                  TYPE                                  DATA   AGE
+default-token-2zx6l   kubernetes.io/service-account-token   3      153m
+memcached             Opaque                                7      5m57s
 ```
 
 ## Unbinding: Deleting the ServiceBinding
@@ -295,20 +330,19 @@ service-broker-token-wgp82   kubernetes.io/service-account-token   3      149m
 We can now delete the `ServiceBinding` resource we created in the `Binding` step (it is called `Unbinding` the `ServiceInstance`)
 
 ```console
-$ kubectl delete servicebinding my-broker-memcached-binding --namespace service-broker
-servicebinding.servicecatalog.k8s.io "my-broker-memcached-binding" deleted
+$ kubectl delete servicebinding memcached --namespace demo
+servicebinding.servicecatalog.k8s.io "memcached" deleted
 
-$ svcat unbind my-broker-memcached-instance --namespace service-broker
-deleted my-broker-memcached-binding
+$ svcat unbind memcached --namespace demo
+deleted memcached
 ```
 
-After completion of unbinding, the `Secret` named `my-broker-memcached-secret` should be deleted.
+After completion of unbinding, the `Secret` named `memcached` should be deleted.
 
 ```console
-$ kubectl get secrets --namespace service-broker
-NAME                         TYPE                                  DATA   AGE
-default-token-ghn5f          kubernetes.io/service-account-token   3      152m
-service-broker-token-wgp82   kubernetes.io/service-account-token   3      152m
+$ kubectl get secrets --namespace demo
+NAME                  TYPE                                  DATA   AGE
+default-token-2zx6l   kubernetes.io/service-account-token   3      174m
 ```
 
 ## Deprovisioning: Deleting the ServiceInstance
@@ -316,11 +350,11 @@ service-broker-token-wgp82   kubernetes.io/service-account-token   3      152m
 After unbinding the `ServiceInstance`, our next step is deleting the `ServiceInstance` resource we created before at the step of provisioning. It is called `Deprovisioning`.
 
 ```console
-$ kubectl delete serviceinstance my-broker-memcached-instance --namespace service-broker
-serviceinstance.servicecatalog.k8s.io "my-broker-memcached-instance" deleted
+$ kubectl delete serviceinstance memcached --namespace demo
+serviceinstance.servicecatalog.k8s.io "memcached" deleted
 
-$ svcat deprovision my-broker-memcached-instance --namespace service-broker
-deleted my-broker-memcached-instance
+$ svcat deprovision memcached --namespace demo
+deleted memcached
 ```
 
 ## Cleanup

@@ -1,11 +1,11 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  name: my-broker-memcached-binding
-  namespace: service-broker
+  name: memcached
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   instanceRef:
-    name: my-broker-memcached-instance
-  secretName: my-broker-memcached-secret
+    name: memcached
+  secretName: memcached
