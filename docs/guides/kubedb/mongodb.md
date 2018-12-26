@@ -114,7 +114,7 @@ Parameters:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 50Mi
+          storage: 1Gi
       storageClassName: standard
     storageType: Durable
     terminationPolicy: WipeOut
@@ -165,7 +165,7 @@ spec:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 50Mi
+            storage: 1Gi
         storageClassName: standard
       storageType: Durable
       terminationPolicy: WipeOut
@@ -200,7 +200,7 @@ status:
           - ReadWriteOnce
           resources:
             requests:
-              storage: 50Mi
+              storage: 1Gi
           storageClassName: standard
         storageType: Durable
         terminationPolicy: WipeOut
