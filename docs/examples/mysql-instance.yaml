@@ -1,10 +1,25 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceInstance
 metadata:
-  name: my-broker-mysql-instance
-  namespace: service-broker
+  name: mysqldb
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   clusterServiceClassExternalName: mysql
-  clusterServicePlanExternalName: default
+  clusterServicePlanExternalName: mysql
+  parameters:
+    metadata:
+      labels:
+        app: my-mysql
+    spec:
+      version: "8.0-v1"
+      storageType: Durable
+      storage:
+        storageClassName: "standard"
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+      terminationPolicy: WipeOut

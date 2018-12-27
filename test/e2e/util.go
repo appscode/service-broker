@@ -110,10 +110,8 @@ func NewServiceBrokerDeployment(name, namespace, image, storageClass string) *ap
 								"--catalog-names",
 								"kubedb",
 								"-v",
-								"5",
+								"3",
 								"--logtostderr",
-								"--storage-class",
-								storageClass,
 							},
 							Ports: []corev1.ContainerPort{
 								{

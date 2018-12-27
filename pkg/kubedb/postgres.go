@@ -58,11 +58,11 @@ func (p PostgreSQLProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planPostgresDemo:
+	case PlanPostgresDemo:
 		pg.Spec = demoPostgresSpec()
-	case planPostgresHADemo:
+	case PlanPostgresHADemo:
 		pg.Spec = demoHAPostgresSpec()
-	case planPostgres:
+	case PlanPostgres:
 		if err := provisionInfo.applyToSpec(&pg.Spec); err != nil {
 			return err
 		}

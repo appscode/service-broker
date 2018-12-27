@@ -1,6 +1,6 @@
 # Uninstall Service Broker
 
-To uninstall service broker, run the following command:
+To uninstall service-broker, run the following command:
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash -s -- --uninstall
@@ -18,6 +18,13 @@ clusterservicebroker.servicecatalog.k8s.io "service-broker" deleted
 Successfully uninstalled service-broker!
 ```
 
+For helm nstallation, run the following command to uninstall the service-broker
+
+```console
+$ helm del <release_name> --purge
+```
+
+
 To uninstall the software services of AppsCode, follow the link below:
 
- - [Uninstall Kubedb](https://kubedb.com/docs/0.9.0-rc.2/setup/uninstall/)
+ - [Uninstall Kubedb](https://kubedb.com/docs/0.9.0/setup/uninstall/)

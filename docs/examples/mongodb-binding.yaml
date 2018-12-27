@@ -1,11 +1,11 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  name: my-broker-mongodb-binding
-  namespace: service-broker
+  name: mongodb
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   instanceRef:
-    name: my-broker-mongodb-instance
-  secretName: my-broker-mongodb-secret
+    name: mongodb
+  secretName: mongodb

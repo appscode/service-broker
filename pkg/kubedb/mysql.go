@@ -48,9 +48,9 @@ func (p MySQLProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planMySQLDemo:
+	case PlanMySQLDemo:
 		my.Spec = demoMySQLSpec()
-	case planMySQL:
+	case PlanMySQL:
 		if err := provisionInfo.applyToSpec(&my.Spec); err != nil {
 			return err
 		}

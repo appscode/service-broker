@@ -65,9 +65,9 @@ func (p MemcachedProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planMemcachedDemo:
+	case PlanMemcachedDemo:
 		mc.Spec = demoMemcachedSpec()
-	case planMemcached:
+	case PlanMemcached:
 		if err := provisionInfo.applyToSpec(&mc.Spec); err != nil {
 			return err
 		}

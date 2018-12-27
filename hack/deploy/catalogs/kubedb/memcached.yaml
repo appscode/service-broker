@@ -1,10 +1,10 @@
 id: d88856cb-fe3f-4473-ba8b-641480da810f
 name: memcached
-description: KubeDB managed Memcache
+description: KubeDB managed Memcached
 bindable: true
 planupdatable: true
 metadata:
-  displayName: KubeDB managed Memcache
+  displayName: KubeDB managed Memcached
   imageUrl: https://cdn.appscode.com/images/logo/databases/memcached.png
 plans:
 - id: af1ce2dc-5734-4e41-aaa2-8aa6a58d688f

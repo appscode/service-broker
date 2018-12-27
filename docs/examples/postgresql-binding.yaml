@@ -1,11 +1,11 @@
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ServiceBinding
 metadata:
-  name: my-broker-postgresql-binding
-  namespace: service-broker
+  name: postgresqldb
+  namespace: demo
   labels:
-    app: service-broker
+    app: appscode-service-broker
 spec:
   instanceRef:
-    name: my-broker-postgresql-instance
-  secretName: my-broker-postgresql-secret
+    name: postgresqldb
+  secretName: postgresqldb

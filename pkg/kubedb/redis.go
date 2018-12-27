@@ -48,9 +48,9 @@ func (p RedisProvider) Create(provisionInfo ProvisionInfo) error {
 
 	// set postgres spec
 	switch provisionInfo.PlanID {
-	case planRedisDemo:
+	case PlanRedisDemo:
 		rd.Spec = demoRedisSpec()
-	case planRedis:
+	case PlanRedis:
 		if err := provisionInfo.applyToSpec(&rd.Spec); err != nil {
 			return err
 		}
