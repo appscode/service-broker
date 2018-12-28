@@ -25,17 +25,28 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Create chart name and version as used by the chart label.
+Create the name of the service account to use
 */}}
-{{- define "service-broker.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- define "service-broker.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "service-broker.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{- define "service-broker.labels" -}}
+chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+app: "{{ template "service-broker.name" . }}"
+release: {{ .Release.Name | quote}}
+heritage: "{{ .Release.Service }}"
 {{- end -}}
 
 {{/*
 template for "--catalog-names" flag values
 */}}
 {{- define "service-broker.catalogNames" }}
-{{- range $i, $item := .Values.catalogs.names }}
+{{- range $i, $item := .Values.catalog.names }}
   {{- if eq ($i) 0 }}
     {{- $item }}
   {{- else }}

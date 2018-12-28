@@ -55,8 +55,8 @@ The following table lists the configurable parameters of the AppsCode Service Br
 | `service.type`      | Specify the type of Service Broker service                        | `ClusterIP`        |
 | `service.port`      | Specify the sevice port number                                      | `80`               |
 | `resources`         | CPU/Memory resource requests/limits                                 | `{}`               |
-| `catalogs.names`    | List of catalogs                                                    | `["kubedb"]`       |
-| `catalogs.path`     | The path where catalogs for different database service plans are stored          | `/etc/config/catalogs`       |
+| `catalog.names`    | List of catalog                                                    | `["kubedb"]`       |
+| `catalog.path`     | The path where catalog for different database service plans are stored          | `/etc/config/catalog`       |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 

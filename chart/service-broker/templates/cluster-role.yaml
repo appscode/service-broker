@@ -1,0 +1,42 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "service-broker.fullname" . }}
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - appcatalog.appscode.com
+  resources:
+  - appbindings
+  verbs: ["get"]
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - serviceinstances
+  verbs: ["list"]
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - clusterservicebrokers
+  verbs: ["delete"]
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs: ["list"]
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs: ["get"]
+- apiGroups:
+  - kubedb.com
+  resources:
+  - mysqls
+  - postgreses
+  - elasticsearches
+  - mongodbs
+  - memcacheds
+  - redises
+  verbs: ["get", "list", "create", "delete"]
