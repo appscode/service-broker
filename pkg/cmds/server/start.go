@@ -1,51 +1,45 @@
 package server
 
 import (
-	"context"
-	"flag"
 	"fmt"
-	"os"
-	"os/signal"
-	"path"
-	"strconv"
-	"syscall"
+	"io"
+	"net"
 
+	"github.com/appscode/kutil/tools/clientcmd"
 	"github.com/appscode/service-broker/pkg/broker"
-	"github.com/golang/glog"
-	"github.com/pmorie/osb-broker-lib/pkg/metrics"
-	"github.com/pmorie/osb-broker-lib/pkg/rest"
-	"github.com/pmorie/osb-broker-lib/pkg/server"
-	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/appscode/service-broker/pkg/server"
 	"github.com/spf13/pflag"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	genericoptions "k8s.io/apiserver/pkg/server/options"
 )
 
+const defaultEtcdPathPrefix = "/registry/service-broker.appscode.com"
+
 type BrokerServerOptions struct {
-	ExtraOptions *broker.ExtraOptions
+	RecommendedOptions *genericoptions.RecommendedOptions
+	ExtraOptions       *ExtraOptions
 
-	Port     int
-	TLSCert  string
-	TLSKey   string
-	Insecure bool
+	StdOut io.Writer
+	StdErr io.Writer
 }
 
-func NewBrokerServerOptions() *BrokerServerOptions {
-	return &BrokerServerOptions{
-		ExtraOptions: broker.NewExtraOptions(),
-
-		Port:     8080,
-		Insecure: false,
+func NewBrokerServerOptions(out, errOut io.Writer) *BrokerServerOptions {
+	o := &BrokerServerOptions{
+		// TODO we will nil out the etcd storage options.  This requires a later level of k8s.io/apiserver
+		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, server.Codecs.LegacyCodec(admissionv1beta1.SchemeGroupVersion)),
+		ExtraOptions:       NewExtraOptions(),
+		StdOut:             out,
+		StdErr:             errOut,
 	}
+	o.RecommendedOptions.Etcd = nil
+	o.RecommendedOptions.Admission = nil
+
+	return o
 }
 
-func (o *BrokerServerOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.IntVar(&o.Port, "port", o.Port, "use '--port' option to specify the port for broker to listen on.")
-	fs.BoolVar(&o.Insecure, "insecure", o.Insecure,
-		"use --insecure to use HTTP vs HTTPS.")
-	fs.StringVar(&o.TLSCert, "tlsCert", o.TLSCert,
-		"base-64 encoded PEM block to use as the certificate for TLS. If '--tlsCert' is used, then '--tlsKey' must also be used. If '--tlsCert' is not used, then TLS will not be used.")
-	fs.StringVar(&o.TLSKey, "tlsKey", o.TLSKey,
-		"base-64 encoded PEM block to use as the private key matching the TLS certificate. If '--tlsKey' is used, then '--tlsCert' must also be used.")
-
+func (o BrokerServerOptions) AddFlags(fs *pflag.FlagSet) {
+	o.RecommendedOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
 }
 
@@ -57,73 +51,42 @@ func (o *BrokerServerOptions) Complete() error {
 	return nil
 }
 
-func (o BrokerServerOptions) Run() error {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
-	go cancelOnInterrupt(ctx, cancelFunc)
-
-	if err := o.runWithContext(ctx); err != nil && err != context.Canceled && err != context.DeadlineExceeded {
-		return err
+func (o BrokerServerOptions) Config() (*server.BrokerServerConfig, error) {
+	// TODO have a "real" external address
+	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", nil, []net.IP{net.ParseIP("127.0.0.1")}); err != nil {
+		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	return nil
+	serverConfig := genericapiserver.NewRecommendedConfig(server.Codecs)
+	serverConfig.EnableMetrics = true
+	if err := o.RecommendedOptions.ApplyTo(serverConfig, server.Scheme); err != nil {
+		return nil, err
+	}
+	// Fixes https://github.com/Azure/AKS/issues/522
+	clientcmd.Fix(serverConfig.ClientConfig)
+
+	extraConfig := broker.NewConfig(serverConfig.ClientConfig)
+	if err := o.ExtraOptions.ApplyTo(extraConfig); err != nil {
+		return nil, err
+	}
+
+	config := &server.BrokerServerConfig{
+		GenericConfig: serverConfig,
+		ExtraConfig:   extraConfig,
+	}
+	return config, nil
 }
 
-func (o BrokerServerOptions) runWithContext(ctx context.Context) error {
-	if flag.Arg(0) == "version" {
-		fmt.Printf("%s/%s\n", path.Base(os.Args[0]), "0.1.0")
-		return nil
-	}
-	if (o.TLSCert != "" || o.TLSKey != "") &&
-		(o.TLSCert == "" || o.TLSKey == "") {
-		fmt.Println("To use TLS, both --tlsCert and --tlsKey must be used")
-		return nil
-	}
-
-	addr := ":" + strconv.Itoa(o.Port)
-
-	glog.Infoln("broker client creating...")
-	b, err := broker.NewBroker(o.ExtraOptions)
-	glog.Infoln("broker client created")
-
+func (o BrokerServerOptions) Run(stopCh <-chan struct{}) error {
+	config, err := o.Config()
 	if err != nil {
 		return err
 	}
 
-	// Prometheus metrics
-	reg := prom.NewRegistry()
-	osbMetrics := metrics.New()
-	reg.MustRegister(osbMetrics)
-
-	api, err := rest.NewAPISurface(b, osbMetrics)
+	s, err := config.Complete().New()
 	if err != nil {
 		return err
 	}
 
-	s := server.New(api, reg)
-
-	glog.Infof("Starting broker!")
-
-	if o.TLSCert == "" && o.TLSKey == "" {
-		err = s.Run(ctx, addr)
-	} else {
-		err = s.RunTLS(ctx, addr, o.TLSCert, o.TLSKey)
-	}
-	return err
-}
-
-func cancelOnInterrupt(ctx context.Context, f context.CancelFunc) {
-	term := make(chan os.Signal)
-	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-term:
-			glog.Infof("Received SIGTERM, exiting gracefully...")
-			f()
-			os.Exit(0)
-		case <-ctx.Done():
-			os.Exit(0)
-		}
-	}
+	return s.Run(stopCh)
 }

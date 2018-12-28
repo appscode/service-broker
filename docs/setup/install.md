@@ -4,9 +4,9 @@
 
 First you need to have the software services by AppsCode installed in the cluster. Currently AppsCode Service Broker supports the following software service:
 
- - Kubedb
+ - KubeDB
 
-So we need to have Kubedb installed to go forward. To install Kubedb see [here](https://kubedb.com/docs/0.9.0/setup/install/).
+So we need to have KubeDB installed to go forward. To install KubeDB see [here](https://kubedb.com/docs/0.9.0/setup/install/).
 
 To check the installation for AppsCode Service Broker, we have used [Service Catalog](https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/). So, this document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://svc-cat.io/docs/install/). Optionally you may install the Service Catalog CLI (`svcat`) from [Installing the Service Catalog CLI](https://svc-cat.io/docs/install/#installing-the-service-catalog-cli) section.
 
@@ -14,85 +14,7 @@ To check the installation for AppsCode Service Broker, we have used [Service Cat
 
 ## Install Service Broker
 
-AppsCode Service Broker can be installed via a script or as a Helm chart.
-
-- [Script](/docs/setup/install.md#Using-Script)
-- [Helm](/docs/setup/install.md#Using-Helm)
-
-### Using Script
-
-To install AppsCode Service Broker in your Kubernetes cluster, run the following command:
-
-```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash
-...
-
-configmap/kubedb created
-deployment.apps/service-broker created
-service/service-broker created
-serviceaccount/service-broker created
-clusterrole.rbac.authorization.k8s.io/service-broker created
-clusterrolebinding.rbac.authorization.k8s.io/service-broker created
-clusterservicebroker.servicecatalog.k8s.io/service-broker created
-
-waiting until service-broker deployment is ready
-
-Successfully installed service-broker in kube-system namespace!
-```
-
-After successful installation, you should have a `service-broker-***` pod running in the `kube-system` namespace.
-
-```console
-$ kubectl get pods -n kube-system | grep service-broker
-service-broker-***       1/1       Running   0          48s
-```
-
-#### Customizing Installer
-
-The installer script and associated yaml files can be found in the [hack/deploy](https://github.com/appscode/service-broker/tree/master/hack/deploy) folder. You can see the full list of flags available to installer using `-h` flag.
-
-```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh | bash -s -- -h
-install.sh - install service-broker
-
-install.sh [options]
-
-options:
---------
--h, --help                    show brief help
--n, --namespace=NAMESPACE     specify namespace (default: kube-system)
-    --docker-registry         docker registry used to pull service-broker image (default: appscode)
-    --image-pull-secret       name of secret used to pull service-broker image
-    --port                    port number at which the broker will expose
-    --catalogPath             the path of catalogs for different service plans
-    --catalogNames            comma separated names of the catalogs for different service plans
-    --uninstall               uninstall service-broker
-```
-
-If you would like to run service broker pod in your own namespace say `my-ns` namespace, first create it and then pass the `--namespace=my-ns` flag:
-
-```console
-$ kubectl create namespace my-ns
-namespace/my-ns created
-
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
-    | bash -s -- --namespace=my-ns
-```
-
-If you are using a private Docker registry, you need to pull the following docker images:
-
- - [appscode/service-broker](https://hub.docker.com/r/appscode/service-broker)
-
-To pass the address of your private registry and optionally a image pull secret use flags `--docker-registry` and `--image-pull-secret` respectively.
-
-```console
-$ curl -fsSL https://raw.githubusercontent.com/appscode/service-broker/master/hack/deploy/install.sh \
-    | bash -s -- --docker-registry=MY_REGISTRY [--image-pull-secret=SECRET_NAME]
-```
-
-### Using Helm
-
-`Service Broker` can also be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `appscode-service-broker`:
+AppsCode Service Broker can be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `appscode-service-broker`:
 
 ```console
 $ helm repo add appscode https://charts.appscode.com/stable/
@@ -108,14 +30,6 @@ To see the detailed configuration options, visit [here](https://github.com/appsc
 To check whether service broker pod has started or not, run the following command:
 
 ```console
-# for script installation
-$ kubectl get pods --all-namespaces -l app=appscode-service-broker --watch
-NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
-kube-system   appscode-service-broker-76c759f6c7-htqbh   0/1     Pending   0          0s
-kube-system   appscode-service-broker-76c759f6c7-htqbh   0/1   ContainerCreating   0     0s
-kube-system   appscode-service-broker-76c759f6c7-htqbh   0/1   Running   0     1s
-kube-system   appscode-service-broker-76c759f6c7-htqbh   1/1   Running   0     7s
-
 # for helm installation
 $ NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   appscode-service-broker-85795d8b6f-ntw9v   0/1     Pending   0          0s
@@ -126,29 +40,29 @@ kube-system   appscode-service-broker-85795d8b6f-ntw9v   1/1   Running   0     1
 
 Once the pod is running, you can cancel the above command by typing `Ctrl+C`.
 
-Now, to confirm `ClusterServiceBroker`, `ClusterServiceClass`, `ClusterServicePlan` have been registered by the `Service Broker`, follow the sections bellow:
+Now, to confirm `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServicePlan`s have been registered by the service broker, run the commands below:
 
 #### Checking a ClusterServiceBroker Resource
 
 ```console
 $ kubectl get clusterservicebrokers -l app=appscode-service-broker
-NAME                      URL                                                            STATUS   AGE
-appscode-service-broker   http://appscode-service-broker.kube-system.svc.cluster.local   Ready    1m
+NAME                      URL                                               STATUS   AGE
+appscode-service-broker   https://appscode-service-broker.kube-system.svc   Ready    1m
 
 $ svcat get brokers
            NAME             NAMESPACE                               URL                                STATUS
 +-------------------------+-----------+--------------------------------------------------------------+--------+
-  appscode-service-broker               http://appscode-service-broker.kube-system.svc.cluster.local   Ready
+  appscode-service-broker               https://appscode-service-broker.kube-system.svc                Ready
 ```
 
-After creating `ClusterServiceBroker` resource, the service catalog controller responds by querying the broker server to see what services it offers and creates a `ClusterServiceClass` for each of the services.
+After `ClusterServiceBroker` resource is created, the service catalog controller responds by querying the broker server to see what services it offers and creates a `ClusterServiceClass` for each of the services.
 
 We can check the status of the broker:
 
 ```console
 $ svcat describe broker appscode-service-broker
   Name:     appscode-service-broker
-  URL:      http://appscode-service-broker.kube-system.svc.cluster.local
+  URL:      https://appscode-service-broker.kube-system.svc
   Status:   Ready - Successfully fetched catalog entries from broker @ 2018-12-24 11:24:49 +0000 UTC
 ```
 
@@ -164,35 +78,41 @@ Output:
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ClusterServiceBroker
 metadata:
-  creationTimestamp: "2018-12-24T11:24:15Z"
+  creationTimestamp: 2018-12-28T20:23:44Z
   finalizers:
   - kubernetes-incubator/service-catalog
   generation: 1
   labels:
-    app: appscode-service-broker
-    chart: appscode-service-broker-0.1.0
+    app: service-broker
+    chart: service-broker-0.1.0
     heritage: Tiller
     release: appscode-service-broker
   name: appscode-service-broker
-  resourceVersion: "604"
+  resourceVersion: "25"
   selfLink: /apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/appscode-service-broker
-  uid: 724608cf-076e-11e9-a97c-0242ac110007
+  uid: 79417e48-0ade-11e9-a302-0242ac110006
 spec:
+  authInfo:
+    bearer:
+      secretRef:
+        name: appscode-service-broker-accessor-token
+        namespace: catalog
+  caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1akNDQWM2Z0F3SUJBZ0lRUW9kK2dGeGV5VG85NjZDWTZIcDZhekFOQmdrcWhraUc5dzBCQVFzRkFEQU4KTVFzd0NRWURWUVFERXdKallUQWVGdzB4T0RFeU1qZ3lNREl6TkRKYUZ3MHlPREV5TWpVeU1ESXpOREphTUEweApDekFKQmdOVkJBTVRBbU5oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUExMktICjJXZGtGeHdVaVBaUnBUZ2lENk5KWEUxblkrNkhkQXU0Mm91c1cwYkd6WkNQN21hWFpKQXV4ZFU2ZTdHYTVRZ08Kb0xsZUcyYThSU1NpQUNmQlV5cE1EcmRza2haa3dwRnBGYlJKSUN4bXl2azBZOWhpZDlDbmFTL1BZbHFQcE5TYgp1aUNvUUtvL2F2NW9zN2lYbTJhRnE4aVdUbDV0ZExxUVJEVVIxMzZvRVg2ZTB4SkV1MWRaU3BPWU9pOTFrbWhUCmY5L3E0VVQrSzlUbEZpNnpHc0ZFTkxCd04zRTdwZklML0dYTFBLNjJ4VkdQc1dUZDhQNW1QelZpNjJ4SEloTDEKandTL09pcUpkQnllWFdiVnp4NXNoMStZL2xNSmtleXI1ZjRKcEZ4V1U2UllaWkU3dUJ1emdrbDRIdnNDbXJUcwpMN3QwV01mMlBWWHBHV0tTWFFJREFRQUJvMEl3UURBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3CkZBWUlLd1lCQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdEUVlKS29aSWh2Y04KQVFFTEJRQURnZ0VCQUdWOW1TclVMODByUW1lWm51aExIUUxIQXBkTUFncmk3b3RNL3FLeE9tZ1ZaS3k5eEFiSQovSTdUQVdpKzJEVG00dWF2RzRoMFI1NmZXTXVMbExpNzJwL3ZUNVF4Yk5senhGM2ladDB2YTFobjdicDNVS2phCm9IS214ZWRaU0VwV2tsYUxEVlExak15R3lLUkZieCtaTHZwNk53NFZiNkd3YmF5b2dJck5NcmdpV2xvTUR1K0IKVHE5WnE3Y00wVVd2Q2xjUjM0SGJ2TG5PaGRMTVFId3VGZDYwL2dPYVRaQWlZY1F5SWt4Zno0dEtLVlgwcUJGaApkYTZUL1laZVQrYWl0OFAyYXV2TDd4VkpLaFFrazFPQXVvMStCRXdTQ3FzUTI4NjZiMG1nVllvQUhybXlDOXJLCnZ2dS9LdmtNSUpVZDRDaitnRlF3VVZlejhVOG52bFc5d1NRPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
   relistBehavior: Duration
   relistRequests: 0
-  url: http://appscode-service-broker.kube-system.svc.cluster.local
+  url: https://appscode-service-broker.broker.svc
 status:
   conditions:
-  - lastTransitionTime: "2018-12-24T11:24:49Z"
+  - lastTransitionTime: 2018-12-28T20:24:17Z
     message: Successfully fetched catalog entries from broker.
     reason: FetchedCatalog
     status: "True"
     type: Ready
-  lastCatalogRetrievalTime: "2018-12-24T11:24:49Z"
+  lastCatalogRetrievalTime: 2018-12-28T20:24:17Z
   reconciledGeneration: 1
 ```
 
-> Notice that the status says that the broker's catalog of service offerings has been successfully added to our cluster's service catalog.
+> Notice that the status says that the broker's catalog of service offerings have been successfully added to our cluster's service catalog.
 
 #### Viewing ClusterServiceClasses
 
@@ -346,7 +266,7 @@ Instances:
 No instances defined
 ```
 
-> Here we,ve used `--scope` flag to specify that our `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServiceBroker` resources are cluster scoped (not namespaced scope)
+> Here we,ve used `--scope` flag to specify that our `ClusterServiceBroker`, `ClusterServiceClass` and `ClusterServiceBroker` resources are cluster scoped (not namespaced scope).
 
 Here is the yaml configuration of `ClusterServicePlan` named `demo-mysql` of `ClusterServiceClass` named `mysql`.
 

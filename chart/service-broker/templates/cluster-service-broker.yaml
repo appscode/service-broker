@@ -1,0 +1,107 @@
+{{- $ca := genCA "ca" 3650 }}
+{{- $cn := include "service-broker.fullname" . -}}
+{{- $altName1 := printf "%s.%s" $cn .Release.Namespace }}
+{{- $altName2 := printf "%s.%s.svc" $cn .Release.Namespace }}
+{{- $cert := genSignedCert $cn nil (list $altName1 $altName2) 3650 $ca }}
+apiVersion: servicecatalog.k8s.io/v1beta1
+kind: ClusterServiceBroker
+metadata:
+  name: {{ template "service-broker.fullname" . }}
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+spec:
+  url: https://{{ template "service-broker.fullname" . }}.{{ .Release.Namespace }}.svc
+  caBundle: {{ b64enc $ca.Cert }}
+  authInfo:
+    bearer:
+      secretRef:
+        name: {{ template "service-broker.fullname" . }}-accessor-token
+        namespace: {{ .Values.catalog.controller.serviceAccount.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "service-broker.fullname" . }}-accessor
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: servicecatalog.k8s.io:broker-accessor
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.catalog.controller.serviceAccount.name }}
+    namespace: {{ .Values.catalog.controller.serviceAccount.namespace }}
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: {{ template "service-broker.fullname" . }}-accessor-token
+  namespace: {{ .Values.catalog.controller.serviceAccount.namespace }}
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/service-account.name: {{ .Values.catalog.controller.serviceAccount.name }}
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "service-broker.fullname" . }}-apiserver-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ b64enc $cert.Cert }}
+  tls.key: {{ b64enc $cert.Key }}
+---
+{{ $promNamespace:= default .Release.Namespace .Values.monitoring.prometheus.namespace }}
+{{- if (and (ne $promNamespace .Release.Namespace) .Values.monitoring.broker) }}
+# if operator monitoring is enabled and prometheus namespace is different than operator
+# create the above secret in prometheus namespace too.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "service-broker.fullname" . }}-apiserver-cert
+  namespace: {{ $promNamespace }}
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ b64enc $cert.Cert }}
+  tls.key: {{ b64enc $cert.Key }}
+---
+{{- end }}
+# to read the config for terminating authentication
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "service-broker.fullname" . }}-extension-server-authentication-reader
+  namespace: kube-system
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: extension-apiserver-authentication-reader
+subjects:
+- kind: ServiceAccount
+  name: {{ template "service-broker.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+---
+# to delegate authentication and authorization
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "service-broker.fullname" . }}-auth-delegator
+  labels:
+    {{- include "service-broker.labels" . | nindent 4 }}
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: {{ template "service-broker.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}

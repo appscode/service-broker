@@ -42,12 +42,12 @@ func NewClient(config *rest.Config) *Client {
 func (c *Client) GetCatalog(catalogPath string, catalogNames ...string) ([]osb.Service, error) {
 	glog.Infoln("Listing services for catalog...")
 
-	catalogs := sets.NewString(catalogNames...)
+	names := sets.NewString(catalogNames...)
 
 	var services []osb.Service
 	for _, provider := range c.serviceProviders {
 		catalog, serviceName := provider.Metadata()
-		if catalogs.Has(catalog) {
+		if names.Has(catalog) {
 			out, err := ioutil.ReadFile(filepath.Join(catalogPath, catalog, fmt.Sprintf("%s.yaml", serviceName)))
 			if err != nil {
 				return nil, err

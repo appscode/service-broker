@@ -42,21 +42,36 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following table lists the configurable parameters of the AppsCode Service Broker chart and their default values.
 
-| Parameter           | Description                                                         | Default            |
-| --------------------| ------------------------------------------------------------------- | ------------------ |
-| `replicaCount`      | Number of Service Broker replicas to create (only 1 is supported) | `1`                |
-| `image.registry`    | Docker registry used to pull Service Broker image                 | `appscode`         |
-| `image.repository`  | Service Broker container image                                    | `service-broker`   |
-| `image.tag`         | Service Broker container image tag                                | `0.1.0`            |
-| `image.pullPolicy`  | Service Broker container image pull policy                        | `IfNotPresent`     |
-| `imagePullSecrets`  | Specify image pull secrets                                          | `[]` (does not add image pull secrets to deployed pods) |
-| `containerPort`     | Specify the container port at which the Service Broker rest server exposes and the container port number | `8080`       |
-| `logLevel`          | Log level for operator                                              | `5`                |
-| `service.type`      | Specify the type of Service Broker service                        | `ClusterIP`        |
-| `service.port`      | Specify the sevice port number                                      | `80`               |
-| `resources`         | CPU/Memory resource requests/limits                                 | `{}`               |
-| `catalogs.names`    | List of catalogs                                                    | `["kubedb"]`       |
-| `catalogs.path`     | The path where catalogs for different database service plans are stored          | `/etc/config/catalogs`       |
+| Parameter                               | Description                                                           | Default              |
+| ----------------------------------------| --------------------------------------------------------------------- | -------------------- |
+| `replicaCount`                          | Number of Service Broker replicas to create (only 1 is supported)     | `1`                  |
+| `broker.registry`                       | Docker registry used to pull service broker image                     | `appscode`           |
+| `broker.repository`                     | Service broker container image                                        | `service-broker`     |
+| `broker.tag`                            | Service broker container image tag                                    | `0.1.0`              |
+| `cleaner.registry`                      | Docker registry used to pull service broker cleaner image             | `appscode`           |
+| `cleaner.repository`                    | Service broker cleaner container image                                | `kubectl`            |
+| `cleaner.tag`                           | Service broker cleaner container image tag                            | `v1.12`              |
+| `imagePullSecrets`                      | Specify image pull secrets                                            | `nil` (does not add image pull secrets to deployed pods) |
+| `imagePullPolicy`                       | Image pull policy                                                     | `IfNotPresent`       |
+| `criticalAddon`                         | If true, installs service broker as critical addon                    | `false`              |
+| `logLevel`                              | Log level for service broker                                          | `3`                  |
+| `resources`                             | CPU/Memory resource requests/limits                                   | `{}`                 |
+| `affinity`                              | Affinity rules for pod assignment                                     | `{}`                 |
+| `nodeSelector`                          | Node labels for pod assignment                                        | `{}`                 |
+| `tolerations`                           | Tolerations used pod assignment                                       | `{}`                 |
+| `serviceAccount.create`                 | If `true`, create a new service account                               | `true`               |
+| `serviceAccount.name`                   | Service account to be used. If not set and `serviceAccount.create` is `true`, a name is generated using the fullname template                                              | ``                                                        |
+| `apiserver.useKubeapiserverFqdnForAks`  | If true, uses kube-apiserver FQDN for AKS cluster to workaround https://github.com/Azure/AKS/issues/522 | `true`             |
+| `apiserver.healthcheck.enabled`         | Enable readiness and liveliness probes                                | `true`               |
+| `enableAnalytics`                       | Send usage events to Google Analytics                                 | `true`               |
+| `monitoring.agent`                      | Specify which monitoring agent to use for monitoring service broker. It accepts either `prometheus.io/builtin` or `prometheus.io/coreos-operator`.                         | `none`                                                    |
+| `monitoring.broker`                     | Specify whether to monitor service broker.                                                                                                                                 | `false`                                                   |
+| `monitoring.prometheus.namespace`       | Specify the namespace where Prometheus server is running or will be deployed.                                                                                              | Release namespace                                         |
+| `monitoring.serviceMonitor.labels`      | Specify the labels for ServiceMonitor. Prometheus crd will select ServiceMonitor using these labels. Only usable when monitoring agent is `prometheus.io/coreos-operator`. | `app: <generated app name>` and `release: <release name>` |
+| `catalog.names`                         | List of catalog                                                       | `["kubedb"]`          |
+| `catalog.path`                          | The path where catalog for different service plans are mounted        | `/etc/config/catalog` |
+| `catalog.controller.serviceAccount.namespace` | Namespace of service catalog manager controller service account | `catalog`             |
+| `catalog.controller.serviceAccount.name`      | Name of service catalog controller manager service account      | `service-catalog-controller-manager` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 

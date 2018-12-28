@@ -1,0 +1,31 @@
+{{- if and (eq .Values.monitoring.agent "prometheus.io/coreos-operator") .Values.monitoring.broker }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "service-broker.fullname" . }}
+  namespace: {{ default .Release.Namespace  .Values.monitoring.prometheus.namespace }}
+  labels:
+    {{- if .Values.monitoring.serviceMonitor.labels }}
+    {{- range $key, $val := .Values.monitoring.serviceMonitor.labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+    {{- else }}
+    app: "{{ template "service-broker.name" . }}"
+    release: "{{ .Release.Name }}"
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app: "{{ template "service-broker.name" . }}"
+      release: "{{ .Release.Name }}"
+  endpoints:
+  - port: api
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    scheme: https
+    tlsConfig:
+      caFile: /etc/prometheus/secrets/{{ template "service-broker.fullname" . }}-apiserver-cert/tls.crt
+      serverName: "{{ template "service-broker.fullname" . }}.{{ .Release.Namespace }}.svc"
+{{- end }}

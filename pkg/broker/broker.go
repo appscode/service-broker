@@ -11,50 +11,19 @@ import (
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
 )
-
-// NewBroker is a hook that is called with the Options the program is run
-// with. NewBroker is the place where you will initialize your
-// Broker Logic the parameters passed in.
-func NewBroker(s *ExtraOptions) (*Broker, error) {
-	config, err := clientcmd.BuildConfigFromFlags(s.MasterURL, s.KubeconfigPath)
-	if err != nil {
-		return nil, err
-	}
-	config.Burst = s.Burst
-	config.QPS = float32(s.QPS)
-
-	svccatClient, err := svcat_cs.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	dbClient := dbsvc.NewClient(config)
-	// For example, if your Broker Logic requires a parameter from the command
-	// line, you would unpack it from the Options and set it on the
-	// Broker Logic here.
-	return &Broker{
-		Client:       dbClient,
-		svccatClient: svccatClient,
-		async:        s.Async,
-		catalogPath:  s.CatalogPath,
-		catalogNames: s.CatalogNames,
-	}, nil
-}
 
 // Broker provides an implementation of broker.Interface
 type Broker struct {
-	Client *dbsvc.Client
-
+	dbClient     *dbsvc.Client
 	svccatClient svcat_cs.ServicecatalogV1beta1Interface
 
 	// Indicates if the broker should handle the requests asynchronously.
 	async bool
 
-	// The path for catalogs
+	// The path for catalog
 	catalogPath string
-	// names of the catalogs those will provided by the broker
+	// names of the catalog those will provided by the broker
 	catalogNames []string
 
 	// Synchronize go routines.
@@ -65,7 +34,7 @@ var _ broker.Interface = &Broker{}
 
 func (b *Broker) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, error) {
 	// Your catalog broker logic goes here
-	services, err := b.Client.GetCatalog(b.catalogPath, b.catalogNames...)
+	services, err := b.dbClient.GetCatalog(b.catalogPath, b.catalogNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +76,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	}
 
 	// Check to see if this is the same instance
-	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.dbClient.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +97,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	}
 
 	glog.Infof("Provisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	err = b.Client.Provision(*curProvisionInfo)
+	err = b.dbClient.Provision(*curProvisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -150,14 +119,14 @@ func (b *Broker) Deprovision(request *osb.DeprovisionRequest, c *broker.RequestC
 	defer b.Unlock()
 
 	glog.Infof("Deprovisioning instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.dbClient.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, err
 	} else if provisionInfo == nil {
 		return nil, errors.Errorf("Instance %q not found", request.InstanceID)
 	}
 
-	err = b.Client.Deprovision(request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
+	err = b.dbClient.Deprovision(request.ServiceID, provisionInfo.InstanceName, provisionInfo.Namespace)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
@@ -186,12 +155,12 @@ func (b *Broker) Bind(request *osb.BindRequest, c *broker.RequestContext) (*brok
 	defer b.Unlock()
 
 	glog.Infof("Binding instance %q for %q/%q...", request.InstanceID, request.ServiceID, request.PlanID)
-	provisionInfo, err := b.Client.GetProvisionInfo(request.InstanceID, request.ServiceID)
+	provisionInfo, err := b.dbClient.GetProvisionInfo(request.InstanceID, request.ServiceID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Instance %q not found", request.InstanceID)
 	}
 
-	creds, err := b.Client.Bind(request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
+	creds, err := b.dbClient.Bind(request.ServiceID, request.PlanID, request.Parameters, *provisionInfo)
 	if err != nil {
 		glog.Errorln(err)
 		return nil, err
