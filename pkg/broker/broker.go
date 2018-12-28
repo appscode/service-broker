@@ -21,9 +21,9 @@ type Broker struct {
 	// Indicates if the broker should handle the requests asynchronously.
 	async bool
 
-	// The path for catalogs
+	// The path for catalog
 	catalogPath string
-	// names of the catalogs those will provided by the broker
+	// names of the catalog those will provided by the broker
 	catalogNames []string
 
 	// Synchronize go routines.

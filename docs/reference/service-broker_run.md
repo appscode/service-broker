@@ -64,8 +64,8 @@ service-broker run [flags]
       --authorization-webhook-cache-unauthorized-ttl duration   The duration to cache 'unauthorized' responses from the webhook authorizer. (default 10s)
       --bind-address ip                                         The IP address on which to listen for the --secure-port port. The associated interface(s) must be reachable by the rest of the cluster, and by CLI/web clients. If blank, all interfaces will be used (0.0.0.0 for all IPv4 interfaces and :: for all IPv6 interfaces). (default 0.0.0.0)
       --burst int                                               The maximum burst for throttle (default 100)
-      --catalog-names strings                                   List of catalogs those can be run by this service-broker, comma separated.
-      --catalog-path string                                     The path to the catalog. (default "/etc/config/catalogs")
+      --catalog-names strings                                   List of catalog those can be run by this service-broker, comma separated.
+      --catalog-path string                                     The path to the catalog. (default "/etc/config/catalog")
       --cert-dir string                                         The directory where the TLS certs are located. If --tls-cert-file and --tls-private-key-file are provided, this flag will be ignored. (default "apiserver.local.config/certificates")
       --client-ca-file string                                   If set, any request presenting a client certificate signed by one of the authorities in the client-ca-file is authenticated with an identity corresponding to the CommonName of the client certificate.
       --contention-profiling                                    Enable lock contention profiling, if profiling is enabled

@@ -18,7 +18,7 @@ type ExtraOptions struct {
 
 func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
-		CatalogPath: "/etc/config/catalogs",
+		CatalogPath: "/etc/config/catalog",
 		Async:       false,
 		QPS:         100,
 		Burst:       100,
@@ -28,7 +28,7 @@ func NewExtraOptions() *ExtraOptions {
 func (s *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.CatalogPath, "catalog-path", s.CatalogPath, "The path to the catalog.")
 	fs.StringSliceVar(&s.CatalogNames, "catalog-names", s.CatalogNames,
-		"List of catalogs those can be run by this service-broker, comma separated.")
+		"List of catalog those can be run by this service-broker, comma separated.")
 	fs.BoolVar(&s.Async, "async", s.Async, "Indicates whether the broker is handling the requests asynchronously.")
 
 	fs.Float64Var(&s.QPS, "qps", s.QPS, "The maximum QPS to the master from this client")
