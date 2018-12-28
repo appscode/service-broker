@@ -2,11 +2,13 @@ package cmds
 
 import (
 	"flag"
+	"os"
 
 	"github.com/appscode/go/flags"
 	v "github.com/appscode/go/version"
 	"github.com/appscode/kutil/tools/cli"
 	"github.com/spf13/cobra"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -23,8 +25,9 @@ func NewRootCmd() *cobra.Command {
 	flag.CommandLine.Parse([]string{})
 	rootCmd.PersistentFlags().BoolVar(&cli.EnableAnalytics, "enable-analytics", cli.EnableAnalytics, "Send analytical events to Google Analytics")
 
-	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(v.NewCmdVersion())
+	stopCh := genericapiserver.SetupSignalHandler()
+	rootCmd.AddCommand(NewCmdRun(os.Stdout, os.Stderr, stopCh))
 
 	return rootCmd
 }

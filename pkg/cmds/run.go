@@ -1,25 +1,27 @@
 package cmds
 
 import (
+	"io"
+
+	"github.com/appscode/go/log"
 	v "github.com/appscode/go/version"
 	"github.com/appscode/kutil/tools/cli"
 	"github.com/appscode/service-broker/pkg/cmds/server"
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun() *cobra.Command {
-	o := server.NewBrokerServerOptions()
+func NewCmdRun(out, errOut io.Writer, stopCh <-chan struct{}) *cobra.Command {
+	o := server.NewBrokerServerOptions(out, errOut)
 
 	cmd := &cobra.Command{
 		Use:               "run",
-		Short:             "Launch AppsCode Service Broker server",
+		Short:             "Launch AppsCode Service Broker",
 		DisableAutoGenTag: true,
 		PreRun: func(c *cobra.Command, args []string) {
 			cli.SendPeriodicAnalytics(c, v.Version.Version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			glog.Infoln("Starting service broker server...")
+			log.Infof("Starting broker version %s+%s ...", v.Version.Version, v.Version.CommitHash)
 
 			if err := o.Complete(); err != nil {
 				return err
@@ -27,7 +29,7 @@ func NewCmdRun() *cobra.Command {
 			if err := o.Validate(args); err != nil {
 				return err
 			}
-			if err := o.Run(); err != nil {
+			if err := o.Run(stopCh); err != nil {
 				return err
 			}
 			return nil

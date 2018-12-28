@@ -13,6 +13,8 @@ import:
 - package: github.com/golang/glog
 - package: github.com/golang/protobuf
   version: v1.0.0
+- package: github.com/gorilla/mux
+  version: v1.6.2
 - package: github.com/gorilla/websocket
   version: v1.4.0
 - package: github.com/imdario/mergo
@@ -57,12 +59,20 @@ import:
   version: v2.2.1
 - package: k8s.io/api
   version: kubernetes-1.12.0
+- package: k8s.io/apiextensions-apiserver
+  version: kubernetes-1.12.0
 - package: k8s.io/apimachinery
   repo: https://github.com/kmodules/apimachinery.git
   vcs: git
   version: ac-1.12.0
+- package: k8s.io/apiserver
+  repo: https://github.com/kmodules/apiserver.git
+  vcs: git
+  version: ac-1.12.0
 - package: k8s.io/client-go
   version: v9.0.0
+- package: k8s.io/kube-aggregator
+  version: kubernetes-1.12.0
 - package: k8s.io/kube-openapi
   version: 0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803
 - package: kmodules.xyz/custom-resources
