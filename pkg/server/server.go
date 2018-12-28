@@ -89,9 +89,8 @@ func (c completedConfig) New() (*BrokerServer, error) {
 	}
 
 	// Prometheus metrics
-	reg := prom.NewRegistry()
 	osbMetrics := metrics.New()
-	reg.MustRegister(osbMetrics)
+	prom.MustRegister(osbMetrics)
 
 	api, err := rest.NewAPISurface(b, osbMetrics)
 	if err != nil {
@@ -108,12 +107,15 @@ func (c completedConfig) New() (*BrokerServer, error) {
 // registerAPIHandlers registers the APISurface endpoints and handlers.
 func registerAPIHandlers(api *rest.APISurface) http.Handler {
 	router := mux.NewRouter()
-	router.HandleFunc("/catalog", api.GetCatalogHandler).Methods("GET")
-	router.HandleFunc("/service_instances/{instance_id}/last_operation", api.LastOperationHandler).Methods("GET")
-	router.HandleFunc("/service_instances/{instance_id}", api.ProvisionHandler).Methods("PUT")
-	router.HandleFunc("/service_instances/{instance_id}", api.DeprovisionHandler).Methods("DELETE")
-	router.HandleFunc("/service_instances/{instance_id}", api.UpdateHandler).Methods("PATCH")
-	router.HandleFunc("/service_instances/{instance_id}/service_bindings/{binding_id}", api.BindHandler).Methods("PUT")
-	router.HandleFunc("/service_instances/{instance_id}/service_bindings/{binding_id}", api.UnbindHandler).Methods("DELETE")
+	if api.EnableCORS {
+		router.Methods("OPTIONS").HandlerFunc(api.OptionsHandler)
+	}
+	router.HandleFunc("/v2/catalog", api.GetCatalogHandler).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", api.LastOperationHandler).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}", api.ProvisionHandler).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}", api.DeprovisionHandler).Methods("DELETE")
+	router.HandleFunc("/v2/service_instances/{instance_id}", api.UpdateHandler).Methods("PATCH")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", api.BindHandler).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", api.UnbindHandler).Methods("DELETE")
 	return router
 }
