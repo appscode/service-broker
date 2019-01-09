@@ -187,7 +187,7 @@ volumeMounts:
   mountPath: /etc/prometheus/secret/appscode-service-broker-apiserver-cert
 ```
 
->Warning: Updating deployment will cause restart of your Prometheus server. If you don't use a persistent volume for Prometheus storage, you will lose your previously scrapped data.
+>**Warning:** Updating deployment will cause restart of your Prometheus server. If you don't use a persistent volume for Prometheus storage, you will lose your previously scrapped data.
 
 ### Deploy New Prometheus Server
 
