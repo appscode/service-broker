@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.4.3
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        - "--storage.tsdb.path=/prometheus/"
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config-volume
+          mountPath: /etc/prometheus/
+        - name: prometheus-storage-volume
+          mountPath: /prometheus/
+        - name: appscode-service-broker-apiserver-cert # mount the secret volume with public certificate of the AppsCode Service Broker
+          mountPath: /etc/prometheus/secret/appscode-service-broker-apiserver-cert
+      volumes:
+      - name: prometheus-config-volume
+        configMap:
+          defaultMode: 420
+          name: appscode-service-broker-prom-config
+      - name: prometheus-storage-volume
+        emptyDir: {}
+      - name: appscode-service-broker-apiserver-cert
+        secret:
+          defaultMode: 420
+          secretName: appscode-service-broker-apiserver-cert
+          items: # avoid mounting private key
+          - key: tls.crt
+            path: tls.crt
