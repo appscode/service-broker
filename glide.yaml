@@ -10,6 +10,8 @@ import:
   version: v1.0.8
 - package: github.com/davecgh/go-spew
   version: v1.1.1
+- package: github.com/go-ini/ini
+  version: v1.40.0
 - package: github.com/golang/glog
 - package: github.com/golang/protobuf
   version: v1.0.0
@@ -22,7 +24,7 @@ import:
 - package: github.com/json-iterator/go
   version: 1.1.5
 - package: github.com/kubedb/apimachinery
-  version: 0.9.0
+  version: 0.10.0
 - package: github.com/kubernetes-incubator/service-catalog
   version: v0.1.38
 - package: github.com/mitchellh/mapstructure
@@ -53,6 +55,8 @@ import:
   version: 95c6576299259db960f6c5b9b69ea52422860fce
 - package: golang.org/x/text
   version: b19bf474d317b857955b12035d2c5acb57ce8b01
+- package: gopkg.in/ini.v1
+  version: v1.40.0
 - package: gopkg.in/square/go-jose.v2
   version: v2.2.1
 - package: gopkg.in/yaml.v2
