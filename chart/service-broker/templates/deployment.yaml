@@ -19,6 +19,15 @@ spec:
     metadata:
       labels:
         {{- include "service-broker.labels" . | nindent 8 }}
+{{- if or .Values.annotations (and .Values.criticalAddon (eq .Release.Namespace "kube-system")) }}
+      annotations:
+{{- if and .Values.criticalAddon (eq .Release.Namespace "kube-system") }}
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+{{- end }}
+{{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 8 }}
+{{- end }}
+{{- end }}
     spec:
       serviceAccountName: {{ template "service-broker.fullname" . }}
       {{- if .Values.imagePullSecrets }}
