@@ -1,5 +1,5 @@
-hash: 703fe1e28df0d76b9ad938a0cb9f08f79869f018817a8b8eee3de7cbc0bbe103
-updated: 2018-12-28T01:16:52.805610059-08:00
+hash: e95c84a69974f56f075c82f0396bb4ff8894ea85b9fb102f0872e10f06837550
+updated: 2019-02-18T22:41:51.368858826-08:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -9,7 +9,7 @@ imports:
   - compute/metadata
   - internal
 - name: github.com/appscode/go
-  version: 584aaa73af837f112c0a471be398ea837341c330
+  version: 52eaa8008e2e5fe8df77ac6fb2fd45e3ea2ae47c
   subpackages:
   - analytics
   - context
@@ -25,9 +25,9 @@ imports:
   - types
   - version
 - name: github.com/appscode/jsonpatch
-  version: 5af499cf01c842bfdd7761a433fc90525ccd6836
+  version: 7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2
 - name: github.com/appscode/kutil
-  version: 6546fe6e8bde14cda08b0415f926cbed47d66e6a
+  version: 963f95c3833ac1630834cb574a30fac82234a3bd
   subpackages:
   - apiextensions/v1beta1
   - meta
@@ -166,6 +166,8 @@ imports:
   version: 878a968ab22548362a09bdb3322f98b00f470d46
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- name: github.com/go-ini/ini
+  version: a9da9309fb4822643ceebb765f80025c35ac19a1
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -195,7 +197,7 @@ imports:
 - name: github.com/google/btree
   version: 7d79101e329e5a3adf994758c578dab82b90c017
 - name: github.com/google/go-cmp
-  version: 2248b49eaa8e1c8c0963ee77b40841adbc19d4ca
+  version: 3af367b6b30c263d47e8895973edcca9a49cf029
   subpackages:
   - cmp
   - cmp/internal/diff
@@ -221,7 +223,7 @@ imports:
   - openstack/utils
   - pagination
 - name: github.com/gorilla/context
-  version: 51ce91d2eaddeca0ef29a71d766bb3634dadf729
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: e3702bed27f0d39777b0b37b664b6280e8ef8fbf
 - name: github.com/gorilla/websocket
@@ -252,7 +254,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 1624edc4454b8682399def8740d46db5e4362ba4
 - name: github.com/kubedb/apimachinery
-  version: 6319e29148b40f1ac9a7ea312394754e83feba8e
+  version: a307434ffe887287826f1197ca7221213905900b
   subpackages:
   - apis
   - apis/authorization
@@ -492,6 +494,8 @@ imports:
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
+- name: gopkg.in/ini.v1
+  version: a9da9309fb4822643ceebb765f80025c35ac19a1
 - name: gopkg.in/natefinch/lumberjack.v2
   version: 20b71e5b60d756d3d2f80def009790325acc2b23
 - name: gopkg.in/square/go-jose.v2
@@ -598,7 +602,7 @@ imports:
   - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/apiserver
-  version: 419ab4faf457be27411fc8125ed110a03be373e8
+  version: 2aa1408a8c0a98b7d52911b63a98cbb7c9fd5e7c
   repo: https://github.com/kmodules/apiserver.git
   vcs: git
   subpackages:
@@ -855,15 +859,11 @@ imports:
   - client/clientset/versioned/typed/appcatalog/v1alpha1
   - client/clientset/versioned/typed/appcatalog/v1alpha1/util
 - name: kmodules.xyz/monitoring-agent-api
-  version: d12289267b3d7510feb9fac1f5e451d476f23a38
-  repo: https://github.com/kmodules/monitoring-agent-api.git
-  vcs: git
+  version: e79ddf3f680a16a99b9aacb718f5607b54cef04d
   subpackages:
   - api/v1
 - name: kmodules.xyz/objectstore-api
   version: ebe27c957a5bf41e0680776e3626b5507087f4c3
-  repo: https://github.com/kmodules/objectstore-api.git
-  vcs: git
   subpackages:
   - api/v1
 - name: kmodules.xyz/offshoot-api
