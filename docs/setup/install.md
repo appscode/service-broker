@@ -1,3 +1,15 @@
+---
+title: Install | AppsCode Service Broker
+menu:
+  product_service-broker_0.1.0:
+    identifier: install-setup
+    name: Setup Install
+    parent: setup
+    weight: 10
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
 # Installation Guide
 
 ## Prerequisites
@@ -14,7 +26,7 @@ To check the installation for AppsCode Service Broker, we have used [Service Cat
 
 ## Install Service Broker
 
-AppsCode Service Broker can be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/master/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `appscode-service-broker`:
+AppsCode Service Broker can be installed via [Helm](https://helm.sh/) using the [chart](https://github.com/appscode/service-broker/tree/0.10.0/chart/service-broker) from [AppsCode Charts Repository](https://github.com/appscode/charts). To install the chart with the release name `appscode-service-broker`:
 
 ```console
 $ helm repo add appscode https://charts.appscode.com/stable/
@@ -23,7 +35,7 @@ $ helm search appscode/service-broker
 $ helm install appscode/service-broker --name appscode-service-broker --namespace kube-system
 ```
 
-To see the detailed configuration options, visit [here](https://github.com/appscode/service-broker/tree/master/chart/service-broker).
+To see the detailed configuration options, visit [here](https://github.com/appscode/service-broker/tree/0.10.0/chart/service-broker).
 
 ### Verify installation
 

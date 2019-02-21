@@ -1,3 +1,17 @@
+---
+title: PostgreSQL | AppsCode Service Broker
+menu:
+  product_service-broker_0.1.0:
+    identifier: postgres-kubedb
+    name: PostgreSQL
+    parent: kubedb-guides
+    weight: 50
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # PostgreSQL Walk-through
 
 This tutorial will show you how to use AppsCode Service Broker to provision and deprovision an PostgreSQL cluster and bind to the PostgreSQL service.
