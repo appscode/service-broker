@@ -79,9 +79,9 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports two plans for `redis` class as we can see above. Using `demo-redis` plan we can provision a demo Redis database. And using `redis` plan we can provision a custom Redis database with the full functionality of a [Redis CRD](https://kubedb.com/docs/0.9.0/concepts/databases/redis).
+AppsCode Service Broker currently supports two plans for `redis` class as we can see above. Using `demo-redis` plan we can provision a demo Redis database. And using `redis` plan we can provision a custom Redis database with the full functionality of a [Redis CRD](https://kubedb.com/docs/0.10.0/concepts/databases/redis).
 
-AppsCode Service Broker accepts only metadata and [Redis Spec](https://kubedb.com/docs/0.9.0/concepts/databases/redis/#redis-spec) as parameters for the plans of `redis` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [Redis Spec](https://kubedb.com/docs/0.10.0/concepts/databases/redis/#redis-spec) as parameters for the plans of `redis` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
 
 Since a `ClusterServiceClass` named `redis` exists in the cluster with a `ClusterServicePlan` named `redis`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 

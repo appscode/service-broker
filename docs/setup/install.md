@@ -6,7 +6,7 @@ First you need to have the software services by AppsCode installed in the cluste
 
  - KubeDB
 
-So we need to have KubeDB installed to go forward. To install KubeDB see [here](https://kubedb.com/docs/0.9.0/setup/install/).
+So we need to have KubeDB installed to go forward. To install KubeDB see [here](https://kubedb.com/docs/0.10.0/setup/install/).
 
 To check the installation for AppsCode Service Broker, we have used [Service Catalog](https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/). So, this document assumes that you've installed Service Catalog onto your cluster. If you haven't, please see the [installation instructions](https://svc-cat.io/docs/install/). Optionally you may install the Service Catalog CLI (`svcat`) from [Installing the Service Catalog CLI](https://svc-cat.io/docs/install/#installing-the-service-catalog-cli) section.
 
