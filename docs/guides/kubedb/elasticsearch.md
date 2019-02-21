@@ -81,9 +81,9 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports three plans for `elasticsearch` class as we can see above. Using `demo-elasticsearch` plan we can provision a demo Elasticsearch database. Using `demo-elasticsearch-cluster` plan we can provision a demo Elasticsearch database with clustering support. And using `elasticsearch` plan we can provision a custom Elasticsearch cluster with the full functionality of an [Elasticsearch CRD](https://kubedb.com/docs/0.9.0/concepts/databases/elasticsearch).
+AppsCode Service Broker currently supports three plans for `elasticsearch` class as we can see above. Using `demo-elasticsearch` plan we can provision a demo Elasticsearch database. Using `demo-elasticsearch-cluster` plan we can provision a demo Elasticsearch database with clustering support. And using `elasticsearch` plan we can provision a custom Elasticsearch cluster with the full functionality of an [Elasticsearch CRD](https://kubedb.com/docs/0.10.0/concepts/databases/elasticsearch).
 
-AppsCode Service Broker accepts only metadata and [Elasticsearch Spec](https://kubedb.com/docs/0.9.0/concepts/databases/elasticsearch/#elasticsearch-spec) as parameters for the plans of `elasticsearch` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [Elasticsearch Spec](https://kubedb.com/docs/0.10.0/concepts/databases/elasticsearch/#elasticsearch-spec) as parameters for the plans of `elasticsearch` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid.
 
 Since a `ClusterServiceClass` named `elasticsearch` exists in the cluster with a `ClusterServicePlan` named `elasticsearch`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 

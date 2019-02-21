@@ -79,9 +79,9 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports two plans for `memcached` class as we can see above. Using `demo-memcached` plan we can provision a demo Memcached database. And using `memcached` plan we can provision a custom Memcached database with the full functionality of a [Memcached CRD](https://kubedb.com/docs/0.9.0/concepts/databases/memcached).
+AppsCode Service Broker currently supports two plans for `memcached` class as we can see above. Using `demo-memcached` plan we can provision a demo Memcached database. And using `memcached` plan we can provision a custom Memcached database with the full functionality of a [Memcached CRD](https://kubedb.com/docs/0.10.0/concepts/databases/memcached).
 
-AppsCode Service Broker accepts only metadata and [Memcached Spec](https://kubedb.com/docs/0.9.0/concepts/databases/memcached/#memcached-spec) as parameters for the plans of `memcached` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [Memcached Spec](https://kubedb.com/docs/0.10.0/concepts/databases/memcached/#memcached-spec) as parameters for the plans of `memcached` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
 
 Since a `ClusterServiceClass` named `memcached` exists in the cluster with a `ClusterServicePlan` named `memcached`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 
