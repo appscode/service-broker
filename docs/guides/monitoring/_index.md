@@ -5,6 +5,6 @@ menu:
     identifier: monitoring-guides
     name: Monitoring
     parent: guides
-    weight: 30
+    weight: 20
 menu_name: product_service-broker_0.1.0
 ---

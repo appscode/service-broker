@@ -5,7 +5,7 @@ menu:
     identifier: kubeapps-guides
     name: Using Kubeapps
     parent: guides
-    weight: 10
+    weight: 30
 product_name: service-broker
 menu_name: product_service-broker_0.1.0
 section_menu_id: guides
