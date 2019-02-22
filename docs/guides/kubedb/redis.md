@@ -1,3 +1,17 @@
+---
+title: Redis | AppsCode Service Broker
+menu:
+  product_service-broker_0.1.0:
+    identifier: redis-kubedb
+    name: Redis
+    parent: kubedb-guides
+    weight: 60
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # Redis Walk-through
 
 This tutorial will show you how to use AppsCode Service Broker to provision and deprovision an Redis cluster and bind to the Redis service.

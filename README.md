@@ -8,14 +8,21 @@
 # AppsCode Service Broker
 Open Service Broker for installing AppsCode cloud services in Kubernetes cluster.
 
+## Supported Versions
+Please pick a version of AppsCode Service Broker that matches your Kubernetes installation.
+
+| AppsCode Service Broker Version                                        | Docs                                                             | Kubernetes Version |
+|------------------------------------------------------------------------|------------------------------------------------------------------|--------------------|
+| [0.1.0](https://github.com/appscode/service-broker/releases/tag/0.1.0) | [User Guide](https://appscode.com/products/service-broker/0.1.0) | 1.9.x+             |
+
 ## Installation
-To install AppsCode Serice Broker, please follow the guide [here](https://github.com/appscode/service-broker/blob/master/docs/setup/install.md).
+To install AppsCode Serice Broker, please follow the guide [here](https://appscode.com/products/service-broker/0.1.0/setup/install).
 
 ## Using Service Broker
-Want to learn how to use AppsCode Service Broker? Please start [here](https://github.com/appscode/service-broker/tree/master/docs/guides).
+Want to learn how to use AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.1.0).
 
 ## Contribution guidelines
-Want to help improve AppsCode Service Broker? Please start [here](https://kubedb.com/docs/latest/welcome/contributing/).
+Want to help improve AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.1.0/welcome/contributing/).
 
 ---
 

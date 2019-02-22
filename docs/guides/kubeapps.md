@@ -1,3 +1,17 @@
+---
+title: Using Kubeapps with AppsCode Service Broker
+menu:
+  product_service-broker_0.1.0:
+    identifier: kubeapps-guides
+    name: Using Kubeapps
+    parent: guides
+    weight: 10
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # Using Kubeapps with AppsCode Service Broker
 
 [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters. Using Kubeapps you can browse and provision external services exposed by a [Service Catalog](https://github.com/kubernetes-incubator/service-catalog).

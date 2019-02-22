@@ -1,3 +1,18 @@
+---
+title: CoreOS Prometheus Operator | AppsCode Service Broker
+description: Monitoring AppsCode Service Broker Using CoreOS Prometheus Operator
+menu:
+  product_service-broker_0.1.0:
+    identifier: coreos-monitoring
+    name: Prometheus Operator
+    parent: monitoring-guides
+    weight: 30
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # Monitoring AppsCode Service Broker Using CoreOS Prometheus Operator
 
 CoreOS [prometheus-operator](https://github.com/coreos/prometheus-operator) provides simple and Kubernetes native way to deploy and configure Prometheus server. This tutorial will show you how to use CoreOS Prometheus operator for monitoring AppsCode Service Broker.

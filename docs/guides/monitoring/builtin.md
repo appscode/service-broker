@@ -1,3 +1,18 @@
+---
+title: Builtin Prometheus | AppsCode Service Broker
+description: Monitoring AppsCode Service Broker with builtin Prometheus
+menu:
+  product_service-broker_0.1.0:
+    identifier: builtin-monitoring
+    name: Builtin Prometheus
+    parent: monitoring-guides
+    weight: 20
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # Monitoring AppsCode Service Broker with builtin Prometheus
 
 This tutorial will show you how to configure builtin [Prometheus](https://github.com/prometheus/prometheus) scrapper to monitor AppsCode Service Broker.

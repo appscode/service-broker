@@ -1,3 +1,18 @@
+---
+title: Monitoring Overview | AppsCode Service Broker
+description: Monitoring AppsCode Service Broker
+menu:
+  product_service-broker_0.1.0:
+    identifier: overview-monitoring
+    name: Overview
+    parent: monitoring-guides
+    weight: 10
+product_name: service-broker
+menu_name: product_service-broker_0.1.0
+section_menu_id: guides
+---
+> New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
+
 # Monitoring AppsCode Service Broker
 
 AppsCode Service Broker has native support for monitoring via [Prometheus](https://prometheus.io/). You can use builtin [Prometheus](https://github.com/prometheus/prometheus) scrapper or [CoreOS Prometheus Operator](https://github.com/coreos/prometheus-operator) to monitor AppsCode Service Broker. This tutorial will show you what metrics AppsCode Service Broker exports and how to enable monitoring.
