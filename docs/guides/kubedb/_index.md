@@ -5,6 +5,6 @@ menu:
     identifier: kubedb-guides
     name: KubeDB
     parent: guides
-    weight: 20
+    weight: 10
 menu_name: product_service-broker_0.1.0
 ---

@@ -20,3 +20,6 @@ Setup contains instructions for installing the AppsCode Service Broker and its v
 
 - [Install AppsCode Service Broker](/docs/setup/install.md). Installation instructions for AppsCode Service Broker.
 - [Uninstall AppsCode Service Broker](/docs/setup/uninstall.md). Instructions for uninstallating AppsCode Service Broker.
+- Developer Guide
+  - [Overview](/docs/setup/developer-guide/overview.md). Outlines everything you need to know from setting up your dev environment to how to build and test AppsCode Service Broker.
+  - [Release process](/docs/setup/developer-guide/release.md). Steps for releasing a new version of AppsCode Service Broker.
