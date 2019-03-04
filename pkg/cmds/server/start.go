@@ -5,13 +5,14 @@ import (
 	"io"
 	"net"
 
-	"github.com/appscode/kutil/tools/clientcmd"
+	"github.com/appscode/kutil/meta"
 	"github.com/appscode/service-broker/pkg/broker"
 	"github.com/appscode/service-broker/pkg/server"
 	"github.com/spf13/pflag"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
+	"kmodules.xyz/client-go/tools/clientcmd"
 )
 
 const defaultEtcdPathPrefix = "/registry/service-broker.appscode.com"
@@ -27,10 +28,14 @@ type BrokerServerOptions struct {
 func NewBrokerServerOptions(out, errOut io.Writer) *BrokerServerOptions {
 	o := &BrokerServerOptions{
 		// TODO we will nil out the etcd storage options.  This requires a later level of k8s.io/apiserver
-		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, server.Codecs.LegacyCodec(admissionv1beta1.SchemeGroupVersion)),
-		ExtraOptions:       NewExtraOptions(),
-		StdOut:             out,
-		StdErr:             errOut,
+		RecommendedOptions: genericoptions.NewRecommendedOptions(
+			defaultEtcdPathPrefix,
+			server.Codecs.LegacyCodec(admissionv1beta1.SchemeGroupVersion),
+			genericoptions.NewProcessInfo("service-broker", meta.Namespace()),
+		),
+		ExtraOptions: NewExtraOptions(),
+		StdOut:       out,
+		StdErr:       errOut,
 	}
 	o.RecommendedOptions.Etcd = nil
 	o.RecommendedOptions.Admission = nil
