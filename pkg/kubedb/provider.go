@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"reflect"
 
-	meta_util "github.com/appscode/kutil/meta"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_util "kmodules.xyz/client-go/meta"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 

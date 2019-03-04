@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	logs "github.com/appscode/go/log/golog"
-	"github.com/appscode/kutil/tools/clientcmd"
 	"github.com/appscode/service-broker/test/e2e/framework"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	svcat "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
@@ -13,6 +11,8 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes"
+	"kmodules.xyz/client-go/logs"
+	"kmodules.xyz/client-go/tools/clientcmd"
 )
 
 const (

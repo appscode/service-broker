@@ -153,7 +153,7 @@ def update_registry():
 
 
 def install():
-    die(call('GO15VENDOREXPERIMENT=1 ' + libbuild.GOC + ' install ./...'))
+    die(call(libbuild.GOC + ' install ./...'))
 
 
 def default():

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 
 	"github.com/appscode/go/flags"
-	logs "github.com/appscode/go/log/golog"
 	"k8s.io/client-go/util/homedir"
+	"kmodules.xyz/client-go/logs"
 )
 
 type E2EOptions struct {
