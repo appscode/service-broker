@@ -85,6 +85,7 @@ func (s *APISurface) ProvisionHandler(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, err, http.StatusBadRequest)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received ProvisionRequest for instanceID %q", request.InstanceID)
 
@@ -165,6 +166,7 @@ func (s *APISurface) DeprovisionHandler(w http.ResponseWriter, r *http.Request) 
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received DeprovisionRequest for instanceID %q", request.InstanceID)
 
@@ -229,6 +231,7 @@ func (s *APISurface) LastOperationHandler(w http.ResponseWriter, r *http.Request
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received LastOperationRequest for instanceID %q", request.InstanceID)
 
@@ -286,6 +289,7 @@ func (s *APISurface) BindHandler(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received BindRequest for instanceID %q, bindingID %q", request.InstanceID, request.BindingID)
 
@@ -346,6 +350,7 @@ func (s *APISurface) UnbindHandler(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received UnbindRequest for instanceID %q, bindingID %q", request.InstanceID, request.BindingID)
 	c := &broker.RequestContext{
@@ -402,6 +407,7 @@ func (s *APISurface) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+	logRequest(request)
 
 	glog.V(4).Infof("Received Update Request for instanceID %q", request.InstanceID)
 
@@ -548,4 +554,11 @@ func (s *APISurface) writeErrorResponse(w http.ResponseWriter, code int, err err
 	s.writeResponse(w, code, &e{
 		Description: err.Error(),
 	})
+}
+
+func logRequest(r interface{}) {
+	data, err := json.MarshalIndent(r, "", "  ")
+	if err == nil {
+		fmt.Println(string(data))
+	}
 }
