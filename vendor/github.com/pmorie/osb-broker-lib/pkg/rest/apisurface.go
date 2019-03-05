@@ -81,15 +81,15 @@ func (s *APISurface) ProvisionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request, err := unpackProvisionRequest(r)
-	glog.V(4).Infof("PROVISION___84", err)
+	fmt.Println("PROVISION___84", err)
 	if err != nil {
 		s.writeError(w, err, http.StatusBadRequest)
 		return
 	}
-	glog.V(4).Infof("PROVISION___89")
+	fmt.Println("PROVISION___89")
 	logRequest(request)
 
-	glog.V(4).Infof("Received ProvisionRequest for instanceID %q", request.InstanceID)
+	fmt.Printf("Received ProvisionRequest for instanceID %q\n", request.InstanceID)
 
 	c := &broker.RequestContext{
 		Writer:  w,
@@ -97,12 +97,12 @@ func (s *APISurface) ProvisionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response, err := s.Broker.Provision(request, c)
-	glog.V(4).Infof("PROVISION___100_", err)
+	fmt.Println("PROVISION___100_", err)
 	if err != nil {
 		s.writeError(w, err, http.StatusInternalServerError)
 		return
 	}
-	glog.V(4).Infof("PROVISION_RESP___")
+	fmt.Println("PROVISION_RESP___")
 	logRequest(response)
 
 	// MUST be returned if the Service Instance was provisioned
