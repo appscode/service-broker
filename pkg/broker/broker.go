@@ -70,7 +70,7 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 		return nil, err
 	}
 	if len(svcinstances.Items) == 0 {
-		curProvisionInfo.InstanceName = request.InstanceID
+		curProvisionInfo.InstanceName = "db-" + request.InstanceID
 	} else {
 		for _, svcinstance := range svcinstances.Items {
 			if svcinstance.Spec.ExternalID == request.InstanceID {
