@@ -50,7 +50,10 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	b.Lock()
 	defer b.Unlock()
 
-	namespace := request.Context["namespace"].(string)
+	var namespace = "appscode"
+	if ns, ok := request.Context["namespace"]; ok {
+		namespace = ns.(string)
+	}
 	response := broker.ProvisionResponse{}
 	curProvisionInfo := &dbsvc.ProvisionInfo{
 		InstanceID: request.InstanceID,
