@@ -17,7 +17,21 @@ aliases:
 
 # Change Log
 
-## [0.1.0](https://github.com/appscode/service-broker/tree/0.1.0) (2019-02-21)
+## [0.2.0](https://github.com/appscode/service-broker/tree/0.2.0) (2019-03-14)
+[Full Changelog](https://github.com/appscode/service-broker/compare/0.1.0...0.2.0)
+
+**Closed issues:**
+
+- Provisioning is failing in reason of missing configurations [\#38](https://github.com/appscode/service-broker/issues/38)
+
+**Merged pull requests:**
+
+- Prepare docs for 0.2.0 release [\#52](https://github.com/appscode/service-broker/pull/52) ([tamalsaha](https://github.com/tamalsaha))
+- Use app-{InstanceID} as instance name when no svcinstance found. [\#50](https://github.com/appscode/service-broker/pull/50) ([tamalsaha](https://github.com/tamalsaha))
+- Add a default namespace option [\#49](https://github.com/appscode/service-broker/pull/49) ([tamalsaha](https://github.com/tamalsaha))
+- Update Kubernetes client libraries to 1.13.0 [\#47](https://github.com/appscode/service-broker/pull/47) ([tamalsaha](https://github.com/tamalsaha))
+
+## [0.1.0](https://github.com/appscode/service-broker/tree/0.1.0) (2019-02-22)
 **Closed issues:**
 
 - Expose /metrics and /heathz [\#34](https://github.com/appscode/service-broker/issues/34)
@@ -26,11 +40,15 @@ aliases:
 - Send analytics [\#17](https://github.com/appscode/service-broker/issues/17)
 - Explore service broker integration [\#15](https://github.com/appscode/service-broker/issues/15)
 - Implement MySQL service broker for Kubernetes [\#1](https://github.com/appscode/service-broker/issues/1)
+- Add monitoring to installer [\#35](https://github.com/appscode/service-broker/issues/35)
 - Secure service broker using TLS [\#33](https://github.com/appscode/service-broker/issues/33)
 - TODO List [\#14](https://github.com/appscode/service-broker/issues/14)
 
 **Merged pull requests:**
 
+- Fix bad links [\#44](https://github.com/appscode/service-broker/pull/44) ([tamalsaha](https://github.com/tamalsaha))
+- Add developer guide [\#43](https://github.com/appscode/service-broker/pull/43) ([tamalsaha](https://github.com/tamalsaha))
+- Add Hugo frontmatter [\#42](https://github.com/appscode/service-broker/pull/42) ([tamalsaha](https://github.com/tamalsaha))
 - Update references to KubeDB 0.10.0 [\#41](https://github.com/appscode/service-broker/pull/41) ([tamalsaha](https://github.com/tamalsaha))
 - Pass Annotations to Operator PodTemplate [\#40](https://github.com/appscode/service-broker/pull/40) ([tamalsaha](https://github.com/tamalsaha))
 - Update KubeDB client libraries to 0.10.0 [\#39](https://github.com/appscode/service-broker/pull/39) ([tamalsaha](https://github.com/tamalsaha))
