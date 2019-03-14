@@ -7,9 +7,10 @@ import (
 )
 
 type config struct {
-	CatalogPath  string
-	CatalogNames []string
-	Async        bool
+	CatalogPath      string
+	CatalogNames     []string
+	Async            bool
+	DefaultNamespace string
 }
 
 type Config struct {
@@ -28,10 +29,11 @@ func NewConfig(clientConfig *rest.Config) *Config {
 
 func (c *Config) New() (*Broker, error) {
 	return &Broker{
-		dbClient:     c.DBClient,
-		svccatClient: c.SvcCatClient,
-		async:        c.Async,
-		catalogPath:  c.CatalogPath,
-		catalogNames: c.CatalogNames,
+		dbClient:         c.DBClient,
+		svccatClient:     c.SvcCatClient,
+		async:            c.Async,
+		catalogPath:      c.CatalogPath,
+		catalogNames:     c.CatalogNames,
+		defaultNamespace: c.DefaultNamespace,
 	}, nil
 }

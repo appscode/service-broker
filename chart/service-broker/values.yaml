@@ -103,3 +103,5 @@ catalog:
     serviceAccount:
       namespace: catalog
       name: service-catalog-controller-manager
+
+defaultNamespace: default

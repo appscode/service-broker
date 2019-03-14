@@ -50,6 +50,7 @@ spec:
         - --enable-analytics={{ .Values.enableAnalytics }}
         - --catalog-path={{ .Values.catalog.path }}
         - --catalog-names={{ include "service-broker.catalogNames" . | quote }}
+        - --defaultNamespace={{ .Values.defaultNamespace }}
         ports:
         - containerPort: 8443
 {{- if .Values.apiserver.healthcheck.enabled }}
