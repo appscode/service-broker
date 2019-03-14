@@ -73,13 +73,18 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	if err != nil {
 		return nil, err
 	}
-	for _, svcinstance := range svcinstances.Items {
-		if svcinstance.Spec.ExternalID == request.InstanceID {
-			curProvisionInfo.InstanceName = svcinstance.Name
+	if len(svcinstances.Items) == 0 {
+		curProvisionInfo.InstanceName = "app-" + request.InstanceID
+	} else {
+		for _, svcinstance := range svcinstances.Items {
+			if svcinstance.Spec.ExternalID == request.InstanceID {
+				curProvisionInfo.InstanceName = svcinstance.Name
+			}
 		}
-	}
-	if curProvisionInfo.InstanceName == "" {
-		return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
+
+		if curProvisionInfo.InstanceName == "" {
+			return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
+		}
 	}
 
 	// Check to see if this is the same instance
