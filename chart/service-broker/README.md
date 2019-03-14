@@ -73,6 +73,7 @@ The following table lists the configurable parameters of the AppsCode Service Br
 | `catalog.path`                                | The path where catalog for different service plans are mounted                                                                                                             | `/etc/config/catalog`                                     |
 | `catalog.controller.serviceAccount.namespace` | Namespace of service catalog manager controller service account                                                                                                            | `catalog`                                                 |
 | `catalog.controller.serviceAccount.name`      | Name of service catalog controller manager service account                                                                                                                 | `service-catalog-controller-manager`                      |
+| `defaultNamespace`                            | The default namespace for brokers when the request doesn't specify                                                                                                         | `default`                                                 |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 

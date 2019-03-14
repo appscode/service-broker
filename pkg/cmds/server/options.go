@@ -5,12 +5,14 @@ import (
 	dbsvc "github.com/appscode/service-broker/pkg/kubedb"
 	svcat_cs "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset/typed/servicecatalog/v1beta1"
 	"github.com/spf13/pflag"
+	"k8s.io/kubernetes/pkg/apis/core"
 )
 
 type ExtraOptions struct {
-	CatalogPath  string
-	CatalogNames []string
-	Async        bool
+	DefaultNamespace string
+	CatalogPath      string
+	CatalogNames     []string
+	Async            bool
 
 	QPS   float64
 	Burst int
@@ -18,10 +20,11 @@ type ExtraOptions struct {
 
 func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
-		CatalogPath: "/etc/config/catalog",
-		Async:       false,
-		QPS:         100,
-		Burst:       100,
+		CatalogPath:      "/etc/config/catalog",
+		Async:            false,
+		QPS:              100,
+		Burst:            100,
+		DefaultNamespace: core.NamespaceDefault,
 	}
 }
 
@@ -33,6 +36,8 @@ func (s *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 
 	fs.Float64Var(&s.QPS, "qps", s.QPS, "The maximum QPS to the master from this client")
 	fs.IntVar(&s.Burst, "burst", s.Burst, "The maximum burst for throttle")
+
+	fs.StringVar(&s.DefaultNamespace, "defaultNamespace", s.DefaultNamespace, "The default namespace for brokers when the request doesn't specify")
 }
 
 func (s *ExtraOptions) ApplyTo(cfg *broker.Config) error {
@@ -44,6 +49,7 @@ func (s *ExtraOptions) ApplyTo(cfg *broker.Config) error {
 	cfg.CatalogPath = s.CatalogPath
 	cfg.CatalogNames = s.CatalogNames
 	cfg.Async = s.Async
+	cfg.DefaultNamespace = s.DefaultNamespace
 
 	cfg.DBClient = dbsvc.NewClient(cfg.ClientConfig)
 	if cfg.SvcCatClient, err = svcat_cs.NewForConfig(cfg.ClientConfig); err != nil {

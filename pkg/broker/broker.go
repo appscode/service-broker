@@ -28,6 +28,9 @@ type Broker struct {
 
 	// Synchronize go routines.
 	sync.RWMutex
+
+	// Default namespace to run brokers if not specified during request
+	defaultNamespace string
 }
 
 var _ broker.Interface = &Broker{}
@@ -50,7 +53,11 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	b.Lock()
 	defer b.Unlock()
 
-	namespace := request.Context["namespace"].(string)
+	namespace := b.defaultNamespace
+	if ns, ok := request.Context["namespace"]; ok {
+		namespace = ns.(string)
+	}
+
 	response := broker.ProvisionResponse{}
 	curProvisionInfo := &dbsvc.ProvisionInfo{
 		InstanceID: request.InstanceID,
