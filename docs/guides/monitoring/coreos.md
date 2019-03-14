@@ -2,13 +2,13 @@
 title: CoreOS Prometheus Operator | AppsCode Service Broker
 description: Monitoring AppsCode Service Broker Using CoreOS Prometheus Operator
 menu:
-  product_service-broker_0.1.0:
+  product_service-broker_0.2.0:
     identifier: coreos-monitoring
     name: Prometheus Operator
     parent: monitoring-guides
     weight: 30
 product_name: service-broker
-menu_name: product_service-broker_0.1.0
+menu_name: product_service-broker_0.2.0
 section_menu_id: guides
 ---
 > New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).

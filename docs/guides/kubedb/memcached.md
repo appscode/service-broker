@@ -1,13 +1,13 @@
 ---
 title: Memcached | AppsCode Service Broker
 menu:
-  product_service-broker_0.1.0:
+  product_service-broker_0.2.0:
     identifier: memcached-kubedb
     name: Memcached
     parent: kubedb-guides
     weight: 20
 product_name: service-broker
-menu_name: product_service-broker_0.1.0
+menu_name: product_service-broker_0.2.0
 section_menu_id: guides
 ---
 > New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
