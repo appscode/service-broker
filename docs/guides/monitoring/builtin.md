@@ -2,13 +2,13 @@
 title: Builtin Prometheus | AppsCode Service Broker
 description: Monitoring AppsCode Service Broker with builtin Prometheus
 menu:
-  product_service-broker_0.1.0:
+  product_service-broker_0.2.0:
     identifier: builtin-monitoring
     name: Builtin Prometheus
     parent: monitoring-guides
     weight: 20
 product_name: service-broker
-menu_name: product_service-broker_0.1.0
+menu_name: product_service-broker_0.2.0
 section_menu_id: guides
 ---
 > New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).
@@ -60,7 +60,7 @@ metadata:
   creationTimestamp: 2019-01-09T07:03:55Z
   labels:
     app: service-broker
-    chart: service-broker-0.1.0
+    chart: service-broker-0.2.0
     heritage: Tiller
     release: appscode-service-broker
   name: appscode-service-broker

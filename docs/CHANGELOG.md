@@ -2,17 +2,17 @@
 title: Changelog | Service Broker
 description: Changelog
 menu:
-  product_service-broker_0.1.0:
+  product_service-broker_0.2.0:
     identifier: changelog-service-broker
     name: Changelog
     parent: welcome
     weight: 10
 product_name: service-broker
-menu_name: product_service-broker_0.1.0
+menu_name: product_service-broker_0.2.0
 section_menu_id: welcome
-url: /products/service-broker/0.1.0/welcome/changelog/
+url: /products/service-broker/0.2.0/welcome/changelog/
 aliases:
-  - /products/service-broker/0.1.0/CHANGELOG/
+  - /products/service-broker/0.2.0/CHANGELOG/
 ---
 
 # Change Log
