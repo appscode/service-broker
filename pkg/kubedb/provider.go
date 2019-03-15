@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	meta_util "kmodules.xyz/client-go/meta"
+	mu "kmodules.xyz/client-go/meta"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 )
 
@@ -47,7 +47,7 @@ func (p *ProvisionInfo) Match(q *ProvisionInfo) bool {
 
 func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta) error {
 	if _, found := p.Params["metadata"]; found {
-		if err := meta_util.Decode(p.Params["metadata"], meta); err != nil {
+		if err := mu.Decode(p.Params["metadata"], meta); err != nil {
 			return err
 		}
 	}
@@ -60,6 +60,12 @@ func (p ProvisionInfo) applyToMetadata(meta *metav1.ObjectMeta) error {
 		meta.Labels = make(map[string]string)
 	}
 	meta.Labels[InstanceKey] = p.InstanceID
+
+	// ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels
+	meta.Labels[mu.NameLabelKey] = p.ServiceID
+	meta.Labels[mu.VersionLabelKey] = p.PlanID
+	meta.Labels[mu.InstanceLabelKey] = p.InstanceID
+	meta.Labels[mu.ManagedByLabelKey] = "appscode-service-broker"
 
 	// set provision info at annotations
 	if meta.Annotations == nil {
@@ -78,7 +84,7 @@ func (p ProvisionInfo) applyToSpec(spec interface{}) error {
 	if _, found := p.Params["spec"]; !found {
 		return errors.New("spec is required for provisioning custom postgres")
 	}
-	return meta_util.Decode(p.Params["spec"], spec)
+	return mu.Decode(p.Params["spec"], spec)
 }
 
 // ref: https://github.com/osbkit/minibroker/blob/d212fcb0013fe73eae914543525e36a1b1fc91cd/pkg/minibroker/provider.go#L14:6
@@ -106,6 +112,6 @@ type Credentials struct {
 // }
 func (c Credentials) ToMap() (map[string]interface{}, error) {
 	var result map[string]interface{}
-	err := meta_util.Decode(&c, &result)
+	err := mu.Decode(&c, &result)
 	return result, err
 }
