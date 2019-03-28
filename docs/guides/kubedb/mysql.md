@@ -93,9 +93,9 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports two plans for `mysql` class as we can see above. Using `demo-mysql` plan we can provision a demo MySQL database. And using `mysql` plan we can provision a custom MySQL database with the full functionality of a [MySQL CRD](https://kubedb.com/docs/0.10.0/concepts/databases/mysql).
+AppsCode Service Broker currently supports two plans for `mysql` class as we can see above. Using `demo-mysql` plan we can provision a demo MySQL database. And using `mysql` plan we can provision a custom MySQL database with the full functionality of a [MySQL CRD](https://kubedb.com/docs/0.11.0/concepts/databases/mysql).
 
-AppsCode Service Broker accepts only metadata and [MySQL Spec](https://kubedb.com/docs/0.10.0/concepts/databases/mysql/#mysql-spec) as parameters for the plans of `mysql` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [MySQL Spec](https://kubedb.com/docs/0.11.0/concepts/databases/mysql/#mysql-spec) as parameters for the plans of `mysql` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for both of the plans available. But the spec is required for the custom plan and it must be valid.
 
 Since a `ClusterServiceClass` named `mysql` exists in the cluster with a `ClusterServicePlan` named `mysql`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 

@@ -76,7 +76,7 @@ To provision a demo standalone PostgreSQL database, perform the following tasks:
   ![ref](/docs/images/enter-provision-name.png)
 
 - Click "Continue"
-- Now, you get another modal dialog to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [spec](https://kubedb.com/docs/0.10.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.10.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formatted metadata:
+- Now, you get another modal dialog to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [spec](https://kubedb.com/docs/0.11.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.11.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formatted metadata:
 
   ```json
   {
@@ -129,7 +129,7 @@ To deprovision the previously created instance named `postgresqldb`, just click 
 
 ### Manage `postgresql` Plan
 
-Using this plan you can provide a [custom specification](https://kubedb.com/docs/0.10.0/concepts/databases/postgres/#postgres-spec) for PostgreSQL.
+Using this plan you can provide a [custom specification](https://kubedb.com/docs/0.11.0/concepts/databases/postgres/#postgres-spec) for PostgreSQL.
 
 #### Provisioning
 
@@ -141,7 +141,7 @@ This section will show you how to provision `postgresql` plan for PostgreSQL dat
   ![ref](/docs/images/enter-provision-name.png)
 
 - Click "Continue"
-- Now, you get another modal dialog to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [spec](https://kubedb.com/docs/0.10.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.10.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formatted parameters for this custom `postgresql` plan:
+- Now, you get another modal dialog to input the parameters for provisioning. AppsCode Service Broker accepts only metadata and [spec](https://kubedb.com/docs/0.11.0/concepts/databases/postgres/#postgres-spec) of [Postgres CRD](https://kubedb.com/docs/0.11.0/concepts/databases/postgres) as parameters for the plans of `postgresql` service. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid. Here we have used the following `json` formatted parameters for this custom `postgresql` plan:
 
   ```json
   {
@@ -211,7 +211,7 @@ To deprovision the previously created instance named `postgresqldb` for plan **`
 ## Cleanup
 
 - [Uninstall AppsCode Service Broker](/docs/setup/uninstall.md).
-- [Uninstall KubeDB](https://kubedb.com/docs/0.10.0/setup/uninstall/)
+- [Uninstall KubeDB](https://kubedb.com/docs/0.11.0/setup/uninstall/)
 - Run the following commands to delete Service Catalog
 
   ```console
