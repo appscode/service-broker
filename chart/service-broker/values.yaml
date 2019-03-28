@@ -100,6 +100,8 @@ catalog:
   # The path where catalog for different database service plans are stored
   path: /etc/config/catalog
   controller:
+    # set enabled=false, if not used with service catalog
+    enabled: true
     serviceAccount:
       namespace: catalog
       name: service-catalog-controller-manager
