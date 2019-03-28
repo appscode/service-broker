@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,20 +71,23 @@ func (b *Broker) Provision(request *osb.ProvisionRequest, c *broker.RequestConte
 	// use name of ServiceInstance as instance crd name
 	// ref: https://github.com/kubernetes-incubator/service-catalog/issues/2532
 	svcinstances, err := b.svccatClient.ServiceInstances(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	if len(svcinstances.Items) == 0 {
+	if kerr.IsNotFound(err) {
 		curProvisionInfo.InstanceName = "app-" + request.InstanceID
+	} else if err != nil {
+		return nil, err
 	} else {
-		for _, svcinstance := range svcinstances.Items {
-			if svcinstance.Spec.ExternalID == request.InstanceID {
-				curProvisionInfo.InstanceName = svcinstance.Name
+		if len(svcinstances.Items) == 0 {
+			curProvisionInfo.InstanceName = "app-" + request.InstanceID
+		} else {
+			for _, svcinstance := range svcinstances.Items {
+				if svcinstance.Spec.ExternalID == request.InstanceID {
+					curProvisionInfo.InstanceName = svcinstance.Name
+				}
 			}
-		}
 
-		if curProvisionInfo.InstanceName == "" {
-			return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
+			if curProvisionInfo.InstanceName == "" {
+				return nil, errors.Errorf("failed get name of ServiceInstance %s/%s", namespace, request.InstanceID)
+			}
 		}
 	}
 
