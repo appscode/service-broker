@@ -1,13 +1,13 @@
 ---
 title: Uninstall | AppsCode Service Broker
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: uninstall-setup
     name: Setup Uninstall
     parent: setup
     weight: 20
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: guides
 ---
 # Uninstall Service Broker

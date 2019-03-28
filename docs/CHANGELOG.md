@@ -2,20 +2,27 @@
 title: Changelog | Service Broker
 description: Changelog
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: changelog-service-broker
     name: Changelog
     parent: welcome
     weight: 10
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: welcome
-url: /products/service-broker/0.3.0/welcome/changelog/
+url: /products/service-broker/0.3.1/welcome/changelog/
 aliases:
-  - /products/service-broker/0.3.0/CHANGELOG/
+  - /products/service-broker/0.3.1/CHANGELOG/
 ---
 
 # Change Log
+
+## [0.3.1](https://github.com/appscode/service-broker/tree/0.3.1) (2019-03-28)
+[Full Changelog](https://github.com/appscode/service-broker/compare/0.3.0...0.3.1)
+
+**Fixed bugs:**
+
+- Convert Credentials into a map respecting json tags [\#57](https://github.com/appscode/service-broker/pull/57) ([tamalsaha](https://github.com/tamalsaha))
 
 ## [0.3.0](https://github.com/appscode/service-broker/tree/0.3.0) (2019-03-28)
 [Full Changelog](https://github.com/appscode/service-broker/compare/0.2.0...0.3.0)
@@ -26,6 +33,7 @@ aliases:
 
 **Merged pull requests:**
 
+- Prepare release 0.3.0 [\#56](https://github.com/appscode/service-broker/pull/56) ([tamalsaha](https://github.com/tamalsaha))
 - Don't create ClusterServiceBroker if not used with svc catalog [\#55](https://github.com/appscode/service-broker/pull/55) ([tamalsaha](https://github.com/tamalsaha))
 - Detect instance name in clusters wihtout svc-catalog [\#54](https://github.com/appscode/service-broker/pull/54) ([tamalsaha](https://github.com/tamalsaha))
 - Update KubeDB dependency to 0.11.0 [\#53](https://github.com/appscode/service-broker/pull/53) ([tamalsaha](https://github.com/tamalsaha))

@@ -1,13 +1,13 @@
 ---
 title: MongoDB | AppsCode Service Broker
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: mongodb-kubedb
     name: Mongodb
     parent: kubedb-guides
     weight: 30
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: guides
 ---
 > New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).

@@ -2,17 +2,17 @@
 title: Table of Contents | Guides
 description: Table of Contents | Guides
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: guides-readme
     name: Readme
     parent: guides
     weight: -1
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: guides
-url: /products/service-broker/0.3.0/guides/
+url: /products/service-broker/0.3.1/guides/
 aliases:
-  - /products/service-broker/0.3.0/guides/README/
+  - /products/service-broker/0.3.1/guides/README/
 ---
 # Guides
 

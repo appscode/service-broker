@@ -2,17 +2,17 @@
 title: Contributing | Service Broker
 description: Contributing
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: contributing-service-broker
     name: Contributing
     parent: welcome
     weight: 10
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: welcome
-url: /products/service-broker/0.3.0/welcome/contributing/
+url: /products/service-broker/0.3.1/welcome/contributing/
 aliases:
-  - /products/service-broker/0.3.0/CONTRIBUTING/
+  - /products/service-broker/0.3.1/CONTRIBUTING/
 ---
 
 # Contribution Guidelines

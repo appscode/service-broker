@@ -2,13 +2,13 @@
 title: Release | AppsCode Service Broker
 description: AppsCode Service Broker Release
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: release
     name: Release
     parent: developer-guide
     weight: 15
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: setup
 ---
 # Release Process

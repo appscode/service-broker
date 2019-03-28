@@ -2,17 +2,17 @@
 title: Table of Contents | Setup
 description: Table of Contents | Setup
 menu:
-  product_service-broker_0.3.0:
+  product_service-broker_0.3.1:
     identifier: setup-readme
     name: Readme
     parent: setup
     weight: -1
 product_name: service-broker
-menu_name: product_service-broker_0.3.0
+menu_name: product_service-broker_0.3.1
 section_menu_id: setup
-url: /products/service-broker/0.3.0/setup/
+url: /products/service-broker/0.3.1/setup/
 aliases:
-  - /products/service-broker/0.3.0/setup/README/
+  - /products/service-broker/0.3.1/setup/README/
 ---
 # Setup
 
