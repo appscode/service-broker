@@ -3,6 +3,7 @@
 {{- $altName1 := printf "%s.%s" $cn .Release.Namespace }}
 {{- $altName2 := printf "%s.%s.svc" $cn .Release.Namespace }}
 {{- $cert := genSignedCert $cn nil (list $altName1 $altName2) 3650 $ca }}
+{{ if .Values.catalog.controller.enabled }}
 apiVersion: servicecatalog.k8s.io/v1beta1
 kind: ClusterServiceBroker
 metadata:
@@ -43,6 +44,7 @@ metadata:
   annotations:
     kubernetes.io/service-account.name: {{ .Values.catalog.controller.serviceAccount.name }}
 type: kubernetes.io/service-account-token
+{{ end }}
 ---
 apiVersion: v1
 kind: Secret
