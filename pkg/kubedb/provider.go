@@ -111,7 +111,14 @@ type Credentials struct {
 //     }
 // }
 func (c Credentials) ToMap() (map[string]interface{}, error) {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
 	var result map[string]interface{}
-	err := mu.Decode(&c, &result)
-	return result, err
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
