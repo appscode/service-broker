@@ -2,13 +2,13 @@
 title: Overview | Developer Guide
 description: Developer Guide Overview
 menu:
-  product_service-broker_0.2.0:
+  product_service-broker_0.3.0:
     identifier: developer-guide-readme
     name: Overview
     parent: developer-guide
     weight: 15
 product_name: service-broker
-menu_name: product_service-broker_0.2.0
+menu_name: product_service-broker_0.3.0
 section_menu_id: setup
 ---
 
