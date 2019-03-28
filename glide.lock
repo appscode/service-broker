@@ -1,5 +1,5 @@
-hash: bc683697c3d669594ac25984a2ff81316200a590c375810d1f2ae99823694a72
-updated: 2019-03-14T15:51:31.587784532-07:00
+hash: a3dccde5311c971a19be65cc93b7516b0773a0cc5a487be766d7456463133502
+updated: 2019-03-27T23:16:56.624557038-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -29,7 +29,6 @@ imports:
 - name: github.com/appscode/kutil
   version: 963f95c3833ac1630834cb574a30fac82234a3bd
   subpackages:
-  - apiextensions/v1beta1
   - meta
 - name: github.com/Azure/go-ansiterm
   version: d6e3b3328b783f23731bc4d058875b0371ff8109
@@ -252,7 +251,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 1624edc4454b8682399def8740d46db5e4362ba4
 - name: github.com/kubedb/apimachinery
-  version: a307434ffe887287826f1197ca7221213905900b
+  version: fb8b2533cc4f81f8c39214d943b3951206be0a2b
   subpackages:
   - apis
   - apis/authorization
@@ -877,7 +876,7 @@ imports:
 - name: k8s.io/utils
   version: 66066c83e385e385ccc3c964b44fd7dcd413d0ed
 - name: kmodules.xyz/client-go
-  version: fd7cc05edf46bb8d630fa6a84b875162f321e778
+  version: 45c57f3f168df1fa926ebd155516cee7ff8d0731
   subpackages:
   - apiextensions/v1beta1
   - logs
@@ -894,15 +893,15 @@ imports:
   - client/clientset/versioned/typed/appcatalog/v1alpha1
   - client/clientset/versioned/typed/appcatalog/v1alpha1/util
 - name: kmodules.xyz/monitoring-agent-api
-  version: e79ddf3f680a16a99b9aacb718f5607b54cef04d
+  version: 374f743f78d098ebc78d61f650ac6beb5b7e869e
   subpackages:
   - api/v1
 - name: kmodules.xyz/objectstore-api
-  version: ebe27c957a5bf41e0680776e3626b5507087f4c3
+  version: 1819d12be808d6e39341205515e8ec91c55d4898
   subpackages:
   - api/v1
 - name: kmodules.xyz/offshoot-api
-  version: 317e1ed3d6c458ec431ae651b7d61deb831f40ed
+  version: 3386b694ec505dca686fd81f82c3be89e9ca5fda
   subpackages:
   - api/v1
 - name: sigs.k8s.io/yaml

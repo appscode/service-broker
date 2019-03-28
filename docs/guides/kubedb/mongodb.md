@@ -95,9 +95,9 @@ No instances defined
 
 ## Provisioning: Creating a New ServiceInstance
 
-AppsCode Service Broker currently supports three plans for `mongodb` class as we can see above. Using `demo-mongodb` plan we can provision a demo MongoDB database. Using `demo-mongodb-cluster` plan we can provision a demo MongoDB database with clustering support. And using `mongodb` plan we can provision a custom MongoDB database with the full functionality of a [MongoDB CRD](https://kubedb.com/docs/0.10.0/concepts/databases/mongodb).
+AppsCode Service Broker currently supports three plans for `mongodb` class as we can see above. Using `demo-mongodb` plan we can provision a demo MongoDB database. Using `demo-mongodb-cluster` plan we can provision a demo MongoDB database with clustering support. And using `mongodb` plan we can provision a custom MongoDB database with the full functionality of a [MongoDB CRD](https://kubedb.com/docs/0.11.0/concepts/databases/mongodb).
 
-AppsCode Service Broker accepts only metadata and [MongoDB Spec](https://kubedb.com/docs/0.10.0/concepts/databases/mongodb/#mongodb-spec) as parameters for the plans of `mongodb` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid.
+AppsCode Service Broker accepts only metadata and [MongoDB Spec](https://kubedb.com/docs/0.11.0/concepts/databases/mongodb/#mongodb-spec) as parameters for the plans of `mongodb` class. The metadata and spec should be provided with key `"metadata"` and `"spec"` respectively. The metadata is optional for all of the plans available. But the spec is required for the custom plan and it must be valid.
 
 Since a `ClusterServiceClass` named `mongodb` exists in the cluster with a `ClusterServicePlan` named `mongodb`, we can create a `ServiceInstance` pointing to them with custom specification as parameters.
 
