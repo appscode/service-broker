@@ -1,13 +1,13 @@
 ---
 title: PostgreSQL | AppsCode Service Broker
 menu:
-  product_service-broker_0.2.0:
+  product_service-broker_0.3.0:
     identifier: postgres-kubedb
     name: PostgreSQL
     parent: kubedb-guides
     weight: 50
 product_name: service-broker
-menu_name: product_service-broker_0.2.0
+menu_name: product_service-broker_0.3.0
 section_menu_id: guides
 ---
 > New to AppsCode Service Broker? Please start [here](/docs/concepts/README.md).

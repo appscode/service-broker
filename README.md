@@ -13,16 +13,16 @@ Please pick a version of AppsCode Service Broker that matches your Kubernetes in
 
 | AppsCode Service Broker Version                                        | Docs                                                             | Kubernetes Version |
 |------------------------------------------------------------------------|------------------------------------------------------------------|--------------------|
-| [0.2.0](https://github.com/appscode/service-broker/releases/tag/0.2.0) | [User Guide](https://appscode.com/products/service-broker/0.2.0) | 1.9.x+             |
+| [0.3.0](https://github.com/appscode/service-broker/releases/tag/0.3.0) | [User Guide](https://appscode.com/products/service-broker/0.3.0) | 1.9.x+             |
 
 ## Installation
-To install AppsCode Serice Broker, please follow the guide [here](https://appscode.com/products/service-broker/0.2.0/setup/install).
+To install AppsCode Serice Broker, please follow the guide [here](https://appscode.com/products/service-broker/0.3.0/setup/install).
 
 ## Using Service Broker
-Want to learn how to use AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.2.0).
+Want to learn how to use AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.3.0).
 
 ## Contribution guidelines
-Want to help improve AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.2.0/welcome/contributing/).
+Want to help improve AppsCode Service Broker? Please start [here](https://appscode.com/products/service-broker/0.3.0/welcome/contributing/).
 
 ---
 

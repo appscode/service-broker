@@ -2,18 +2,18 @@
 title: Weclome | Service Broker
 description: Welcome to Service Broker
 menu:
-  product_service-broker_0.2.0:
+  product_service-broker_0.3.0:
     identifier: readme-service-broker
     name: Readme
     parent: welcome
     weight: -1
 product_name: service-broker
-menu_name: product_service-broker_0.2.0
+menu_name: product_service-broker_0.3.0
 section_menu_id: welcome
-url: /products/service-broker/0.2.0/welcome/
+url: /products/service-broker/0.3.0/welcome/
 aliases:
-  - /products/service-broker/0.2.0/
-  - /products/service-broker/0.2.0/README/
+  - /products/service-broker/0.3.0/
+  - /products/service-broker/0.3.0/README/
 ---
 
 # AppsCode Service Broker
