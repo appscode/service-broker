@@ -22,12 +22,12 @@ const (
 	KubeDBServiceRedis         = "ccfd1c81-e59f-4875-a39f-75ba55320ce0"
 
 	// Versions used in demo plans of different databases
-	demoMySQLVersion         = "8.0-v1"
-	demoPostgresVersion      = "10.2-v1"
 	demoElasticSearchVersion = "6.3-v1"
-	demoMongoDBVersion       = "3.6-v1"
-	demoRedisVersion         = "4.0-v1"
 	demoMemcachedVersion     = "1.5.4-v1"
+	demoMongoDBVersion       = "3.6-v2"
+	demoMySQLVersion         = "8.0.14"
+	demoPostgresVersion      = "11.1-v1"
+	demoRedisVersion         = "4.0.11"
 
 	// Name of the plans of under different services
 	PlanElasticSearchDemo        = "c4e99557-3a81-452e-b9cf-660f01c155c0"
