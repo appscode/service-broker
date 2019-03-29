@@ -114,11 +114,6 @@ func (p MongoDbProvider) Bind(
 		return nil, errors.Wrapf(err, `failed to retrieve "port" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	uri, err := app.URL()
-	if err != nil {
-		return nil, errors.Wrapf(err, `failed to retrieve "uri" from secret for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
-	}
-
 	username, ok := data["username"]
 	if !ok {
 		return nil, errors.Errorf(`"username" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
@@ -129,14 +124,16 @@ func (p MongoDbProvider) Bind(
 		return nil, errors.Errorf(`"password" not found in secret keys for %s %s/%s`, app.Spec.Type, app.Namespace, app.Name)
 	}
 
-	return &Credentials{
+	creds := Credentials{
 		Protocol: app.Spec.ClientConfig.Service.Scheme,
-		Host:     host,
+		Host:     host + ".cluster.local",
 		Port:     port,
-		URI:      uri,
 		Username: username,
 		Password: password,
-	}, nil
+		Database: "blog",
+	}
+	creds.URI = buildURI(creds)
+	return &creds, nil
 }
 
 func (p MongoDbProvider) GetProvisionInfo(instanceID string) (*ProvisionInfo, error) {

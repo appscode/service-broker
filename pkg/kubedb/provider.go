@@ -2,9 +2,11 @@ package kubedb
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mu "kmodules.xyz/client-go/meta"
 	appcat "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
@@ -96,6 +98,7 @@ type Credentials struct {
 	Username interface{} `json:"username,omitempty"`
 	Password interface{} `json:"password,omitempty"`
 	RootCert interface{} `json:"rootCert,omitempty"`
+	Database string      `json:"database,omitempty"`
 }
 
 // ToMap converts the credentials into the OSB API credentials response
@@ -121,4 +124,18 @@ func (c Credentials) ToMap() (map[string]interface{}, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func buildURI(c Credentials) string {
+	if c.Database == "" {
+		return fmt.Sprintf("%s://%s:%s@%s:%d",
+			c.Protocol, c.Username, c.Password, c.Host, c.Port)
+	}
+
+	return fmt.Sprintf("%s://%s:%s@%s:%d/%s",
+		c.Protocol, c.Username, c.Password, c.Host, c.Port, c.Database)
+}
+
+func buildHostFromService(service corev1.Service) string {
+	return fmt.Sprintf("%s.%s.svc.cluster.local", service.Name, service.Namespace)
 }
