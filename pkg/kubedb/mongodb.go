@@ -126,7 +126,7 @@ func (p MongoDbProvider) Bind(
 
 	creds := Credentials{
 		Protocol: app.Spec.ClientConfig.Service.Scheme,
-		Host:     host,
+		Host:     host + ".cluster.local",
 		Port:     port,
 		Username: username,
 		Password: password,
