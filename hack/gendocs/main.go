@@ -47,7 +47,7 @@ menu_name: product_service-broker_{{ .Version }}
 section_menu_id: reference
 {{- if .RootCmd }}
 aliases:
-  - products/service-broker/{{ .Version }}/reference/
+  - /products/service-broker/{{ .Version }}/reference/
 {{ end }}
 ---
 `))
