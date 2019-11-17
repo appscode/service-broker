@@ -8,6 +8,8 @@
 # AppsCode Service Broker
 Open Service Broker for installing AppsCode cloud services in Kubernetes cluster.
 
+> This project is now retired. We believe a better approach to creating non-Kubernetes resoruces is via CRDs. So, we have focused our efforts on the [Kuebform](https://kubeform.com) project. You can read our blog post regarding this [here](https://blog.byte.builders/post/introducing-kubeform/).
+
 ## Supported Versions
 Please pick a version of AppsCode Service Broker that matches your Kubernetes installation.
 
